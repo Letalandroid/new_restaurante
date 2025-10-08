@@ -1,13 +1,35 @@
-<script setup>
+<script lang="ts" setup>
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AppMenuItem from './AppMenuItem.vue';
 
-const page = usePage();
-const permissions = computed(() => page.props.auth.user?.permissions ?? []);
-const hasPermission = (perm) => permissions.value.includes(perm);
+// Tipos para usuario y permisos
+interface User {
+    permissions?: string[];
+}
 
-const model = computed(() => [
+interface Auth {
+    user?: User;
+}
+
+// Obtenemos los props de la página
+const page = usePage<{ auth: Auth }>();
+
+// Computed para permisos del usuario
+const permissions = computed<string[]>(() => page.props.auth.user?.permissions ?? []);
+
+// Función para verificar permisos
+const hasPermission = (perm: string): boolean => permissions.value.includes(perm);
+
+// Tipos del menú
+interface MenuItem {
+    label: string;
+    icon?: string;
+    to?: string;
+    items?: MenuItem[];
+}
+// Computed para el modelo del menú
+const model = computed<MenuItem[]>(() => [
     {
         label: 'Home',
         items: [
@@ -22,13 +44,13 @@ const model = computed(() => [
             hasPermission('ver almacenes') && { label: 'Almacenes', icon: 'pi pi-fw pi-building', to: '/almacenes' },
             hasPermission('ver proveedores') && { label: 'Proveedores', icon: 'pi pi-fw pi-truck', to: '/proveedores' },
             hasPermission('ver insumos') && { label: 'Insumos', icon: 'pi pi-fw pi-box', to: '/insumos' },
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
     },
     {
         label: 'Gestión de Cocina',
         items: [
             hasPermission('ver dishes') && { label: 'Platos', icon: 'pi pi-fw pi-apple', to: '/platos' },
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
     },
     {
         label: 'Gestión de Comercio',
@@ -37,7 +59,7 @@ const model = computed(() => [
             hasPermission('ver cajas') && { label: 'Cajas', icon: 'pi pi-fw pi-cart-plus', to: '/cajas' },
             hasPermission('ver ordenes') && { label: 'Ordenes', icon: 'pi pi-fw pi-list', to: '/ordenes' },
             hasPermission('ver mesas') && { label: 'Lista de Mesas', icon: 'pi pi-fw pi-table', to: '/ordenes/mesas' },
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
         
     },
     {
@@ -51,7 +73,7 @@ const model = computed(() => [
         items: [
           hasPermission('ver clientes') && { label: 'Clientes', icon: 'pi pi-fw pi-users', to: '/clientes' },
           //hasPermission('ver tipos_clientes') && { label: 'Tipo de Clientes', icon: 'pi pi-fw pi-id-card', to: '/tipo_clientes' },
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
       },
 (hasPermission('ver movimientos') || hasPermission('ver movimientos')) && {
         label: 'Movimientos',
@@ -60,9 +82,9 @@ const model = computed(() => [
           hasPermission('ver facturas insumos') && { label: 'Compras de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/movimientos' },
                     hasPermission('ver kardex insumos') && { label: 'Kardex de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/kardex' },
 
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
       },
-      ].filter(Boolean),
+      ].filter(Boolean) as MenuItem[],
     },
     {
         label: 'Gestión de Infraestructura',
@@ -70,7 +92,7 @@ const model = computed(() => [
             hasPermission('ver pisos') && { label: 'Pisos', icon: 'pi pi-fw pi-list', to: '/pisos' },
             hasPermission('ver areas') && { label: 'Areas', icon: 'pi pi-fw pi-map', to: '/areas' },
             hasPermission('ver mesas') && { label: 'Mesas', icon: 'pi pi-fw pi-table', to: '/mesas' },
-        ].filter(Boolean),
+        ].filter(Boolean) as MenuItem[],
     },
     {
   label: 'Usuarios y Seguridad',
@@ -83,19 +105,19 @@ const model = computed(() => [
       items: [
         hasPermission('ver empleados') && { label: 'Empleados', icon: 'pi pi-fw pi-id-card', to: '/empleados' },
         hasPermission('ver tipos_empleados') && { label: 'Tipo de empleados', icon: 'pi pi-fw pi-sitemap', to: '/tipo_empleados' },
-      ].filter(Boolean),
+      ].filter(Boolean) as MenuItem[],
     },
     hasPermission('ver presentaciones') && { label: 'Presentaciones', icon: 'pi pi-fw pi-check-square', to: '/presentaciones' },
-  ].filter(Boolean),
+  ].filter(Boolean) as MenuItem[],
 },
 {
   label: 'Reportes y Finanzas',
   items: [
     hasPermission('ver reporte_cajas') && { label: 'Reporte de Caja', icon: 'pi pi-fw pi-file', to: '/reporte-cajas' },
     // ...otros reportes/finanzas
-  ].filter(Boolean)
+  ].filter(Boolean) as MenuItem[],
 }
-].filter(section => section.items.length > 0));
+].filter(section => section.items && section.items.length > 0) as MenuItem[]);
 </script>
 
 <template>
