@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Web\CertificadoWebController;
 use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
 use App\Http\Controllers\Web\CajaWebController;
@@ -125,9 +126,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/envio-sunat', [SunatController::class, 'enviarFactura'])->name('envio-sunat');
     Route::post('/generate-invoice/{idSale}', [SalesInvoiceController::class, 'generateInvoice']);
     Route::get('/datos/dashboard', [DashboardController::class, 'getdatos']);
-Route::get('/certificado', [CertificadoWebController::class, 'index'])->name('index.view');
-Route::post('/enviar-certificado', [CertificadoController::class, 'subircertificado'])->name('subir.certificado');
-Route::get('/crear-certificado', [CrearPemController::class, 'crear']);
+    Route::get('/certificado', [CertificadoWebController::class, 'index'])->name('index.view');
+    Route::post('/enviar-certificado', [CertificadoController::class, 'subircertificado'])->name('subir.certificado');
+    Route::get('/crear-certificado', [CrearPemController::class, 'crear']);
 
     #CONSULTA  => BACKEND
     Route::get('/consulta/{dni}', [ConsultasDni::class, 'consultar'])->name('consultar.dni');
@@ -450,7 +451,13 @@ Route::prefix('insumos')->group(function () {
     
     });
 });
+        //RUTAS PARA QUE PASEN EL TEST  
+        Route::get('/register', [RegisteredUserController::class, 'create'])
+            ->middleware('guest')
+            ->name('register');
 
+        Route::post('/register', [RegisteredUserController::class, 'store'])
+            ->middleware('guest');
 // Archivos de configuración adicionales
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
