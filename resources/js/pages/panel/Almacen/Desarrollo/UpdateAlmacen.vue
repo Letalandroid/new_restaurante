@@ -1,26 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useToast } from 'primevue/usetoast';
 import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
 
-const props = defineProps({
-    visible: Boolean,
-    AlmacenId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Almacen {
+    name: string;
+    state: boolean;
+}
 
-const serverErrors = ref({});
-const submitted = ref(false);
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    AlmacenId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
+
+const serverErrors = ref<ServerErrors>({});
+const submitted = ref<boolean>(false);
 const toast = useToast();
-const loading = ref(false);
+const loading = ref<boolean>(false);
 
-const dialogVisible = ref(props.visible);
-watch(() => props.visible, (val) => dialogVisible.value = val);
+const dialogVisible = ref<boolean>(props.visible);
+watch(() => props.visible, (val) => (dialogVisible.value = val));
 watch(dialogVisible, (val) => emit('update:visible', val));
 
 watch(() => props.visible, (newVal) => {
@@ -29,12 +42,13 @@ watch(() => props.visible, (newVal) => {
     }
 });
 
-const almacen = ref({
+const almacen = ref<Almacen>({
     name: '',
     state: false
 });
 
-const fetchAlmacen = async () => {
+const fetchAlmacen = async (): Promise<void> => {
+    if (!props.AlmacenId) return;
     loading.value = true;
     try {
         const response = await axios.get(`/almacen/${props.AlmacenId}`);
@@ -55,14 +69,16 @@ const fetchAlmacen = async () => {
     }
 };
 
-const updateAlmacen = async () => {
+const updateAlmacen = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
+
+    if (!props.AlmacenId) return;
 
     try {
         const almacenData = {
             name: almacen.value.name,
-            state: almacen.value.state === true,
+            state: almacen.value.state
         };
 
         await axios.put(`/almacen/${props.AlmacenId}`, almacenData);
@@ -76,9 +92,10 @@ const updateAlmacen = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
-        if (error.response && error.response.data?.errors) {
-            serverErrors.value = error.response.data.errors;
+    } catch (error: any) {
+       const axiosError = error as AxiosError;
+        if (axiosError.response?.status === 422 && axiosError.response.data) {
+            serverErrors.value = (axiosError.response.data as any).errors || {};
             toast.add({
                 severity: 'error',
                 summary: 'Error de validación',

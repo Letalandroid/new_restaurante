@@ -1,5 +1,5 @@
-<script setup>
-import { ref, onMounted,watch } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -13,37 +13,56 @@ import DeleteAlmacen from './DeleteAlmacen.vue';
 import UpdateAlmacen from './UpdateAlmacen.vue';
 import Select from 'primevue/select';
 
-const dt = ref();
-const almacenes = ref([]);
-const selectedalmacenes = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteAlmacenDialog = ref(false);
-const almacen = ref({});
-const selectedAlmacenId = ref(null);
-const selectedEstadoAlmacen = ref(null);
-const updateAlmacenDialog = ref(false);
-const currentPage = ref(1);
+interface Almacen {
+    id: number;
+    name?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state?: boolean | number | string;
+}
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface Filter {
+    state: any;
+    online: any;
+}
+
+const dt = ref<any>(null);
+const almacenes = ref<Almacen[]>([]);
+const selectedalmacenes = ref<Almacen[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteAlmacenDialog = ref<boolean>(false);
+const almacen = ref<Almacen | null>(null);
+const selectedAlmacenId = ref<number | null>(null);
+const selectedEstadoAlmacen = ref<{ name: string; value: any } | null>(null);
+const updateAlmacenDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
+
+const props = defineProps<{
+    refresh: number;
+}>();
+
 watch(() => props.refresh, () => {
     loadAlmacen();
 });
+
 watch(() => selectedEstadoAlmacen.value, () => {
     currentPage.value = 1;
     loadAlmacen();
 });
-function editalmacen(almacen) {
-    selectedAlmacenId.value = almacen.id;
+
+function editalmacen(a: Almacen) {
+    selectedAlmacenId.value = a.id;
     updateAlmacenDialog.value = true;
 }
 
-const estadoAlmacenOptions = ref([
+const estadoAlmacenOptions = ref<{ name: string; value: any }[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
@@ -53,21 +72,22 @@ function handleAlmacenUpdated() {
     loadAlmacen();
 }
 
-function confirmDeletealmacen(selected) {
+function confirmDeletealmacen(selected: Almacen) {
     almacen.value = selected;
     deleteAlmacenDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const filters = ref({
+const filters = ref<Filter>({
     state: null,
     online: null
 });
+
 function handleUserDeleted() {
     loadAlmacen();
 }
@@ -75,11 +95,11 @@ function handleUserDeleted() {
 const loadAlmacen = async () => {
     loading.value = true;
     try {
-        const params = {
+        const params: any = {
             page: pagination.value.currentPage,
-                per_page: pagination.value.perPage,
-                search: globalFilterValue.value,
-                state: filters.value.state,
+            per_page: pagination.value.perPage,
+            search: globalFilterValue.value,
+            state: filters.value.state,
         };
         if (selectedEstadoAlmacen.value !== null && selectedEstadoAlmacen.value.value !== '') {
             params.state = selectedEstadoAlmacen.value.value;
@@ -92,22 +112,20 @@ const loadAlmacen = async () => {
         pagination.value.total = response.data.meta.total;
     } catch (error) {
         console.error('Error al cargar almacen:', error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los almacen', life: 3000 });
     } finally {
         loading.value = false;
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: any) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadAlmacen();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {

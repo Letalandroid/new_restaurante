@@ -1,28 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    cliente: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Cliente {
+    id: number;
+    name: string;
+    [key: string]: any;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    cliente: Cliente | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteCliente() {
+async function deleteCliente(): Promise<void> {
+    if (!props.cliente) return;
     try {
         await axios.delete(`/cliente/${props.cliente.id}`);
         emit('deleted');
@@ -33,7 +44,7 @@ async function deleteCliente() {
             detail: 'Cliente eliminado correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el cliente';
         if (error.response) {

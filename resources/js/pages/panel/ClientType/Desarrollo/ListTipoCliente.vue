@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -13,24 +13,40 @@ import Select from 'primevue/select';
 import DeleteTipoCliente from './DeleteTipoCliente.vue';
 import UpdateTipoCliente from './UpdateTipoCliente.vue';
 
-const dt = ref();
-const tiposClientes = ref([]);
-const selectedTiposClientes = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteTipoClienteDialog = ref(false);
-const tipoCliente = ref({});
-const selectedTipoClienteId = ref(null);
-const selectedEstadoTipoCliente = ref(null);
-const updateTipoClienteDialog = ref(false);
-const currentPage = ref(1);
+interface TipoCliente {
+    id: number;
+    name: string;
+    state: boolean | number;
+    creacion?: string;
+    actualizacion?: string;
+}
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | '';
+}
+
+const dt = ref();
+const tiposClientes = ref<TipoCliente[]>([]);
+const selectedTiposClientes = ref<TipoCliente[]>();
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteTipoClienteDialog = ref<boolean>(false);
+const tipoCliente = ref<TipoCliente| null>(null);
+const selectedTipoClienteId = ref<number | null>(null);
+const selectedEstadoTipoCliente = ref<EstadoOption | null>(null);
+const updateTipoClienteDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
+
+const props = defineProps<{
+    refresh: number;
+}>();
 
 watch(() => props.refresh, () => {
     loadTipoCliente();
@@ -41,29 +57,29 @@ watch(() => selectedEstadoTipoCliente.value, () => {
     loadTipoCliente();
 });
 
-const estadoTipoClienteOptions = ref([
+const estadoTipoClienteOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
 ]);
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
 const filters = ref({
-    state: null,
-    online: null
+    state: null as number | null,
+    online: null as number | null
 });
 
-function editTipoCliente(tc) {
+function editTipoCliente(tc: TipoCliente) {
     selectedTipoClienteId.value = tc.id;
     updateTipoClienteDialog.value = true;
 }
 
-function confirmDeleteTipoCliente(selected) {
+function confirmDeleteTipoCliente(selected: TipoCliente) {
     tipoCliente.value = selected;
     deleteTipoClienteDialog.value = true;
 }
@@ -76,10 +92,10 @@ function handleTipoClienteDeleted() {
     loadTipoCliente();
 }
 
-const loadTipoCliente = async () => {
+const loadTipoCliente = async (): Promise<void> => {
     loading.value = true;
     try {
-        const params = {
+        const params: Record<string, any> = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
@@ -92,7 +108,7 @@ const loadTipoCliente = async () => {
 
         const response = await axios.get('/tipo_cliente', { params });
 
-        tiposClientes.value = response.data.data;
+        tiposClientes.value = response.data.data as TipoCliente[];
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
     } catch (error) {
@@ -102,16 +118,15 @@ const loadTipoCliente = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }): void => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadTipoCliente();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {

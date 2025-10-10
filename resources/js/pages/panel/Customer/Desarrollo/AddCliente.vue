@@ -17,7 +17,7 @@
                     <InputText
                         v-model.trim="cliente.name"
                         required
-                        placeholder="Ingrese el nombre correspondiente"
+                        placeholder="Ingrese el nombre del cliente"
                         maxlength="150"
                         fluid
                     />
@@ -76,7 +76,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
@@ -89,13 +89,29 @@ import { useToast } from 'primevue/usetoast';
 import Dropdown from 'primevue/dropdown';
 import ToolsCustomer from './toolsCustomer.vue';
 
+interface Cliente {
+    name: string;
+    codigo: string;
+    client_type_id: number | null;
+    state: boolean;
+}
+
+interface TipoCliente {
+    id: number;
+    name: string;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
 const toast = useToast();
 const submitted = ref(false);
 const clienteDialog = ref(false);
-const serverErrors = ref({});
+const serverErrors = ref<ServerErrors>({});
 const emit = defineEmits(['cliente-agregado']);
 
-const cliente = ref({
+const cliente = ref<Cliente>({
     name: '',
     codigo: '',
     client_type_id: null,
@@ -103,35 +119,34 @@ const cliente = ref({
 });
 
 // Variable para controlar la longitud máxima del código
-const codigoMaxLength = ref(8);  // Valor inicial para persona natural (8 dígitos para DNI)
-const codigoPlaceholder = ref("Ingrese su número de DNI");  // Placeholder inicial para persona natural
+const codigoMaxLength = ref<number>(8);  // Valor inicial para persona natural (8 dígitos para DNI)
+const codigoPlaceholder = ref<string>("Ingrese su número de DNI");  // Placeholder inicial para persona natural
 
 // Cargar tipos de cliente
-const tiposCliente = ref([]);
-const loadCliente = async () => {
+const tiposCliente = ref<TipoCliente[]>([]);
+
+const loadCliente = async (): Promise<void> => {
     try {
-        const response = await axios.get('/cliente');  // Aquí haces una solicitud GET para obtener los clientes
+        const response = await axios.get('/cliente');  
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('cliente-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('cliente-agregado');  
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los clientes', life: 3000 });
         console.error(error);
     }
 };
 
-function onTipoClienteChange() {
-    // Cambiar la longitud del código y el placeholder dependiendo del tipo de cliente seleccionado
-    if (cliente.value.client_type_id === 1) { // Persona natural
-        codigoMaxLength.value = 8;  // 8 dígitos (DNI)
-        codigoPlaceholder.value = "Ingrese su número de DNI"; // Placeholder para Persona natural
-    } else if (cliente.value.client_type_id === 2) { // Persona jurídica
-        codigoMaxLength.value = 11; // 11 dígitos (RUC)
-        codigoPlaceholder.value = "Ingrese su número de RUC (10 o 20)"; // Placeholder para Persona jurídica
+function onTipoClienteChange(): void {
+    if (cliente.value.client_type_id === 1) { 
+        codigoMaxLength.value = 8;  
+        codigoPlaceholder.value = "Ingrese su número de DNI"; 
+    } else if (cliente.value.client_type_id === 2) { 
+        codigoMaxLength.value = 11; 
+        codigoPlaceholder.value = "Ingrese su número de RUC (10 o 20)"; 
     }
 }
 
-function resetCliente() {
+function resetCliente(): void {
     cliente.value = {
         name: '',
         codigo: '',
@@ -142,18 +157,18 @@ function resetCliente() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetCliente();
     clienteDialog.value = true;
     fetchTiposCliente();
 }
 
-function hideDialog() {
+function hideDialog(): void {
     clienteDialog.value = false;
     resetCliente();
 }
 
-function fetchTiposCliente() {
+function fetchTiposCliente(): void {
     axios.get('/tipo_cliente', { params: { state: 1 } })
         .then(res => {
             tiposCliente.value = res.data.data;
@@ -163,7 +178,7 @@ function fetchTiposCliente() {
         });
 }
 
-function guardarCliente() {
+function guardarCliente(): void {
     submitted.value = true;
     serverErrors.value = {};
 

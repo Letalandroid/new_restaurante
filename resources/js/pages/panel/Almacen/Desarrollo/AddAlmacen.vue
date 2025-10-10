@@ -40,9 +40,9 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -50,26 +50,36 @@ import InputText from 'primevue/inputtext';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
-import { defineEmits } from 'vue';
 import ToolsAlmacen from './toolsAlmacen.vue';
 
-const toast = useToast();
-const submitted = ref(false);
-const almacenDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['almacen-agregado']);
+interface Almacen {
+    name: string;
+    state: boolean;
+}
 
-const almacen = ref({
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const almacenDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'almacen-agregado'): void;
+}>();
+
+const almacen = ref<Almacen>({
     name: '',
     state: true
 });
+
 // Método para recargar la lista de almacenes
 const loadAlmacen = async () => {
     try {
-        const response = await axios.get('/almacen');  // Aquí haces una solicitud GET para obtener los almacenes
+        const response = await axios.get('/almacen');  // Solicitud GET para obtener los almacenes
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('almacen-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('almacen-agregado');  // Notificación a componente padre
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los almacenes', life: 3000 });
         console.error(error);
@@ -100,14 +110,14 @@ function guardaralmacen() {
     serverErrors.value = {};
 
     axios.post('/almacen', almacen.value)
-        .then(()=> {
+        .then(() => {
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Almacén registrado', life: 3000 });
             hideDialog();
             emit('almacen-agregado');
         })
-        .catch(error => {
-            if (error.response && error.response.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
+        .catch((error: AxiosError) => {
+           if (error.response && error.response.status === 422) {
+                serverErrors.value = (error.response.data as any).errors || {};
             } else {
                 toast.add({
                     severity: 'error',

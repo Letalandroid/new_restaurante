@@ -40,9 +40,9 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -53,29 +53,42 @@ import { useToast } from 'primevue/usetoast';
 import { defineEmits } from 'vue';
 import ToolsCategory from './toolsCategory.vue';
 
-const toast = useToast();
-const submitted = ref(false);
-const categoriaDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['categoria-agregada']);
+// Tipos
+interface Categoria {
+    name: string;
+    state: boolean | null;
+}
 
-const categoria = ref({
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const categoriaDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'categoria-agregada'): void;
+}>();
+
+const categoria = ref<Categoria>({
     name: '',
     state: true
 });
+
 // Método para recargar la lista de categorías
-const loadCategoria = async () => {
+const loadCategoria = async (): Promise<void> => {
     try {
-        const response = await axios.get('/categoria');  // Aquí haces una solicitud GET para obtener las categorías
+        const response = await axios.get('/categoria');
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('categoria-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('categoria-agregada');
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las categorías', life: 3000 });
         console.error(error);
     }
-}
-function resetCategoria() {
+};
+
+function resetCategoria(): void {
     categoria.value = {
         name: '',
         state: true
@@ -84,37 +97,37 @@ function resetCategoria() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetCategoria();
     categoriaDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     categoriaDialog.value = false;
     resetCategoria();
 }
 
-function guardarCategoria() {
+async function guardarCategoria(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
-    axios.post('/categoria', categoria.value)
-        .then(() => {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría registrada', life: 3000 });
-            hideDialog();
-            emit('categoria-agregada');
-        })
-        .catch(error => {
-            if (error.response && error.response.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
-            } else {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'No se pudo registrar la categoría',
-                    life: 3000
-                });
-            }
-        });
+    try {
+        await axios.post('/categoria', categoria.value);
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría registrada', life: 3000 });
+        hideDialog();
+        emit('categoria-agregada');
+    } catch (error) {
+        const err = error as AxiosError<{ errors?: ServerErrors }>;
+        if (err.response && err.response.status === 422) {
+            serverErrors.value = err.response.data.errors || {};
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo registrar la categoría',
+                life: 3000
+            });
+        }
+    }
 }
 </script>

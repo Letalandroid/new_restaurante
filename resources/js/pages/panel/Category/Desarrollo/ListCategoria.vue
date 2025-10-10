@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -12,72 +12,93 @@ import { debounce } from 'lodash';
 import DeleteCategoria from './DeleteCategoria.vue';
 import UpdateCategoria from './UpdateCategoria.vue';
 import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
+
+interface Categoria {
+    id: number;
+    name: string;
+    state: boolean | number | string;
+    creacion?: string;
+    actualizacion?: string;
+}
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | boolean;
+}
 
 const dt = ref();
-const categorias = ref([]);
-const selectedCategorias = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteCategoriaDialog = ref(false);
-const categoria = ref({});
-const selectedCategoriaId = ref(null);
-const selectedEstadoCategoria = ref(null);
-const updateCategoriaDialog = ref(false);
-const currentPage = ref(1);
+const categorias = ref<Categoria[]>([]);
+const selectedCategorias = ref<Categoria[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteCategoriaDialog = ref<boolean>(false);
+const categoria = ref<Categoria | null>(null);
+const selectedCategoriaId = ref<number | null>(null);
+const selectedEstadoCategoria = ref<EstadoOption | null>(null);
+const updateCategoriaDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const toast = useToast();
+
+const props = defineProps<{
+    refresh: number;
+}>();
+
 watch(() => props.refresh, () => {
     loadCategoria();
 });
+
 watch(() => selectedEstadoCategoria.value, () => {
     currentPage.value = 1;
     loadCategoria();
 });
 
-function editCategoria(categoria) {
-    selectedCategoriaId.value = categoria.id;
+function editCategoria(categoriaItem: Categoria): void {
+    selectedCategoriaId.value = categoriaItem.id;
     updateCategoriaDialog.value = true;
 }
 
-const estadoCategoriaOptions = ref([
+const estadoCategoriaOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
 ]);
 
-function handleCategoriaUpdated() {
+function handleCategoriaUpdated(): void {
     loadCategoria();
 }
 
-function confirmDeleteCategoria(selected) {
+function confirmDeleteCategoria(selected: Categoria): void {
     categoria.value = selected;
     deleteCategoriaDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
 const filters = ref({
-    state: null,
-    online: null
+    state: null as string | number | null,
+    online: null as string | number | null
 });
 
-function handleCategoriaDeleted() {
+function handleCategoriaDeleted(): void {
     loadCategoria();
 }
 
-const loadCategoria = async () => {
+const loadCategoria = async (): Promise<void> => {
     loading.value = true;
     try {
-        const params = {
+        const params: Record<string, any> = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
@@ -92,7 +113,7 @@ const loadCategoria = async () => {
         categorias.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al cargar categoría:', error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las categorías', life: 3000 });
     } finally {
@@ -100,16 +121,15 @@ const loadCategoria = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }): void => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadCategoria();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -137,7 +157,7 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar categoria..." />
                     </IconField>
                     <Select v-model="selectedEstadoCategoria" :options="estadoCategoriaOptions" optionLabel="name"
                         placeholder="Estado" class="w-full md:w-auto" />

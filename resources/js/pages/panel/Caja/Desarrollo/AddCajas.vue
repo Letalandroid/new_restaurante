@@ -25,28 +25,38 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
 
-const toast = useToast();
-const submitted = ref(false);
-const cajaDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['caja-agregada']);
+interface Caja {
+    numero_cajas: string;
+}
 
-const caja = ref({
-    numero_cajas: '',  // Solo se ingresa el número de cajas
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const cajaDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'caja-agregada'): void;
+}>();
+
+const caja = ref<Caja>({
+    numero_cajas: '',
 });
 
 function resetCaja() {
     caja.value = {
-        numero_cajas: '', // Inicializar en 1
+        numero_cajas: '',
     };
     serverErrors.value = {};
     submitted.value = false;
@@ -72,9 +82,9 @@ function guardarCaja() {
             hideDialog();
             emit('caja-agregada');
         })
-        .catch(error => {
-            if (error.response?.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
+        .catch((error: AxiosError) => {
+            if (error.response && error.response.status === 422) {
+                serverErrors.value = (error.response.data as any).errors || {};
             } else {
                 toast.add({
                     severity: 'error',

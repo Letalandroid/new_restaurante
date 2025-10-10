@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -12,24 +12,49 @@ import { debounce } from 'lodash';
 import DeleteCliente from './DeleteCliente.vue';
 import UpdateCliente from './UpdateCliente.vue';
 import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
+
+interface Cliente {
+    id: number;
+    name: string;
+    codigo: string;
+    Cliente_Tipo?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state: boolean | number;
+}
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | boolean;
+}
+
+interface Filters {
+    state: number | null;
+}
 
 const dt = ref();
-const clientes = ref([]);
-const selectedClientes = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteClienteDialog = ref(false);
-const cliente = ref({});
-const selectedClienteId = ref(null);
-const selectedEstadoCliente = ref(null);
-const updateClienteDialog = ref(false);
+const clientes = ref<Cliente[]>([]);
+const selectedClientes = ref<Cliente[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteClienteDialog = ref<boolean>(false);
+const cliente = ref<Cliente | null>(null);
+const selectedClienteId = ref<number | null>(null);
+const selectedEstadoCliente = ref<EstadoOption | null>(null);
+const updateClienteDialog = ref<boolean>(false);
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const toast = useToast();
+
+const props = defineProps<{
+    refresh: number;
+}>();
 
 watch(() => props.refresh, () => {
     loadCliente();
@@ -40,12 +65,12 @@ watch(() => selectedEstadoCliente.value, () => {
     loadCliente();
 });
 
-function editCliente(cliente) {
-    selectedClienteId.value = cliente.id;
+function editCliente(selectedCliente: Cliente) {
+    selectedClienteId.value = selectedCliente.id;
     updateClienteDialog.value = true;
 }
 
-const estadoClienteOptions = ref([
+const estadoClienteOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
@@ -55,18 +80,18 @@ function handleClienteUpdated() {
     loadCliente();
 }
 
-function confirmDeleteCliente(selected) {
+function confirmDeleteCliente(selected: Cliente) {
     cliente.value = selected;
     deleteClienteDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const filters = ref({
+const filters = ref<Filters>({
     state: null
 });
 
@@ -74,15 +99,16 @@ function handleClienteDeleted() {
     loadCliente();
 }
 
-const loadCliente = async () => {
+const loadCliente = async (): Promise<void> => {
     loading.value = true;
     try {
-        const params = {
+        const params: Record<string, any> = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
             state: filters.value.state,
         };
+
         if (selectedEstadoCliente.value !== null && selectedEstadoCliente.value.value !== '') {
             params.state = selectedEstadoCliente.value.value;
         }
@@ -92,7 +118,7 @@ const loadCliente = async () => {
         clientes.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al cargar clientes:', error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los clientes', life: 3000 });
     } finally {
@@ -100,16 +126,15 @@ const loadCliente = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadCliente();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -137,7 +162,7 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar cliente..." />
                     </IconField>
                     <Select v-model="selectedEstadoCliente" :options="estadoClienteOptions" optionLabel="name"
                         placeholder="Estado" class="w-full md:w-auto" />

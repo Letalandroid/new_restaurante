@@ -1,28 +1,38 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    categoria: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Categoria {
+    id: number;
+    name: string;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    categoria: Categoria | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteCategoria() {
+async function deleteCategoria(): Promise<void> {
+    if (!props.categoria) return;
     try {
         await axios.delete(`/categoria/${props.categoria.id}`);
         emit('deleted');
@@ -33,7 +43,7 @@ async function deleteCategoria() {
             detail: 'Categoría eliminada correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando la categoría';
         if (error.response) {

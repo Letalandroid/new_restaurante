@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -8,18 +8,32 @@ import { useToast } from 'primevue/usetoast';
 import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
 
-const props = defineProps({
-    visible: Boolean,
-    categoriaId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Categoria {
+    name: string;
+    state: boolean;
+}
 
-const serverErrors = ref({});
-const submitted = ref(false);
+interface ServerErrors {
+    name?: string[];
+    state?: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    categoriaId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
+
+const serverErrors = ref<ServerErrors>({});
+const submitted = ref<boolean>(false);
 const toast = useToast();
-const loading = ref(false);
+const loading = ref<boolean>(false);
 
-const dialogVisible = ref(props.visible);
+const dialogVisible = ref<boolean>(props.visible);
 watch(() => props.visible, (val) => dialogVisible.value = val);
 watch(dialogVisible, (val) => emit('update:visible', val));
 
@@ -29,12 +43,12 @@ watch(() => props.visible, (newVal) => {
     }
 });
 
-const categoria = ref({
+const categoria = ref<Categoria>({
     name: '',
     state: false
 });
 
-const fetchCategoria = async () => {
+const fetchCategoria = async (): Promise<void> => {
     loading.value = true;
     try {
         const response = await axios.get(`/categoria/${props.categoriaId}`);
@@ -42,7 +56,7 @@ const fetchCategoria = async () => {
 
         categoria.value.name = data.name;
         categoria.value.state = data.state;
-    } catch (error) {
+    } catch (error: any) {
         toast.add({
             severity: 'error',
             summary: 'Error',
@@ -55,7 +69,7 @@ const fetchCategoria = async () => {
     }
 };
 
-const updateCategoria = async () => {
+const updateCategoria = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -76,7 +90,7 @@ const updateCategoria = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({

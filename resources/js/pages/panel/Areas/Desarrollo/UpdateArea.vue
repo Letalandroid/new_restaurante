@@ -1,86 +1,77 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useToast } from 'primevue/usetoast';
 import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
 
-const props = defineProps({
-    visible: Boolean,
-    AreaId: [Number, String]
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Area {
+    name: string;
+    state: boolean;
+}
 
-const serverErrors = ref({});
-const submitted = ref(false);
+const props = defineProps<{
+    visible: boolean;
+    AreaId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
+
+const serverErrors = ref<Record<string, string[]>>({});
+const submitted = ref<boolean>(false);
 const toast = useToast();
-const loading = ref(false);
+const loading = ref<boolean>(false);
+const dialogVisible = ref<boolean>(props.visible);
 
-const dialogVisible = ref(props.visible);
-watch(() => props.visible, (val) => dialogVisible.value = val);
+watch(() => props.visible, (val) => (dialogVisible.value = val));
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const fetchArea = async () => {
+const area = ref<Area>({
+    name: '',
+    state: false
+});
+
+const fetchArea = async () : Promise<void> => {
+    if (!props.AreaId) return;
     loading.value = true;
-    
     try {
         const response = await axios.get(`/area/${props.AreaId}`);
-        
-        if (response.data && response.data.areas) {
-            const data = response.data.areas;
-            area.value = {
-                name: data.name || '',
-                state: data.state === true
-            };
-        } else {
-            console.error('Unexpected response format:', response.data);
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Formato de respuesta inesperado',
-                life: 3000
-            });
-        }
+        const data = response.data.areas;
+        area.value.name = data.name;
+        area.value.state = data.state;
     } catch (error) {
-        console.error('Error fetching area:', error);
         toast.add({
             severity: 'error',
             summary: 'Error',
             detail: 'No se pudo cargar el área',
             life: 3000
         });
+        console.error('Error fetching area:', error);
     } finally {
         loading.value = false;
     }
 };
 
-watch(() => [props.visible, props.AreaId], ([newVisible, newAreaId]) => {
-    if (newVisible && newAreaId) {
-        fetchArea();
-    }
-}, { immediate: true });
+watch(() => props.visible, (newVal) => {
+        if (newVal && props.AreaId) {
+            fetchArea();
+        }
+    });
 
-const area = ref({
-    name: '',
-    state: false
-});
-
-const updateArea = async () => {
+const updateArea = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
-
-    if (!area.value.name.trim()) {
-        serverErrors.value.name = ['El nombre es requerido'];
-        return;
-    }
-
+    if (!props.AreaId) return;
     try {
         const areaData = {
             name: area.value.name,
-            state: area.value.state === true,
+            state: area.value.state
         };
 
         await axios.put(`/area/${props.AreaId}`, areaData);
@@ -94,10 +85,10 @@ const updateArea = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
-        
-        if (error.response && error.response.data?.errors) {
-            serverErrors.value = error.response.data.errors;
+    } catch (error: any) {
+        const axiosError = error as AxiosError;
+        if (axiosError.response?.status === 422 && axiosError.response.data) {
+            serverErrors.value = (axiosError.response.data as any).errors || {};
             toast.add({
                 severity: 'error',
                 summary: 'Error de validación',
@@ -112,17 +103,15 @@ const updateArea = async () => {
                 life: 3000
             });
         }
+        console.error(error);
     }
 };
 </script>
 
 <template>
     <Dialog v-model:visible="dialogVisible" header="Editar Área" modal :closable="true" :closeOnEscape="true"
-        :style="{ width: '600px' }">
-        <div v-if="loading" class="flex justify-center p-4">
-            <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
-        </div>
-        <div v-else class="flex flex-col gap-6">
+        :style="{ width: '90%', maxWidth: '600px' }">
+        <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-9">
                     <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>

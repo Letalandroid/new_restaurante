@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -9,29 +9,51 @@ import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 import Dropdown from 'primevue/dropdown';
 
-const props = defineProps({
-    visible: Boolean,
-    clienteId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Cliente {
+    id?: number;
+    name: string;
+    codigo: string;
+    client_type_id: number | null;
+    state: boolean;
+}
+
+interface TipoCliente {
+    id: number;
+    name: string;
+    codigo_pattern?: string;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    clienteId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const cliente = ref({
+const cliente = ref<Cliente>({
     name: '',
     codigo: '',
     client_type_id: null,
     state: false,
 });
 
-const tiposCliente = ref([]);
-const codigoMaxLength = ref(8); // 8 dígitos por defecto para persona natural (DNI)
-const codigoPattern = ref(""); // Expresión regular para el código
-const codigoPlaceholder = ref("Ingrese su codigo"); 
+const tiposCliente = ref<TipoCliente[]>([]);
+const codigoMaxLength = ref<number>(8); // 8 dígitos por defecto para persona natural (DNI)
+const codigoPattern = ref<string>(''); // Expresión regular para el código
+const codigoPlaceholder = ref<string>('Ingrese su codigo');
 
 watch(() => props.visible, (val) => {
     dialogVisible.value = val;
@@ -43,7 +65,7 @@ watch(() => props.visible, (val) => {
 
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const fetchCliente = async () => {
+const fetchCliente = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/cliente/${props.clienteId}`);
@@ -55,8 +77,8 @@ const fetchCliente = async () => {
             state: data.state
         };
         // Actualizar la longitud y el patrón del código al cargar el cliente
-        onTipoClienteChange(); 
-    } catch (error) {
+        onTipoClienteChange();
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el cliente', life: 3000 });
         console.error(error);
     } finally {
@@ -64,31 +86,31 @@ const fetchCliente = async () => {
     }
 };
 
-const fetchTiposCliente = async () => {
+const fetchTiposCliente = async (): Promise<void> => {
     try {
         const res = await axios.get('/tipo_cliente', { params: { state: 1 } });
         tiposCliente.value = res.data.data;
-    } catch (error) {
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los tipos de cliente', life: 3000 });
         console.error(error);
     }
 };
 
-const updateCliente = async () => {
+const updateCliente = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
     // Validación de longitud de código dependiendo del tipo de cliente
     if (cliente.value.client_type_id === 1 && cliente.value.codigo.length !== 8) { // Persona natural (DNI)
         serverErrors.value.codigo = ['El código debe tener 8 dígitos para persona natural.'];
-        codigoPlaceholder.value.codigo = "Ingrese su número de DNI"; 
+        codigoPlaceholder.value = 'Ingrese su número de DNI';
         toast.add({ severity: 'error', summary: 'Error', detail: 'El código debe tener 8 dígitos para persona natural.', life: 3000 });
         return;
     }
 
     if (cliente.value.client_type_id === 2 && cliente.value.codigo.length !== 11) { // Persona jurídica (RUC)
         serverErrors.value.codigo = ['El código debe tener 11 dígitos para persona jurídica.'];
-        codigoPlaceholder.value.codigo = "Ingrese su número de RUC (10 o 20 dígitos)";
+        codigoPlaceholder.value = 'Ingrese su número de RUC (10 o 20 dígitos)';
         toast.add({ severity: 'error', summary: 'Error', detail: 'El código debe tener 11 dígitos para persona jurídica.', life: 3000 });
         return;
     }
@@ -112,7 +134,7 @@ const updateCliente = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
@@ -133,7 +155,7 @@ const updateCliente = async () => {
     }
 };
 
-const onTipoClienteChange = () => {
+const onTipoClienteChange = (): void => {
     const tipoCliente = tiposCliente.value.find(t => t.id === cliente.value.client_type_id);
     if (tipoCliente) {
         // Ajustar el patrón y longitud de código dependiendo del tipo de cliente
@@ -199,7 +221,7 @@ const onTipoClienteChange = () => {
                         placeholder="Seleccione tipo de cliente"
                         filter
                         filterBy="name"
-                        filterPlaceholder="Buscar tipo de cliente..." 
+                        filterPlaceholder="Buscar tipo de cliente..."
                         class="w-full"
                         fluid
                         :class="{ 'p-invalid': serverErrors.client_type_id }"

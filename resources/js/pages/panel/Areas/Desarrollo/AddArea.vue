@@ -38,9 +38,9 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -51,29 +51,41 @@ import { useToast } from 'primevue/usetoast';
 import { defineEmits } from 'vue';
 import ToolsArea from './toolsArea.vue';
 
-const toast = useToast();
-const submitted = ref(false);
-const areaDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['area-agregada']);
+interface Area {
+    name: string;
+    state: boolean;
+}
 
-const area = ref({
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const areaDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'area-agregada'): void;
+}>();
+
+const area = ref<Area>({
     name: '',
     state: true
 });
+
 // Método para recargar la lista de Areas
-const loadArea = async () => {
+const loadArea = async (): Promise<void> => {
     try {
-        const response = await axios.get('/area');  // Aquí haces una solicitud GET para obtener las areas
+        const response = await axios.get('/area');
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('area-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('area-agregada');
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las areas', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las áreas', life: 3000 });
         console.error(error);
     }
-}
-function resetArea() {
+};
+
+function resetArea(): void {
     area.value = {
         name: '',
         state: true
@@ -82,37 +94,40 @@ function resetArea() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetArea();
     areaDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     areaDialog.value = false;
     resetArea();
 }
 
-function guardarArea() {
+async function guardarArea(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
     axios.post('/area', area.value)
-        .then(() => {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Área registrada', life: 3000 });
-            hideDialog();
-            emit('area-agregada');
-        })
-        .catch(error => {
-            if (error.response && error.response.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
-            } else {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'No se pudo registrar el área',
-                    life: 3000
-                });
-            }
-        });
+            .then(() => {
+                toast.add({ severity: 'success', summary: 'Éxito', detail: 'Área registrada', life: 3000 });
+                hideDialog();
+                emit('area-agregada');
+            })
+    .catch((error: AxiosError) => {
+        if (error.response && error.response.status === 422) {
+                serverErrors.value = (error.response.data as any).errors || {};
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo registrar el área',
+                life: 3000
+            });
+        }
+    });
 }
 </script>
+
+<style scoped>
+</style>

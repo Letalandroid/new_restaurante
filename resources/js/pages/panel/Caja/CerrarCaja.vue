@@ -45,7 +45,7 @@
                 mode="currency"
                 currency="PEN"
                 locale="es-PE"
-                min="0" 
+                :min="0" 
               />
             </div>
             <div class="mb-4">
@@ -59,7 +59,7 @@
                 mode="currency"
                 currency="PEN"
                 locale="es-PE"
-                min="0" 
+                :min="0" 
               />
             </div>
             <div class="mb-4">
@@ -73,7 +73,7 @@
                 mode="currency"
                 currency="PEN"
                 locale="es-PE"
-                min="0" 
+                :min="0" 
               />
             </div>
             <div class="mb-4">
@@ -87,7 +87,7 @@
                 mode="currency"
                 currency="PEN"
                 locale="es-PE"
-                min="0" 
+                :min="0" 
               />
             </div>
 
@@ -105,7 +105,7 @@
   </AppLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import InputText from 'primevue/inputtext';
@@ -117,24 +117,40 @@ import Espera from '@/components/Espera.vue';
 import InputNumber from 'primevue/inputnumber';
 import { router } from '@inertiajs/core';
 
+interface CajaActivaResponse {
+  state: boolean;
+  caja: {
+    id: string;
+    numero_cajas: string;
+    vendedorNombre: string;
+  };
+  vendedorNombre?: string;
+  message?: string;
+}
+
+interface ApiResponse {
+  state: boolean;
+  message?: string;
+}
+
 const toast = useToast();
 
-const isLoading = ref(false);
+const isLoading = ref<boolean>(false);
 
-const vendedor = ref('');
-const cajaNumero = ref(null);
-const cajaId = ref('');
-const cajaActiva = ref(false);
-const montoEfectivo = ref('');
-const montoTarjeta = ref('');
-const montoYape = ref('');
-const montoTransferencia = ref('');
+const vendedor = ref<string>('');
+const cajaNumero = ref<string | null>(null);
+const cajaId = ref<string>('');
+const cajaActiva = ref<boolean>(false);
+const montoEfectivo = ref<number>(0);
+const montoTarjeta = ref<number>(0);
+const montoYape = ref<number>(0);
+const montoTransferencia = ref<number>(0);
 
 // Obtener datos del vendedor y caja activa desde la API
 onMounted(async () => {
   isLoading.value = true;  // Empieza el estado de carga
   try {
-    const response = await axios.get('/caja/mi-caja-activa');
+    const response = await axios.get<CajaActivaResponse>('/caja/mi-caja-activa');
     if (response.data.state) {
       // Asignamos el ID de la caja activa y el nombre del vendedor
       vendedor.value = response.data.caja.vendedorNombre;
@@ -142,7 +158,7 @@ onMounted(async () => {
       cajaNumero.value = response.data.caja.numero_cajas;  // 'cajaNumero' muestra el número visible de la caja
       cajaActiva.value = true;
     } else {
-      vendedor.value = response.data.vendedorNombre;  // Si no hay caja activa
+      vendedor.value = response.data.vendedorNombre || '';  // Si no hay caja activa
       cajaActiva.value = false;
     }
   } catch (error) {
@@ -152,12 +168,13 @@ onMounted(async () => {
       detail: 'No se pudo cargar la información de la caja activa.',
       life: 3000
     });
-  }finally {
+    console.error('Error al cargar', error)
+  } finally {
     isLoading.value = false;  // Finaliza el estado de carga
   }
 });
 
-const cerrarCaja = async () => {
+const cerrarCaja = async (): Promise<void> => {
   // Validación: los montos no pueden ser negativos
   if (
     montoEfectivo.value < 0 ||
@@ -186,7 +203,7 @@ const cerrarCaja = async () => {
 
   try {
     // Cambia a PUT y a la ruta correcta
-    const response = await axios.put(`/caja/cerrar/${cajaId.value}`, {
+    const response = await axios.put<ApiResponse>(`/caja/cerrar/${cajaId.value}`, {
       monto_efectivo: montoEfectivo.value,
       monto_tarjeta: montoTarjeta.value,
       monto_yape: montoYape.value,
@@ -201,7 +218,7 @@ const cerrarCaja = async () => {
         life: 3000
       });
       // Redirigir o actualizar
-      const url = '/ordenes/mesas'
+      const url = '/ordenes/mesas';
       router.visit(url);
     } else {
       toast.add({
@@ -211,7 +228,7 @@ const cerrarCaja = async () => {
         life: 3000
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.response?.data);
     toast.add({
       severity: 'error',
