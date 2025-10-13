@@ -76,8 +76,8 @@
     </Dialog>
 </template>
 
-<script setup>
-import {ref} from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
@@ -88,21 +88,38 @@ import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import ToolsSupplier from './toolsSupplier.vue';
 
-const toast = useToast();
-const submitted = ref(false);
-const proveedorDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['proveedor-agregado']);
+// Definición de interfaces
+interface Proveedor {
+    name: string;
+    ruc: string;
+    address: string;
+    phone: string;
+    state: boolean;
+}
 
-const proveedor = ref({
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const proveedorDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'proveedor-agregado'): void;
+    (e: 'proveedor-agregada'): void;
+}>();
+
+const proveedor = ref<Proveedor>({
     name: '',
     ruc: '',
     address: '',
     phone: '',
     state: true
 });
+
 // Método para recargar la lista de proveedores
-const loadProveedor = async () => {
+const loadProveedor = async (): Promise<void> => {
     try {
         const response = await axios.get('/proveedor');  // Aquí haces una solicitud GET para obtener los proveedores
         console.log(response.data);
@@ -112,8 +129,9 @@ const loadProveedor = async () => {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los proveedores', life: 3000 });
         console.error(error);
     }
-}
-function resetProveedor() {
+};
+
+function resetProveedor(): void {
     proveedor.value = {
         name: '',
         ruc: '',
@@ -125,39 +143,38 @@ function resetProveedor() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetProveedor();
     proveedorDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     proveedorDialog.value = false;
     resetProveedor();
 }
 
-function guardarProveedor() {
+async function guardarProveedor(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
     if (!proveedor.value.name || !proveedor.value.ruc) return;
 
-    axios.post('/proveedor', proveedor.value)
-        .then(() => {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Proveedor registrado', life: 3000 });
-            hideDialog();
-            emit('proveedor-agregado');
-        })
-        .catch(error => {
-            if (error.response && error.response.state === 422) {
-                serverErrors.value = error.response.data.errors || {};
-            } else {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'No se pudo registrar el proveedor',
-                    life: 3000
-                });
-            }
-        });
+    try {
+        await axios.post('/proveedor', proveedor.value);
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Proveedor registrado', life: 3000 });
+        hideDialog();
+        emit('proveedor-agregado');
+    } catch (error: any) {
+        if (error.response && error.response.status === 422) {
+            serverErrors.value = error.response.data.errors || {};
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo registrar el proveedor',
+                life: 3000
+            });
+        }
+    }
 }
 </script>

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -14,68 +14,94 @@ import autoTable from 'jspdf-autotable';
 import DeleteMovementInput from './DeleteMovementInput.vue';
 import UpdateMovementInput from './UpdateMovementInput.vue';
 
-const detailModalVisible = ref(false); // Controlar la visibilidad del modal
-const movementDetails = ref({});
-const movementDetailsDetails = ref([]);
-const subtotal = ref(0);
-const igv = ref(0);
-const total = ref(0);
-const showPdfDialog = ref(false);
-const pdfUrl = ref(null);
-const movementInputs = ref([]);
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteMovementInputDialog = ref(false);
-const updateMovementInputDialog = ref(false);
-const selectedMovementInputId = ref(null);
-const movementInput = ref({});
-const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedSupplier = ref(null);
-const selectedEstadoMovementInput = ref(null);
-const pagination = ref({
-    currentPage: 1,
-    perPage: 15,
-    total: 0
+interface Movement {
+  id: number;
+  code: string;
+  movement_type: number;
+  supplier_name: string;
+  payment_type: string;
+  issue_date: string;
+  execution_date: string;
+  sub?: number;
+  igv?: number;
+  total?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface MovementDetail {
+  quantity: number;
+  priceUnit: number;
+  batch: string;
+  totalPrice: number;
+  input: {
+    name: string;
+    unitMeasure: string;
+  };
+}
+
+interface Pagination {
+  currentPage: number;
+  perPage: number;
+  total: number;
+}
+
+const detailModalVisible = ref<boolean>(false);
+const movementDetails = ref<Movement>({} as Movement);
+const movementDetailsDetails = ref<MovementDetail[]>([]);
+const subtotal = ref<number>(0);
+const igv = ref<number>(0);
+const total = ref<number>(0);
+const showPdfDialog = ref<boolean>(false);
+const pdfUrl = ref<string | null>(null);
+const movementInputs = ref<Movement[]>([]);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteMovementInputDialog = ref<boolean>(false);
+const updateMovementInputDialog = ref<boolean>(false);
+const selectedMovementInputId = ref<number | null>(null);
+const movementInput = ref<Movement>({} as Movement);
+const currentPage = ref<number>(1);
+const selectedMovementInputs = ref<Movement[] | null>(null);
+const selectedSupplier = ref<any>(null);
+const selectedEstadoMovementInput = ref<any>(null);
+
+const pagination = ref<Pagination>({
+  currentPage: 1,
+  perPage: 15,
+  total: 0
 });
 
-const refreshCount = ref(0);  // Variable que se incrementa cuando se agrega un movimiento
+const refreshCount = ref<number>(0);
+let lastDoc: jsPDF | null = null;
 
-let lastDoc = null;
 // Función para generar PDF
 const generatePDF = () => {
   const doc = new jsPDF();
   const now = new Date();
 
-  const formatTime = (date) => date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-  const formatDate = (date) => date.toLocaleDateString('es-PE');
+  const formatTime = (date: Date) => date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  const formatDate = (date: Date) => date.toLocaleDateString('es-PE');
   const currentDate = formatDate(now);
   const currentTime = formatTime(now);
 
-  // Título
   doc.setFontSize(15);
   doc.text('RESTAURANTE E.I.R.L', 105, 15, { align: 'center' });
 
-  // Fecha y hora
   doc.setFontSize(9);
   doc.text(`Fecha: ${currentDate}    Hora: ${currentTime}`, 105, 21, { align: 'center' });
 
-  // Línea separadora
   doc.setLineWidth(0.5);
   doc.line(10, 24, 200, 24);
 
-  // Título "COMPROBANTE DE COMPRA"
   doc.setFontSize(13);
   doc.text('COMPROBANTE DE COMPRA', 105, 33, { align: 'center' });
 
-  // Código
   doc.setFontSize(10);
   doc.text(`${movementDetails.value.code}`, 105, 39, { align: 'center' });
 
-  // Línea separadora
   doc.line(10, 47, 200, 47);
 
-  // Datos a la izquierda
   let yStart = 52;
   doc.text(`Proveedor: ${movementDetails.value.supplier_name}`, 13, yStart);
   yStart += 6;
@@ -86,17 +112,14 @@ const generatePDF = () => {
   doc.text(`Fecha de Emisión: ${movementDetails.value.issue_date}`, 13, yStart);
   doc.text(`Fecha de Impresión: ${currentDate}`, 150, yStart);
 
-  // Fecha de impresión y hora
   yStart += 6;
   doc.text(`Fecha de Ejecución: ${movementDetails.value.execution_date}`, 13, yStart);
   doc.text(`Hora de Impresión: ${currentTime}`, 150, yStart);
 
-  // Línea separadora antes de la tabla
   doc.line(10, yStart + 5, 200, yStart + 5);
 
-  // Tabla
-  let tableHead = [['Cantidad', 'Insumo', 'Unidad', 'Precio Unitario', 'Lote', 'Total']];
-  let tableBody = movementDetailsDetails.value.map(item => [
+  const tableHead = [['Cantidad', 'Insumo', 'Unidad', 'Precio Unitario', 'Lote', 'Total']];
+  const tableBody = movementDetailsDetails.value.map(item => [
     item.quantity, item.input.name, item.input.unitMeasure, item.priceUnit, item.batch, item.totalPrice
   ]);
 
@@ -111,18 +134,15 @@ const generatePDF = () => {
     tableLineWidth: 0.5,
   });
 
-  // Línea separadora después de la tabla
-  const tableEndY = doc.lastAutoTable.finalY + 5;
+  const tableEndY = (doc as any).lastAutoTable.finalY + 5;
   doc.line(10, tableEndY, 200, tableEndY);
 
-  // Subtotal, IGV y Total (en la parte derecha)
   if (subtotal.value) {
     doc.text(`Subtotal: ${formatCurrency(subtotal.value)}`, 170, tableEndY + 10);
     doc.text(`IGV: ${formatCurrency(igv.value)}`, 170, tableEndY + 20);
     doc.text(`M. Total: ${formatCurrency(total.value)}`, 170, tableEndY + 30);
   }
 
-  // Pie de página con número de página
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -131,25 +151,18 @@ const generatePDF = () => {
     doc.text("https://restauranttj-main-rwzwgj.laravel.cloud/", 200, 290, { align: 'right' });
   }
 
-  // Para la vista previa
   lastDoc = doc;
   const pdfBlob = doc.output('blob');
   pdfUrl.value = URL.createObjectURL(pdfBlob);
   showPdfDialog.value = true;
-
-  // Descargar PDF directamente
-  //doc.save('comprobante-compra.pdf');
 };
 
-// Función para descargar el PDF (repetir la misma generación del PDF)
 const downloadPDF = () => {
   if (lastDoc) {
-        // Usa lo que quieras como nombre dinámico:
-        lastDoc.save('comprobante-compras.pdf');
-    }
-};  // Aquí descargamos el PDF al hacer clic en "Descargar PDF"
+    lastDoc.save('comprobante-compras.pdf');
+  }
+};
 
-// Cerrar el modal de vista previa
 const closePdfDialog = () => {
   showPdfDialog.value = false;
   if (pdfUrl.value) {
@@ -158,125 +171,112 @@ const closePdfDialog = () => {
   }
 };
 
-// Función para obtener los detalles del movimiento
-const viewMovementDetails = async (movementId) => {
-    try {
-        // Mostrar el modal
-        detailModalVisible.value = true;
+const viewMovementDetails = async (movementId: number) => {
+  try {
+    detailModalVisible.value = true;
 
-        // Hacer la solicitud a la API de /insumos/movimiento/{id}
-        const response = await axios.get(`/insumos/movimiento/${movementId}`);
-        movementDetails.value = response.data.movement;
+    const response = await axios.get(`/insumos/movimiento/${movementId}`);
+    movementDetails.value = response.data.movement;
 
-        // Hacer la solicitud a la API de /insumos/movimientos/detalle/{id}
-        const detailsResponse = await axios.get(`/insumos/movimientos/detalle/${movementId}`);
-        movementDetailsDetails.value = detailsResponse.data.data;
-
-        // Asignar el subtotal, IGV y total
-        subtotal.value = detailsResponse.data.subtotal;
-        igv.value = detailsResponse.data.total_igv;
-        total.value = detailsResponse.data.total;
-    } catch (error) {
-        console.error('Error al cargar los detalles del movimiento:', error);
-    }
+    const detailsResponse = await axios.get(`/insumos/movimientos/detalle/${movementId}`);
+    movementDetailsDetails.value = detailsResponse.data.data;
+    subtotal.value = detailsResponse.data.subtotal;
+    igv.value = detailsResponse.data.total_igv;
+    total.value = detailsResponse.data.total;
+  } catch (error) {
+    console.error('Error al cargar los detalles del movimiento:', error);
+  }
 };
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some(col => col.field === fieldName);
-};
 
-const formatCurrency = (value) => {
-    if (value != null) {
-        return 'S/. ' + parseFloat(value).toFixed(2);
-    }
-    return '';
+
+const formatCurrency = (value: number | null) => {
+  if (value != null) {
+    return 'S/. ' + parseFloat(value.toString()).toFixed(2);
+  }
+  return '';
 };
 
 const loadMovementInputs = async () => {
-    loading.value = true;
-    try {
-        const params = {
-            page: pagination.value.currentPage,
-            per_page: pagination.value.perPage,
-            search: globalFilterValue.value,
-            supplier: selectedSupplier?.value,
-            state: selectedEstadoMovementInput.value?.value ?? '',
-        };
-        const response = await axios.get('/insumos/movimiento', { params });
-        movementInputs.value = response.data.data;
-        pagination.value.currentPage = response.data.meta.current_page;
-        pagination.value.total = response.data.meta.total;
-    } catch (error) {
-        console.error('Error al cargar los movimientos de entrada:', error);
-    } finally {
-        loading.value = false;
-    }
+  loading.value = true;
+  try {
+    const params = {
+      page: pagination.value.currentPage,
+      per_page: pagination.value.perPage,
+      search: globalFilterValue.value,
+      supplier: selectedSupplier.value?.value,
+      state: selectedEstadoMovementInput.value?.value ?? '',
+    };
+    const response = await axios.get('/insumos/movimiento', { params });
+    movementInputs.value = response.data.data;
+    pagination.value.currentPage = response.data.meta.current_page;
+    pagination.value.total = response.data.meta.total;
+  } catch (error) {
+    console.error('Error al cargar los movimientos de entrada:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
-// Recarga la tabla cuando `refreshCount` cambia
+const props = defineProps<{
+  refresh: number;
+}>();
+
 watch(refreshCount, loadMovementInputs);
 watch(() => props.refresh, loadMovementInputs);
 watch(() => selectedEstadoMovementInput.value, () => {
-    currentPage.value = 1;
-    loadMovementInputs();
+  currentPage.value = 1;
+  loadMovementInputs();
 });
 
-const onPage = (event) => {
-    pagination.value.currentPage = event.page + 1;
-    pagination.value.perPage = event.rows;
-    loadMovementInputs();
+const onPage = (event: any) => {
+  pagination.value.currentPage = event.page + 1;
+  pagination.value.perPage = event.rows;
+  loadMovementInputs();
 };
 
 const onGlobalSearch = debounce(() => {
-    pagination.value.currentPage = 1;
-    loadMovementInputs();
+  pagination.value.currentPage = 1;
+  loadMovementInputs();
 }, 500);
 
-const getSeverity = (value) => {
-    return value ? 'success' : 'danger';
+
+
+const editarMovementInput = (movement: Movement) => {
+  selectedMovementInputId.value = movement.id;
+  updateMovementInputDialog.value = true;
 };
 
-const editarMovementInput = (movement) => {
-    selectedMovementInputId.value = movement.id;
-    updateMovementInputDialog.value = true;
-};
-
-const confirmarDeleteMovementInput = (movement) => {
-    movementInput.value = movement;
-    console.log(movementInput.value); // Verifica si los datos están correctos
-    deleteMovementInputDialog.value = true;
+const confirmarDeleteMovementInput = (movement: Movement) => {
+  movementInput.value = movement;
+  console.log(movementInput.value);
+  deleteMovementInputDialog.value = true;
 };
 
 function handleMovementInputUpdated() {
-    loadMovementInputs();
+  loadMovementInputs();
 }
 
 function handleMovementInputDeleted() {
-    loadMovementInputs();
+  loadMovementInputs();
 }
 
 onMounted(loadMovementInputs);
-const getMovementTypeLabel = (value) => {
-  const movementTypes = {
+
+const getMovementTypeLabel = (value: number) => {
+  const movementTypes: Record<number, string> = {
     1: 'Factura',
     2: 'Guía',
     3: 'Boleta',
   };
-  return movementTypes[value] || 'Desconocido'; // Valor por defecto si no encuentra el tipo
+  return movementTypes[value] || 'Desconocido';
 };
+
 const closeDetailModal = () => {
-    detailModalVisible.value = false;
+  detailModalVisible.value = false;
 };
 
-// CAMBIO: Variable para el maximize del modal
-const maximized = ref(false);
-
+const maximized = ref<boolean>(false);
 </script>
 
 <template>
@@ -293,7 +293,7 @@ const maximized = ref(false);
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por codigo..." />
                     </IconField>
                     
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadMovementInputs" />

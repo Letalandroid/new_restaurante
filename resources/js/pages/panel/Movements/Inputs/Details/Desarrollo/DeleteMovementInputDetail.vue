@@ -1,18 +1,34 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    movementInput: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+// Tipado de las props
+interface Input {
+    id: number;
+    name: string;
+}
+
+interface MovementInput {
+    id: number;
+    idMovementInput: number;
+    input: Input;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    movementInput: MovementInput | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(props.visible);
+const localVisible = ref<boolean>(props.visible);
 
 // Sincroniza localVisible con el prop visible
 watch(() => props.visible, (val) => {
@@ -22,15 +38,18 @@ watch(() => props.visible, (val) => {
 watch(localVisible, (val) => {
     emit('update:visible', val);
 });
-function closeDialog() {
+
+function closeDialog(): void {
     emit('update:visible', false);
 }
-async function deleteInput() {
+
+async function deleteInput(): Promise<void> {
+    if (!props.movementInput) return;
     console.log('ID a eliminar:', props.movementInput.id);  // Verifica que el ID es correcto
 
     try {
-        const response = await axios.delete(`/insumos/movimientos/detalle/${props.movementInput.id}`);
-deleteInputKardex();
+        await axios.delete(`/insumos/movimientos/detalle/${props.movementInput.id}`);
+        deleteInputKardex();
         emit('deleted');
         closeDialog();
         toast.add({
@@ -40,8 +59,7 @@ deleteInputKardex();
             life: 3000
         });
 
-
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error al eliminar el movimiento de insumo';
         if (error.response?.data?.message) {
@@ -51,7 +69,8 @@ deleteInputKardex();
     }
 }
 
-async function deleteInputKardex() {
+async function deleteInputKardex(): Promise<void> {
+    if (!props.movementInput) return;
     const { idMovementInput } = props.movementInput;  
     const idInput = props.movementInput.input.id;   
 
@@ -66,7 +85,8 @@ async function deleteInputKardex() {
         emit('deleted');
         closeDialog();
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Error al eliminar kardex:', error);
     }
 }
 

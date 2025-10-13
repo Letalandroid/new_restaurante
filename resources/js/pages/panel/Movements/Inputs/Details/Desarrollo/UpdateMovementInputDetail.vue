@@ -1,29 +1,55 @@
-<script setup>
-import Select from 'primevue/select';
-import SelectButton from 'primevue/selectbutton';
+<script setup lang="ts">
 import { ref, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Button from 'primevue/button';
 import InputDate from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
-import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
-const { id } = usePage().props;
+
+// Tipos de datos
+interface Input {
+    id: number;
+    name: string;
+    priceBuy?: string;
+    priceSale?: string;
+    quantityUnitMeasure?: string;
+    idAlmacen?: number;
+    almacen_name?: string;
+    description?: string;
+    unitMeasure?: string;
+    state?: boolean;
+}
+
+interface MovementInputDetail {
+    id: number;
+    idMovementInput: number;
+    idInput: number;
+    quantity: string;
+    totalPrice: string;
+    priceUnit: string;
+    batch: string;
+    expirationDate: string;
+    input?: Input;
+}
+
+
 const inputDialog = ref(false);
-const props = defineProps({
-    visible: Boolean,
-    movementInputId: Number,
-});
 
+const props = defineProps<{
+    visible: boolean;
+    movementInputId: number | null;
+    detailId: number | null; // <-- Nuevo prop
+}>();
 
-const emit = defineEmits(['update:visible', 'updated']);
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const serverErrors = ref({});
-const submitted = ref(false);
+const serverErrors = ref<Record<string, string[]>>({});
 const loading = ref(false);
 
 const dialogVisible = ref(props.visible);
@@ -36,12 +62,16 @@ watch(dialogVisible, (val) => emit('update:visible', val));
 const movementInput = ref({
     batch: '',
     idMovementInput: '',
+    quantity: 0,
+    totalPrice: 0,
+    unitPrice: '',
+    expirationDate: null as Date | null,
 });
-
 
 const clearSearch = () => {
     searchTerm.value = ''; // Vaciar el campo de búsqueda
 };
+
 watch(
     () => props.visible,
     async (val) => {
@@ -50,32 +80,39 @@ watch(
         }
     },
 );
+
 const fetchMovementInput = async () => {
     loading.value = true;
     try {
         const { data } = await axios.get(`/insumos/movimientos/detalle/${props.movementInputId}`);
-        
-        // Iterar sobre los elementos en data
-        data.data.forEach((item) => {
-            if (item.id === props.movementInputId) {
-                movementInput.value = {
-                    batch: item.batch,  
-                    quantity: item.quantity,
-                    expirationDate: item.expirationDate,
-                    totalPrice: item.totalPrice,
-                    unitPrice: item.priceUnit,
-                    idMovementInput: item.idMovementInput,
-                };
-                                console.log('Movimiento actualizado:', movementInput.value);
 
-                // Preseleccionar insumo basado en idInput
-                if (item.input) {
-                    selectedInsumo.value = item.input; // Asignar el insumo correspondiente
-                    searchTerm.value = item.input.name; // Inicializar la búsqueda con el nombre del insumo
-                }
+        // Buscar solo el detalle que quieres editar
+        const detail = data.data.find((item: MovementInputDetail) => item.id === props.detailId);
+
+        if (detail) {
+            movementInput.value = {
+                batch: detail.batch,
+                quantity: parseFloat(detail.quantity),
+                expirationDate: detail.expirationDate ? new Date(detail.expirationDate) : null,
+                totalPrice: parseFloat(detail.totalPrice),
+                unitPrice: detail.priceUnit,
+                idMovementInput: detail.idMovementInput.toString(),
+            };
+
+            if (detail.input) {
+                selectedInsumo.value = detail.input;
+                searchTerm.value = detail.input.name;
             }
-        });
-
+            if (detail.expirationDate) {
+                const parts = detail.expirationDate.split('-'); // ["31", "10", "2025"]
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // JS months: 0-11
+                const year = parseInt(parts[2], 10);
+                movementInput.value.expirationDate = new Date(year, month, day);
+            } else {
+                movementInput.value.expirationDate = null;
+            }
+        }
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -83,11 +120,11 @@ const fetchMovementInput = async () => {
             detail: 'No se pudo cargar los insumos',
             life: 3000,
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
 };
-
 
 // Watcher para calcular el precio unitario
 watch([() => movementInput.value.quantity, () => movementInput.value.totalPrice], () => {
@@ -104,16 +141,13 @@ const handleSearch = async () => {
         try {
             if (searchTerm.value.trim()) {
                 const response = await axios.get('/insumo', {
-                    params: {
-                        search: searchTerm.value, // Se pasa el término de búsqueda
-                    },
+                    params: { search: searchTerm.value },
                 });
-
                 if (response.data && Array.isArray(response.data.data)) {
-                    insumosOptions.value = response.data.data; // Guardamos los resultados en insumosOptions
+                    insumosOptions.value = response.data.data;
                 }
             } else {
-                insumosOptions.value = []; // Limpiamos los resultados si no hay texto
+                insumosOptions.value = [];
             }
         } catch (error) {
             console.error('Error en la búsqueda:', error);
@@ -122,11 +156,11 @@ const handleSearch = async () => {
 };
 
 // Función para seleccionar un insumo de la lista
-const selectInsumo = (insumo) => {
-    selectedInsumo.value = insumo; // Asignamos el insumo seleccionado
-    searchTerm.value = insumo.name; // Mostramos el nombre del insumo seleccionado en el input
-    insumosOptions.value = []; // Limpiamos las opciones después de la selección
-    showResults.value = false; // Ocultamos los resultados
+const selectInsumo = (insumo: Input) => {
+    selectedInsumo.value = insumo;
+    searchTerm.value = insumo.name;
+    insumosOptions.value = [];
+    showResults.value = false;
 };
 
 // Función para limpiar la selección
@@ -137,25 +171,21 @@ const clearSelection = () => {
     showResults.value = false;
 };
 
-const insumos = ref([]); // Aquí almacenamos los resultados de la búsqueda
 const searchTerm = ref('');
 const showResults = ref(false);
-const insumosOptions = ref([]);
-const timeoutId = ref(null);
-const selectedInsumo = ref(null);
+const insumosOptions = ref<Input[]>([]);
+const timeoutId = ref<number | null>(null);
+const selectedInsumo = ref<Input | null>(null);
 
 function hideDialog() {
-    // Cerrar el diálogo
     dialogVisible.value = false;
     inputDialog.value = false;
 
-
-
-    // Limpiar la búsqueda y la selección
     clearSearch();
     selectedInsumo.value = null; 
     showResults.value = false; 
 }
+
 const saveMovement = async () => {
     loading.value = true;
     try {
@@ -176,12 +206,14 @@ const saveMovement = async () => {
             totalPrice: movementInput.value.totalPrice,
             priceUnit: movementInput.value.unitPrice,
             batch: movementInput.value.batch,
-            expirationDate: movementInput.value.expirationDate, 
+            expirationDate: movementInput.value.expirationDate
+                ? movementInput.value.expirationDate.toISOString().split('T')[0]
+                : null, 
         };
 
         console.log(formData);
 
-        const response = await axios.put(`/insumos/movimientos/detalle/${props.movementInputId}`, formData);
+        const response = await axios.put(`/insumos/movimientos/detalle/${props.detailId}`, formData);
 
         if (response.data.state) {
             toast.add({
@@ -191,8 +223,10 @@ const saveMovement = async () => {
                 life: 3000,
             });
             emit('updated');
-            await updateKardex();
-            hideDialog();
+            hideDialog(); // cerrar modal inmediatamente
+
+            // actualizar kardex en segundo plano sin bloquear
+            updateKardex().catch((err) => console.error(err));
         } else {
             toast.add({
                 severity: 'error',
@@ -201,7 +235,6 @@ const saveMovement = async () => {
                 life: 3000,
             });
         }
-
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -209,6 +242,7 @@ const saveMovement = async () => {
             detail: 'Ocurrió un error al actualizar el detalle del movimiento.',
             life: 3000,
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
@@ -220,8 +254,8 @@ const updateKardex = async () => {
         const idInput = selectedInsumo.value ? selectedInsumo.value.id : null;
 
         const response = await axios.get(`/insumos/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
-
         const id = response.data.data[0].id;
+
         const formDataKardex = {
             idInput: idInput, 
             idMovementInput: idMovementInput, 
@@ -230,23 +264,14 @@ const updateKardex = async () => {
 
         console.log(formDataKardex); 
 
-        const updateResponse = await axios.put(`/insumos/karde/${id}`, formDataKardex);
-
-      
+        await axios.put(`/insumos/karde/${id}`, formDataKardex);
     } catch (error) {
+        console.error(error);
     }
 };
-
-
-
-
-
-
-
-
-
-
 </script>
+
+
 
 <template>
     <Dialog
@@ -320,7 +345,7 @@ const updateKardex = async () => {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Cantidad <span class="text-red-500">*</span></label>
-                    <InputNumber v-model="movementInput.quantity" required min="1" class="w-full" :class="{ 'p-invalid': serverErrors.quantity }" />
+                    <InputNumber v-model="movementInput.quantity" required :min="1" class="w-full" :class="{ 'p-invalid': serverErrors.quantity }" />
                     <small v-if="serverErrors.quantity" class="text-red-500">{{ serverErrors.quantity[0] }}</small>
                 </div>
             </div>
@@ -332,10 +357,10 @@ const updateKardex = async () => {
                     <InputNumber
                         v-model="movementInput.totalPrice"
                         required
-                        min="0"
+                        :min="0"
                         mode="decimal"
-                        minFractionDigits="2" 
-                        maxFractionDigits="2"
+                        :minFractionDigits="2" 
+                        :maxFractionDigits="2"
                         class="w-full"
                         :class="{ 'p-invalid': serverErrors.totalPrice }"
                     />

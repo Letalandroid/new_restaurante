@@ -1,32 +1,52 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
-import Select from 'primevue/select';
-//import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import axios from 'axios';
 
-const props = defineProps({
-    visible: Boolean,
-    tableId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+// Tipos
+interface Table {
+    name: string;
+    tablenum: string;
+    capacity: number | null;
+    state: boolean;
+    idArea: number | null;
+    idFloor: number | null;
+}
+
+interface Option {
+    label: string;
+    value: number;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    tableId: number | null;
+}>();
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const serverErrors = ref({});
+const serverErrors = ref<ServerErrors>({});
 const submitted = ref(false);
 const loading = ref(false);
 
-const dialogVisible = ref(props.visible);
+const dialogVisible = ref<boolean>(props.visible);
 watch(() => props.visible, (val) => dialogVisible.value = val);
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const table = ref({
+const table = ref<Table>({
     name: '',
     tablenum: '',
     capacity: null,
@@ -35,9 +55,8 @@ const table = ref({
     idFloor: null
 });
 
-
-const areas = ref([]);
-const pisos = ref([]);
+const areas = ref<Option[]>([]);
+const pisos = ref<Option[]>([]);
 
 watch(() => props.visible, async (val) => {
     if (val && props.tableId) {
@@ -47,7 +66,7 @@ watch(() => props.visible, async (val) => {
     }
 });
 
-const fetchTable = async () => {
+const fetchTable = async (): Promise<void> => {
     loading.value = true;
     try {
         const { data } = await axios.get(`/mesa/${props.tableId}`);
@@ -67,30 +86,33 @@ const fetchTable = async () => {
             detail: 'No se pudo cargar la mesas',
             life: 3000
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
 };
 
-const fetchAreas = async () => {
+const fetchAreas = async (): Promise<void> => {
     try {
         const { data } = await axios.get('/area', { params: { state: 1 } });
-        areas.value = data.data.map(c => ({ label: c.name, value: c.id }));
+        areas.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar las areas' });
+        console.error(e);
     }
 };
 
-const fetchFloors = async () => {
+const fetchFloors = async (): Promise<void> => {
     try {
         const { data } = await axios.get('/piso', { params: { state: 1 } });
-        pisos.value = data.data.map(a => ({ label: a.name, value: a.id }));
+        pisos.value = data.data.map((a: any) => ({ label: a.name, value: a.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los pisos' });
+        console.error(e);
     }
 };
 
-const updateTable = async () => {
+const updateTable = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -115,7 +137,7 @@ const updateTable = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response?.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
@@ -168,13 +190,25 @@ const updateTable = async () => {
                     <small v-else-if="serverErrors.tablenum" class="text-red-500">{{ serverErrors.tablenum[0] }}</small>
                 </div>
                 <!-- Capacidad -->
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Capacidad <span class="text-red-500">*</span></label>
-                    <InputText v-model.number="table.capacity" type="number" fluid min="1" />
-                    <small v-if="submitted && !table.capacity" class="text-red-500">La capacidad es obligatoria.</small>
-                    <small v-else-if="table.capacity < 1" class="text-red-500">Debe ser al menos 1 persona.</small>
-                    <small v-else-if="serverErrors.capacity" class="text-red-500">{{ serverErrors.capacity[0] }}</small>
-                </div>
+                    <div class="col-span-6">
+                        <label class="mb-2 block font-bold">Capacidad <span class="text-red-500">*</span></label>
+                        <InputText
+                            :modelValue="table.capacity !== null ? table.capacity.toString() : ''"
+                            @update:modelValue="(val) => table.capacity = val ? parseInt(val.replace(/[^0-9]/g, '')) || null : null"
+                            fluid
+                            type="text"
+                            maxlength="6"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            @keypress="(e) => {
+                                const char = e.key;
+                                if (!/[0-9]/.test(char)) e.preventDefault(); // Bloquea letras, comas, puntos, símbolos
+                            }"
+                        />
+                        <small v-if="submitted && !table.capacity" class="text-red-500">La capacidad es obligatoria.</small>
+                        <small v-else-if="table.capacity! < 1" class="text-red-500">Debe ser al menos 1 persona.</small>
+                        <small v-else-if="serverErrors.capacity" class="text-red-500">{{ serverErrors.capacity[0] }}</small>
+                    </div>
 
                 <!-- Area -->
                 <div class="col-span-6">

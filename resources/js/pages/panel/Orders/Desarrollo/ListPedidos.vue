@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import { debounce } from 'lodash';
 import Button from 'primevue/button';
@@ -7,7 +7,6 @@ import DataTable from 'primevue/datatable';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref, watch } from 'vue';
@@ -17,16 +16,37 @@ import Dialog  from 'primevue/dialog';
 // Initialize toast
 const toast = useToast();
 
-const dt = ref();
-const ordenes = ref([]);
-const selectedOrdenes = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const orden = ref({});
-const selectedOrdenId = ref(null);
-const selectedEstadoOrden = ref(null);
-const currentPage = ref(1);
-const selectedState = ref(null); // Filtro para el estado
+// Tipos para las ordenes
+interface Orden {
+    id: number;
+    numeroMesa?: string;
+    name?: string;
+    quantity?: number;
+    state?: string;
+    creacion?: string;
+    orderDishes?: any[];
+}
+
+// Tipos para los insumos
+interface Insumo {
+    id: number;
+}
+
+// Tipos para pagination
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+const dt = ref<any>(null);
+const ordenes = ref<Orden[]>([]);
+const selectedOrdenes = ref<Orden[]>();
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const selectedEstadoOrden = ref<any>(null);
+const currentPage = ref<number>(1);
+const selectedState = ref<string | null>(null); // Filtro para el estado
 const stateOptions = ref([
     { label: 'Todos los estados', value: null },
     { label: 'Pendiente', value: 'pendiente' },
@@ -36,16 +56,15 @@ const stateOptions = ref([
     { label: 'Cancelado', value: 'cancelado' },
 ]);
 
+const selectedOrder = ref<Partial<Orden>>({});
+const showActionsDialog = ref<boolean>(false);
 
-const selectedOrder = ref({});
-const showActionsDialog = ref(false);
-
-function showActionMenu(order) {
+function showActionMenu(order: Orden) {
     selectedOrder.value = order;
     showActionsDialog.value = true;
 }
 
-async function fetchUserId() {
+async function fetchUserId(): Promise<number | null> {
     try {
         // Hacemos la solicitud al backend para obtener el user_id
         const { data } = await axios.get('/user-id');
@@ -62,7 +81,8 @@ async function fetchUserId() {
         return null;
     }
 }
-async function obtenerInsumosPorPedido(idOrder) {
+
+async function obtenerInsumosPorPedido(idOrder: number) {
     const userId = await fetchUserId(); // Esperar a obtener el user_id
 
     if (!userId) {
@@ -82,7 +102,7 @@ async function obtenerInsumosPorPedido(idOrder) {
 
             // Verificamos si el plato tiene insumos
             if (plato.insumos && plato.insumos.length > 0) {
-                for (const insumo of plato.insumos) {
+                for (const insumo of plato.insumos as Insumo[]) {
                     // Ahora accedemos al idInput del insumo
                     const kardexInput = {
                         idUser: userId,  // idUser con valor 2
@@ -134,23 +154,20 @@ async function obtenerInsumosPorPedido(idOrder) {
     }
 }
 
-
-
-
-
-
-
-
-async function updateOrderState(newState) {
-
-
+async function updateOrderState(newState: string) {
+    const id = selectedOrder.value.id;
+    if (id == null) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'ID de la orden no disponible', life: 3000 });
+        console.error('selectedOrder.id is undefined');
+        return;
+    }
 
     try {
-        const response = await axios.put(`/order-dishes/${selectedOrder.value.id}`, { state: newState });
+        await axios.put(`/order-dishes/${id}`, { state: newState });
 
- // Si el nuevo estado es "completado", obtenemos los insumos
+        // Si el nuevo estado es "completado", obtenemos los insumos
         if (newState === 'completado') {
-            await obtenerInsumosPorPedido(selectedOrder.value.id);
+            await obtenerInsumosPorPedido(id);
         }
 
         toast.add({ severity: 'success', summary: 'Éxito', detail: `Estado del pedido actualizado a ${newState}`, life: 3000 });
@@ -158,6 +175,7 @@ async function updateOrderState(newState) {
         showActionsDialog.value = false; // Cerrar el diálogo
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado', life: 3000 });
+        console.error(error);
     }
 }
 const props = defineProps({
@@ -172,6 +190,7 @@ watch(
         loadOrdenes();
     },
 );
+
 watch(
     () => selectedEstadoOrden.value,
     () => {
@@ -180,51 +199,26 @@ watch(
     },
 );
 
-function editOrden(orden) {
-    selectedOrdenId.value = orden.id;
-    updateOrdenDialog.value = true;
-}
 
-const estadoOrdenOptions = ref([
-    { name: 'TODOS', value: '' },
-    { name: 'ACTIVOS', value: 1 },
-    { name: 'INACTIVOS', value: 0 },
-]);
-
-function handleOrdenUpdated() {
-    loadOrdenes();
-}
 const onStateChange = async () => {
     await loadOrdenes();
 };
-function confirmDeleteOrden(selected) {
-    orden.value = selected;
-    deleteOrdenDialog.value = true;
-}
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0,
 });
 
-const filters = ref({
-    state: null,
-});
-
-function handleOrdenDeleted() {
-    loadOrdenes();
-}
 
 const loadOrdenes = async () => {
     loading.value = true;
     try {
-        const params = {
+        const params: any = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
-            state: selectedState.value, 
-
+            state: selectedState.value,
         };
         if (selectedEstadoOrden.value !== null && selectedEstadoOrden.value !== undefined && selectedEstadoOrden.value.value !== '') {
             params.state = selectedEstadoOrden.value.value;
@@ -257,16 +251,15 @@ const loadOrdenes = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: any) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadOrdenes();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -274,17 +267,12 @@ const onGlobalSearch = debounce(() => {
     loadOrdenes();
 }, 500);
 
-const formatCurrency = (value) => {
-    if (value != null) {
-        return 'S/. ' + parseFloat(value).toFixed(2);
-    }
-    return '';
-};
 
 onMounted(() => {
     loadOrdenes();
 });
 </script>
+
 
 <template>
     <DataTable
@@ -312,7 +300,7 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por platillo..." />
                     </IconField>
                           <Dropdown
                     v-model="selectedState"

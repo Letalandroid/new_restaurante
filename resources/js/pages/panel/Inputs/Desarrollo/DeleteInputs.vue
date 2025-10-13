@@ -1,18 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    input: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface InputData {
+    id: number;
+    name: string;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    input: InputData | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(props.visible);
+const localVisible = ref<boolean>(props.visible);
 
 // Sincroniza localVisible con el prop visible
 watch(() => props.visible, (val) => {
@@ -22,11 +31,12 @@ watch(() => props.visible, (val) => {
 watch(localVisible, (val) => {
     emit('update:visible', val);
 });
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteInput() {
+async function deleteInput(): Promise<void> {
+    if (!props.input) return;
     try {
         await axios.delete(`/insumo/${props.input.id}`);
         emit('deleted');
@@ -37,7 +47,7 @@ async function deleteInput() {
             detail: 'Insumo eliminado correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el insumo';
         if (error.response?.data?.message) {

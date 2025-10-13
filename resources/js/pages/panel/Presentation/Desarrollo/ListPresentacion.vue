@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -12,25 +12,64 @@ import { debounce } from 'lodash';
 import DeletePresentacion from './DeletePresentacion.vue';
 import UpdatePresentacion from './UpdatePresentacion.vue';
 import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
 
+// Tipos e interfaces
+interface Presentacion {
+    id: number;
+    name: string;
+    description: string;
+    creacion?: string;
+    actualizacion?: string;
+    state: boolean | number | string;
+}
+
+const toast = useToast();
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | '';
+}
+
+interface Props {
+    refresh: number;
+}
+
+interface Filters {
+    state: number | string | null;
+    online: number | string | null;
+}
+
+interface Meta {
+    current_page: number;
+    total: number;
+}
+
+interface PresentacionResponse {
+    data: Presentacion[];
+    meta: Meta;
+}
+
+// Refs y variables
 const dt = ref();
-const presentaciones = ref([]);
-const selectedPresentaciones = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deletePresentacionDialog = ref(false);
-const presentacion = ref({});
-const selectedPresentacionId = ref(null);
-const selectedEstadoPresentacion = ref(null);
-const updatePresentacionDialog = ref(false);
-const currentPage = ref(1);
+const presentaciones = ref<Presentacion[]>([]);
+const selectedPresentaciones = ref<Presentacion[]>();
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deletePresentacionDialog = ref<boolean>(false);
+const presentacion = ref<Presentacion | null>(null);
+const selectedPresentacionId = ref<number | null>(null);
+const selectedEstadoPresentacion = ref<EstadoOption | null>(null);
+const updatePresentacionDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const props = defineProps<Props>();
 
 watch(() => props.refresh, () => {
     loadPresentacion();
@@ -41,12 +80,12 @@ watch(() => selectedEstadoPresentacion.value, () => {
     loadPresentacion();
 });
 
-function editPresentacion(p) {
+function editPresentacion(p: Presentacion) {
     selectedPresentacionId.value = p.id;
     updatePresentacionDialog.value = true;
 }
 
-const estadoPresentacionOptions = ref([
+const estadoPresentacionOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
@@ -56,18 +95,18 @@ function handlePresentacionUpdated() {
     loadPresentacion();
 }
 
-function confirmDeletePresentacion(selected) {
+function confirmDeletePresentacion(selected: Presentacion) {
     presentacion.value = selected;
     deletePresentacionDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const filters = ref({
+const filters = ref<Filters>({
     state: null,
     online: null
 });
@@ -76,10 +115,10 @@ function handlePresentacionDeleted() {
     loadPresentacion();
 }
 
-const loadPresentacion = async () => {
+const loadPresentacion = async (): Promise<void> => {
     loading.value = true;
     try {
-        const params = {
+        const params: Record<string, any> = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
@@ -89,7 +128,7 @@ const loadPresentacion = async () => {
             params.state = selectedEstadoPresentacion.value.value;
         }
 
-        const response = await axios.get('/presentacion', { params });
+        const response = await axios.get<PresentacionResponse>('/presentacion', { params });
 
         presentaciones.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
@@ -102,16 +141,15 @@ const loadPresentacion = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: any) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadPresentacion();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -139,7 +177,7 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar presentación..." />
                     </IconField>
                     <Select v-model="selectedEstadoPresentacion" :options="estadoPresentacionOptions" optionLabel="name"
                         placeholder="Estado" class="w-full md:w-auto" />

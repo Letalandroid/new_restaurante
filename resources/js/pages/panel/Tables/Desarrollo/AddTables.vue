@@ -42,9 +42,17 @@
                 <!-- Capacidad -->
                 <div class="col-span-6">
                     <label class="mb-2 block font-bold">Capacidad <span class="text-red-500">*</span></label>
-                    <InputText v-model.number="table.capacity" type="number" fluid min="1" />
-                    <small v-if="submitted && !table.capacity" class="text-red-500">La capacidad es obligatoria.</small>
-                    <small v-else-if="table.capacity < 1" class="text-red-500">Debe ser al menos 1 persona.</small>
+                    <InputText
+                        v-model="capacityInput"
+                        fluid
+                        placeholder="Capacidad"
+                        inputmode="numeric"
+                        maxlength="6"
+                        @keydown="filterInteger"
+                        @input="syncCapacity"
+                    />
+                    <small v-if="submitted && !capacityInput" class="text-red-500">La capacidad es obligatoria.</small>
+                    <small v-else-if="Number(capacityInput) < 1" class="text-red-500">Debe ser al menos 1 persona.</small>
                     <small v-else-if="serverErrors.capacity" class="text-red-500">{{ serverErrors.capacity[0] }}</small>
                 </div>
 
@@ -91,7 +99,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
@@ -105,13 +113,54 @@ import { ref } from 'vue';
 import ToolsTable from './toolsTable.vue';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 
-const toast = useToast();
-const submitted = ref(false);
-const tableDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['tables-agregado']);
+// Interfaces
+interface Mesa {
+    name: string;
+    tablenum: string;
+    capacity: number | null;
+    state: boolean;
+    idArea: number | null;
+    idFloor: number | null;
+}
 
-const table = ref({
+interface OptionItem {
+    label: string;
+    value: number;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const tableDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits(['tables-agregado', 'mesa-agregada']);
+// Campo auxiliar para manejar capacidad como texto pero validar número
+const capacityInput = ref<string>('');
+
+// Permite solo números enteros en tiempo real
+const filterInteger = (event: KeyboardEvent): void => {
+    const allowedKeys = ['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'];
+    const isNumber = /^[0-9]$/.test(event.key);
+
+    if (!isNumber && !allowedKeys.includes(event.key)) {
+        event.preventDefault(); // Bloquea cualquier otra tecla (letras, puntos, comas, signos)
+    }
+};
+
+// Sincroniza el valor válido al objeto table
+const syncCapacity = (event: Event): void => {
+    const input = event.target as HTMLInputElement;
+    // Limpia cualquier carácter no numérico (por si se pega texto)
+    input.value = input.value.replace(/[^0-9]/g, '');
+    capacityInput.value = input.value;
+    table.value.capacity = input.value ? parseInt(input.value) : null;
+};
+
+
+const table = ref<Mesa>({
     name: '',
     tablenum: '',
     capacity: null,
@@ -119,22 +168,24 @@ const table = ref({
     idArea: null,
     idFloor: null
 });
+
 // Método para recargar la lista de mesas
-const loadMesa = async () => {
+const loadMesa = async (): Promise<void> => {
     try {
         const response = await axios.get('/mesa');  // Aquí haces una solicitud GET para obtener las mesas
         console.log(response.data);
         // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
         emit('mesa-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
-    } catch (error) {
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las mesas', life: 3000 });
         console.error(error);
     }
-}
-const areas = ref([]);
-const pisos = ref([]);
+};
 
-function resetTable() {
+const areas = ref<OptionItem[]>([]);
+const pisos = ref<OptionItem[]>([]);
+
+function resetTable(): void {
     table.value = {
         name: '',
         tablenum: '',
@@ -143,42 +194,44 @@ function resetTable() {
         idArea: null,
         idFloor: null
     };
+    capacityInput.value = '';
     serverErrors.value = {};
     submitted.value = false;
 }
 
-
-function openNew() {
+function openNew(): void {
     resetTable();
     fetchAreas();
     fetchFloors();
     tableDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     tableDialog.value = false;
     resetTable();
 }
 
-async function fetchAreas() {
+async function fetchAreas(): Promise<void> {
     try {
         const { data } = await axios.get('/area', { params: { state: 1 } });
-        areas.value = data.data.map((c) => ({ label: c.name, value: c.id }));
-    } catch (e) {
+        areas.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
+    } catch (e: any) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar las Areas' });
+        console.error(e);
     }
 }
 
-async function fetchFloors() {
+async function fetchFloors(): Promise<void> {
     try {
         const { data } = await axios.get('/piso', { params: { state: 1 } });
-        pisos.value = data.data.map((a) => ({ label: a.name, value: a.id }));
-    } catch (e) {
+        pisos.value = data.data.map((a: any) => ({ label: a.name, value: a.id }));
+    } catch (e: any) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los pisos' });
+        console.error(e);
     }
 }
 
-function guardarTable() {
+function guardarTable(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -189,7 +242,7 @@ function guardarTable() {
             hideDialog();
             emit('tables-agregado');
         })
-        .catch((error) => {
+        .catch((error: any) => {
             if (error.response?.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {

@@ -48,9 +48,9 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -62,20 +62,35 @@ import { useToast } from 'primevue/usetoast';
 import ToolsPresentation from './toolsPresentation.vue';
 
 const toast = useToast();
-const submitted = ref(false);
-const presentacionDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['presentacion-agregada']);
+const submitted = ref<boolean>(false);
+const presentacionDialog = ref<boolean>(false);
 
-const presentacion = ref({
+// Tipos
+interface Presentacion {
+    name: string;
+    description: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'presentacion-agregada'): void;
+}>();
+
+const presentacion = ref<Presentacion>({
     name: '',
     description: '',
     state: true
 });
+
 // Método para recargar la lista de presentaciones
-const loadPresentacion = async () => {
+const loadPresentacion = async (): Promise<void> => {
     try {
-        const response = await axios.get('/presentacion');  // Aquí haces una solicitud GET para obtener las presentaciones
+        const response: AxiosResponse = await axios.get('/presentacion');  // Aquí haces una solicitud GET para obtener las presentaciones
         console.log(response.data);
         // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
         emit('presentacion-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
@@ -83,8 +98,9 @@ const loadPresentacion = async () => {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las presentaciones', life: 3000 });
         console.error(error);
     }
-}
-function resetPresentacion() {
+};
+
+function resetPresentacion(): void {
     presentacion.value = {
         name: '',
         description: '',
@@ -94,17 +110,17 @@ function resetPresentacion() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetPresentacion();
     presentacionDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     presentacionDialog.value = false;
     resetPresentacion();
 }
 
-function guardarPresentacion() {
+function guardarPresentacion(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -116,7 +132,7 @@ function guardarPresentacion() {
             hideDialog();
             emit('presentacion-agregada');
         })
-        .catch(error => {
+        .catch((error: AxiosError<any>) => {
             if (error.response && error.response.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {

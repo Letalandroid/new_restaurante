@@ -49,7 +49,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
 import Toolbar from 'primevue/toolbar';
@@ -60,35 +60,47 @@ import Textarea from 'primevue/textarea';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
-import { defineEmits } from 'vue';
 import ToolsFloor from './toolsFloor.vue';
 
+interface Piso {
+    name: string;
+    description: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
 const toast = useToast();
-const submitted = ref(false);
-const loading = ref(false);
-const pisoDialog = ref(false);
-const serverErrors = ref({});
+const submitted = ref<boolean>(false);
+const loading = ref<boolean>(false);
+const pisoDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const emit = defineEmits(['piso-agregado']);
+const emit = defineEmits<{
+    (e: 'piso-agregado'): void;
+}>();
 
-const piso = ref({
+const piso = ref<Piso>({
     name: '',
     description: '',
     state: true
 });
+
 // Método para recargar la lista de pisos
-const loadPiso = async () => {
+const loadPiso = async (): Promise<void> => {
     try {
-        const response = await axios.get('/piso');  // Aquí haces una solicitud GET para obtener los pisos
+        const response = await axios.get('/piso');
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('piso-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
-    } catch (error) {
+        emit('piso-agregado');
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los pisos', life: 3000 });
         console.error(error);
     }
-}
-function resetPiso() {
+};
+
+function resetPiso(): void {
     piso.value = {
         name: '',
         description: '',
@@ -99,22 +111,21 @@ function resetPiso() {
     loading.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetPiso();
     pisoDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     pisoDialog.value = false;
     resetPiso();
 }
 
-async function guardarPiso() {
+async function guardarPiso(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
     if (!piso.value.name || piso.value.name.length < 2) {
-        // no enviar si no cumple validacion basica
         return;
     }
 
@@ -126,7 +137,7 @@ async function guardarPiso() {
         toast.add({ severity: 'success', summary: 'Éxito', detail: 'Piso registrado', life: 3000 });
         hideDialog();
         emit('piso-agregado');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.status === 422) {
             serverErrors.value = error.response.data.errors || {};
         } else {

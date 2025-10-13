@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -13,48 +13,67 @@ import { debounce } from 'lodash';
 import DeletePiso from './DeletePisos.vue';
 import UpdatePiso from './UpdatePisos.vue';
 
-const pisos = ref([]);
-const selectedPisos = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const selectedEstadoPiso = ref(null);
-const pagination = ref({
+interface Piso {
+    id: number;
+    name: string;
+    description?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state: boolean | number | string;
+}
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | boolean;
+}
+
+const pisos = ref<Piso[]>([]);
+const selectedPisos = ref<Piso[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const selectedEstadoPiso = ref<EstadoOption | null>(null);
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const piso = ref({});
-const selectedPisoId = ref(null);
-const deletePisoDialog = ref(false);
-const updatePisoDialog = ref(false);
+const piso = ref<Piso | null>(null);
+const selectedPisoId = ref<number | null>(null);
+const deletePisoDialog = ref<boolean>(false);
+const updatePisoDialog = ref<boolean>(false);
 
-const props = defineProps({
-    refresh: {
-        type: [Number, Boolean],
-        default: 0
+const props = defineProps<{
+    refresh: number | boolean;
+}>();
+
+watch(
+    () => props.refresh,
+    () => {
+        loadPisos();
     }
-});
+);
 
-watch(() => props.refresh, () => {
-    loadPisos();
-});
-
-
-const estadoPisoOptions = ref([
+const estadoPisoOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
-    { name: 'INACTIVOS', value: 0 },
+    { name: 'INACTIVOS', value: 0 }
 ]);
 
-const loadPisos = async () => {
+const loadPisos = async (): Promise<void> => {
     loading.value = true;
     try {
         const params = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
-            state: selectedEstadoPiso.value?.value ?? '',
+            state: selectedEstadoPiso.value?.value ?? ''
         };
 
         const response = await axios.get('/piso', { params });
@@ -68,16 +87,15 @@ const loadPisos = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }): void => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadPisos();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -85,26 +103,29 @@ const onGlobalSearch = debounce(() => {
     loadPisos();
 }, 500);
 
-watch(() => selectedEstadoPiso.value, () => {
-    pagination.value.currentPage = 1;
-    loadPisos();
-});
+watch(
+    () => selectedEstadoPiso.value,
+    () => {
+        pagination.value.currentPage = 1;
+        loadPisos();
+    }
+);
 
-const editarPiso = (p) => {
+const editarPiso = (p: Piso): void => {
     selectedPisoId.value = p.id;
     updatePisoDialog.value = true;
 };
 
-const confirmarEliminarPiso = (p) => {
+const confirmarEliminarPiso = (p: Piso): void => {
     piso.value = p;
     deletePisoDialog.value = true;
 };
 
-const handlePisoEliminado = () => {
+const handlePisoEliminado = (): void => {
     loadPisos();
 };
 
-const handlePisoActualizado = () => {
+const handlePisoActualizado = (): void => {
     loadPisos();
 };
 
@@ -114,12 +135,23 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedPisos" :value="pisos" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedPisos"
+        :value="pisos"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pisos">
-
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pisos"
+    >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">PISOS</h4>
@@ -128,10 +160,15 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por piso..." />
                     </IconField>
-                    <Select v-model="selectedEstadoPiso" :options="estadoPisoOptions" optionLabel="name"
-                        placeholder="Estado del Piso" class="w-full md:w-auto" />
+                    <Select
+                        v-model="selectedEstadoPiso"
+                        :options="estadoPisoOptions"
+                        optionLabel="name"
+                        placeholder="Estado del Piso"
+                        class="w-full md:w-auto"
+                    />
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadPisos" />
                 </div>
             </div>

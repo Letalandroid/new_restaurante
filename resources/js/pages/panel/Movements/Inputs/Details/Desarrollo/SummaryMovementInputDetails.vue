@@ -40,51 +40,6 @@
         </div>
     </div>
 </Panel>
-    <Card class="p-4  mr-4">
-        <template #content>
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg">DETALLE DE {{ data.tipoMovimiento }} N°: {{ data.codigo }}</h3>
-                <div class="flex space-x-3">
-                    <Button label="Nuevo" icon="pi pi-plus" severity="contrast" @click="openNewModal"
-                        class="px-4 py-2" />
-                    <Button label="Volver" severity="secondary" @click="goBack" class="px-4 py-2" />
-                </div>
-            </div>
-        </template>
-        <template #footer>
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="font-bold">CODIGO:</span>
-                            <pre class="ml-2">{{ data.codigo }}</pre>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-bold">FECHA DE EMISION:</span>
-                            <pre class="ml-2">{{ data.fechaEmision }}</pre>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="font-bold">PROVEEDOR:</span>
-                            <pre class="ml-2">{{ data.name }}</pre>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-bold">FECHA DE EJECUCION:</span>
-                            <pre class="ml-2">{{ data.fechaEjecucion }}</pre>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div v-if="data.fechaCredito !== '00-00-0000'" class="flex items-center">
-                            <span class="font-bold">FECHA DE CREDITO:</span>
-                            <pre class="ml-2">{{ data.fechaCredito }}</pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-
-    </Card>
 
 </template>
 
@@ -93,8 +48,6 @@ import { ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3'; 
 const { id } = usePage().props;
 import Panel from 'primevue/panel';
-import Button from 'primevue/button';
-import Toolbar from 'primevue/toolbar';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 const toast = useToast();
@@ -137,17 +90,9 @@ async function loadMovementDetails() {
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar los datos del movimiento.' });
                     window.location.href = '/insumos/movimientos/';
+        console.error(error);
 
     }
-}
-
-// Funciones para el comportamiento de los botones
-function openNew() {
-    inputDialog.value = true;
-}
-function back() {
-                    window.location.href = '/insumos/movimientos/';
-
 }
 
 // Cargar los detalles al montar el componente

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { usePage } from '@inertiajs/vue3'; // Inertia.js hook
 import axios from 'axios';
 import { debounce } from 'lodash';
@@ -12,17 +12,36 @@ import { onMounted, ref, watch } from 'vue';
 import DeleteMovementInput from './DeleteMovementInputDetail.vue';
 import UpdateMovementInput from './UpdateMovementInputDetail.vue';
 
-const movementInputs = ref([]);
+// Tipos de datos para movimientos e insumos
+interface Input {
+    id: number;
+    name: string;
+    quantityUnitMeasure?: string;
+    unitMeasure?: string;
+}
+
+interface MovementInput {
+    id: number;
+    idMovementInput: number;
+    quantity: string | number;
+    input: Input;
+    priceUnit: string | number;
+    batch: string;
+    totalPrice: string | number;
+}
+
+const movementInputs = ref<MovementInput[]>([]);
 const loading = ref(false);
 const globalFilterValue = ref('');
 const deleteMovementInputDialog = ref(false);
 const updateMovementInputDialog = ref(false);
-const selectedMovementInputId = ref(null);
-const movementInput = ref({});
+const selectedMovementInputId = ref<number | null>(null);
+const selectedDetailId = ref<number | null>(null);
+const movementInput = ref<MovementInput | null>(null);
 const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedSupplier = ref(null);
-const selectedEstadoMovementInput = ref(null);
+const selectedSupplier = ref<any>(null);
+const selectedMovementInputs = ref<MovementInput[] | null>(null);
+const selectedEstadoMovementInput = ref<any>(null);
 const pagination = ref({
     currentPage: 1,
     perPage: 15,
@@ -33,14 +52,13 @@ const { id } = usePage().props;
 
 const refreshCount = ref(0); // Variable que se incrementa cuando se agrega un movimiento
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some((col) => col.field === fieldName);
-};
+
 
 
 const subtotal = ref(0);
 const igv = ref(0);
 const total = ref(0);
+
 const loadMovementInputs = async () => {
     loading.value = true;
     try {
@@ -73,7 +91,7 @@ const loadMovementInputs = async () => {
     }
 };
 
-const formatCurrency = (value) => {
+const formatCurrency = (value: number) => {
     if (value != null) {
         // Formatear el número como moneda con 2 decimales y símbolo "S/."
         return 'S/. ' + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -81,13 +99,9 @@ const formatCurrency = (value) => {
     return '';
 };
 
-
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true,
-    },
-});
+const props = defineProps<{
+    refresh: number;
+}>();
 // Recarga la tabla cuando `refreshCount` cambia
 watch(refreshCount, loadMovementInputs);
 watch(() => props.refresh, loadMovementInputs);
@@ -99,7 +113,7 @@ watch(
     },
 );
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadMovementInputs();
@@ -110,16 +124,13 @@ const onGlobalSearch = debounce(() => {
     loadMovementInputs();
 }, 500);
 
-const getSeverity = (value) => {
-    return value ? 'success' : 'danger';
-};
-
-const editarMovementInput = (movement) => {
-    selectedMovementInputId.value = movement.id;
+const editarMovementInput = (movement: MovementInput) => {
+    selectedMovementInputId.value = movement.idMovementInput;
+    selectedDetailId.value = movement.id; // <-- Nuevo ref para el detalle
     updateMovementInputDialog.value = true;
 };
 
-const confirmarDeleteMovementInput = (movement) => {
+const confirmarDeleteMovementInput = (movement: MovementInput) => {
     movementInput.value = movement;
     console.log(movementInput.value); // Verifica si los datos están correctos
     deleteMovementInputDialog.value = true;
@@ -134,18 +145,11 @@ function handleMovementInputDeleted() {
 }
 
 onMounted(loadMovementInputs);
-const getMovementTypeLabel = (value) => {
-    const movementTypes = {
-        1: 'Factura',
-        2: 'Guía',
-        3: 'Boleta',
-    };
-    return movementTypes[value] || 'Desconocido'; // Valor por defecto si no encuentra el tipo
-};
+
 
 // Función para formatear la cantidad
-function formatQuantity(quantity) {
-    const numericQuantity = parseFloat(quantity); // Asegurarnos de que sea un número
+function formatQuantity(quantity: string | number) {
+    const numericQuantity = parseFloat(quantity as string); // Asegurarnos de que sea un número
 
     // Si no es un número válido, devolvemos el valor original
     if (isNaN(numericQuantity)) {
@@ -194,7 +198,7 @@ function formatQuantity(quantity) {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar insumo..." />
                     </IconField>
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadMovementInputs" />
                 </div>
@@ -234,10 +238,18 @@ function formatQuantity(quantity) {
         </Column>
     </DataTable>
 
-    <DeleteMovementInput v-model:visible="deleteMovementInputDialog" :movementInput="movementInput" @deleted="handleMovementInputDeleted" />
+    <!-- Componente para eliminar movimiento de insumo -->
+    <DeleteMovementInput
+        v-model:visible="deleteMovementInputDialog"
+        :movementInput="movementInput"
+        @deleted="handleMovementInputDeleted"
+    />
+
+    <!-- Componente para actualizar movimiento de insumo -->
     <UpdateMovementInput
         v-model:visible="updateMovementInputDialog"
         :movementInputId="selectedMovementInputId"
+        :detailId="selectedDetailId"
         @updated="handleMovementInputUpdated"
     />
 </template>

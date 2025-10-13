@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -8,24 +8,45 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
-const props = defineProps({
-    visible: Boolean,
-    productoId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Producto {
+    name: string;
+    details: string;
+    state: boolean;
+    idCategory: number | null;
+    idAlmacen: number | null;
+}
+
+interface Option {
+    label: string;
+    value: number;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    productoId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const serverErrors = ref({});
-const submitted = ref(false);
-const loading = ref(false);
+const serverErrors = ref<ServerErrors>({});
+const submitted = ref<boolean>(false);
+const loading = ref<boolean>(false);
 
-const dialogVisible = ref(props.visible);
+const dialogVisible = ref<boolean>(props.visible);
 watch(() => props.visible, (val) => dialogVisible.value = val);
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const producto = ref({
+const producto = ref<Producto>({
     name: '',
     details: '',
     state: false,
@@ -33,8 +54,8 @@ const producto = ref({
     idAlmacen: null
 });
 
-const categorias = ref([]);
-const almacenes = ref([]);
+const categorias = ref<Option[]>([]);
+const almacenes = ref<Option[]>([]);
 
 watch(() => props.visible, async (val) => {
     if (val && props.productoId) {
@@ -44,7 +65,7 @@ watch(() => props.visible, async (val) => {
     }
 });
 
-const fetchProducto = async () => {
+const fetchProducto = async (): Promise<void> => {
     loading.value = true;
     try {
         const { data } = await axios.get(`/producto/${props.productoId}`);
@@ -63,30 +84,33 @@ const fetchProducto = async () => {
             detail: 'No se pudo cargar el producto',
             life: 3000
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
 };
 
-const fetchCategorias = async () => {
+const fetchCategorias = async (): Promise<void> => {
     try {
         const { data } = await axios.get('/categoria', { params: { state: 1 } });
-        categorias.value = data.data.map(c => ({ label: c.name, value: c.id }));
+        categorias.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar categorías' });
+        console.error(e);
     }
 };
 
-const fetchAlmacenes = async () => {
+const fetchAlmacenes = async (): Promise<void> => {
     try {
         const { data } = await axios.get('/almacen', { params: { state: 1 } });
-        almacenes.value = data.data.map(a => ({ label: a.name, value: a.id }));
+        almacenes.value = data.data.map((a: any) => ({ label: a.name, value: a.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar almacenes' });
+        console.error(e);
     }
 };
 
-const updateProducto = async () => {
+const updateProducto = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -111,12 +135,13 @@ const updateProducto = async () => {
         dialogVisible.value = false;
         emit('updated');
     } catch (error) {
-        if (error.response?.data?.errors) {
-            serverErrors.value = error.response.data.errors;
+        const err = error as AxiosError<{ message?: string; errors?: ServerErrors }>;
+        if (err.response?.data?.errors) {
+            serverErrors.value = err.response.data.errors;
             toast.add({
                 severity: 'error',
                 summary: 'Error de validación',
-                detail: error.response.data.message || 'Revisa los campos.',
+                detail: err.response.data.message || 'Revisa los campos.',
                 life: 5000
             });
         } else {

@@ -7,19 +7,12 @@
     </Toolbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { router } from '@inertiajs/core';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
-import { useToast } from 'primevue/usetoast';
-import { defineEmits, ref } from 'vue';
-const toast = useToast();
-const emit = defineEmits(['plato-agregado']);
-const submitted = ref(false);
-const DialogOrder = ref(false);
-const serverErrors = ref({});
 
-const verMesas = () => {
+const verMesas = (): void => {
     const url = `/ordenes/mesas/`;
     router.visit(url);
 };

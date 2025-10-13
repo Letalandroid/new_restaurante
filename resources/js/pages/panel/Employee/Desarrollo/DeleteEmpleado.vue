@@ -1,28 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    empleado: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Empleado {
+    id: number;
+    name: string;
+    [key: string]: any;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    empleado: Empleado | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteEmpleado() {
+async function deleteEmpleado(): Promise<void> {
+    if (!props.empleado) return;
     try {
         await axios.delete(`/empleado/${props.empleado.id}`);
         emit('deleted');
@@ -33,7 +44,7 @@ async function deleteEmpleado() {
             detail: 'Empleado eliminado correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el empleado';
         if (error.response) {

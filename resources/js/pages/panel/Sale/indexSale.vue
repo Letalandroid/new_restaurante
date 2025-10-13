@@ -7,7 +7,7 @@
             </template>
 
             <template v-else>
- <ListSales :refresh="refreshKey"/>
+                <ListSales :refresh="refreshKey"/>
 
             </template>
         </div>
@@ -24,9 +24,6 @@ import ListSales from './Desarrollo/ListSales.vue';
 const isLoading = ref(true);
 const refreshKey = ref(0);
 
-function refrescarListado() {
-    refreshKey.value++;
-}
 onMounted(() => {
     setTimeout(() => {
         isLoading.value = false;

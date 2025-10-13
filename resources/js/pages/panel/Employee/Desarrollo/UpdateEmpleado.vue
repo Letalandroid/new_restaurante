@@ -1,5 +1,5 @@
-<script setup>
-import { ref,watch } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
@@ -7,28 +7,48 @@ import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
+import Dropdown from 'primevue/dropdown';
 
-const props = defineProps({
-    visible: Boolean,
-    empleadoId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Empleado {
+    name: string;
+    codigo: string;
+    employee_type_id: number | null;
+    state: boolean;
+}
+
+interface TipoEmpleado {
+    id: number;
+    name: string;
+}
+
+interface ServerErrors {
+    [key: string]: string[] | undefined;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    empleadoId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const empleado = ref({
+const empleado = ref<Empleado>({
     name: '',
     codigo: '',
     employee_type_id: null,
     state: false,
 });
 
-const tiposEmpleado = ref([]);
+const tiposEmpleado = ref<TipoEmpleado[]>([]);
 
 watch(() => props.visible, (val) => {
     dialogVisible.value = val;
@@ -39,7 +59,7 @@ watch(() => props.visible, (val) => {
 });
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const fetchEmpleado = async () => {
+const fetchEmpleado = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/empleado/${props.empleadoId}`);
@@ -58,7 +78,7 @@ const fetchEmpleado = async () => {
     }
 };
 
-const fetchTiposEmpleado = async () => {
+const fetchTiposEmpleado = async (): Promise<void> => {
     try {
         const res = await axios.get('/tipo_empleado', { params: { state: 1 } });
         tiposEmpleado.value = res.data.data;
@@ -68,7 +88,7 @@ const fetchTiposEmpleado = async () => {
     }
 };
 
-const updateEmpleado = async () => {
+const updateEmpleado = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -91,7 +111,7 @@ const updateEmpleado = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({

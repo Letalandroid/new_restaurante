@@ -5,7 +5,7 @@
         </template>
     </Toolbar>
 
-     <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Movimiento de Insumo" :modal="true">
+     <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Movimiento de Insumo" :modal="true" @hide="resetForm">
         <div class="flex flex-col gap-6">
             <!-- Tipo de Documento -->
             <div class="grid grid-cols-12 gap-4">
@@ -93,37 +93,50 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 
 import axios from 'axios';
 import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
-import RadioButton from 'primevue/radiobutton';
-import Select from 'primevue/select';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
-import Tag from 'primevue/tag';
 import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
-import InputNumber from 'primevue/inputnumber';
-import ToolsInput from './toolsInput.vue';
 import InputDate from 'primevue/datepicker';
 import SelectButton from 'primevue/selectbutton';
 
 const toast = useToast();
-const submitted = ref(false);
 const inputDialog = ref(false);
-const serverErrors = ref({});
+const serverErrors = ref<Record<string, string[]>>({});
 const emit = defineEmits(['inputs-agregado','movementsinputAgregado']);
-const selectedMovementInputs = ref([]);  // Si es un array vacío, de esta forma lo defines.
-    import {
-        router
-    } from '@inertiajs/core';
+import { router } from '@inertiajs/core';
 
+interface MovementInput {
+    code: string | null;
+    issueDate: Date | null;
+    executionDate: Date | null;
+    supplierId: number | null;
+    movementType: string | null;
+    state: boolean;
+    igvState: string | null;
+    paymentType: string;
+    documentType?: string | null;
+}
 
-const movementInput = ref({
+interface MovementData {
+    code: string | null;
+    issue_date: string | null;
+    execution_date: string | null;
+    supplier_id: number | null;
+    user_id: number | null;
+    movement_type: number | null;
+    state: boolean;
+    igv_state: number | null;
+    payment_type: string | null;
+}
+
+const movementInput = ref<MovementInput>({
     code: null,                 
     issueDate: null,        
     executionDate: null,       
@@ -135,7 +148,7 @@ const movementInput = ref({
 });
 
 // Variable para guardar todos los datos de acuerdo a las columnas de la tabla
-const movementData = ref({
+const movementData = ref<MovementData>({
     code: null,
     issue_date: null,
     execution_date: null,
@@ -164,14 +177,20 @@ const igvOptions = [
     { label: 'NO INCLUIDO', value: 'NO INCLUIDO' },
 ];
 
-const customers = ref([]);
+interface CustomerOption {
+    label: string;
+    value: number;
+}
+
+const customers = ref<CustomerOption[]>([]);
 
 async function fetchCustomers() {
     try {
         const { data } = await axios.get('/proveedor', { params: { state: 1 } });
-        customers.value = data.data.map((c) => ({ label: c.name, value: c.id }));
+        customers.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los Proveedores' });
+        console.error("Error en la solicitud:", e);
     }
 }
 
@@ -182,9 +201,10 @@ function openNew() {
 
 function hideDialog() {
     inputDialog.value = false;
+    resetForm();
 }
 
-async function fetchUserId() {
+async function fetchUserId(): Promise<number | null> {
     try {
         // Hacemos la solicitud al backend para obtener el user_id
         const { data } = await axios.get('/user-id');
@@ -202,8 +222,6 @@ async function fetchUserId() {
     }
 }
 
-
-
 async function saveMovement() {
    const userId = await fetchUserId(); // Esperar a obtener el user_id
 
@@ -218,7 +236,7 @@ async function saveMovement() {
         execution_date: formatDate(movementInput.value.executionDate),
         supplier_id: movementInput.value.supplierId, 
         user_id: userId,  // Aquí se agrega el user_id
-        movement_type: getMovementTypeValue(movementInput.value.documentType),
+        movement_type: getMovementTypeValue(movementInput.value.documentType || ''),
         state: movementInput.value.state, // true o false
         igv_state: getIgvStateValue(movementInput.value.igvState),
         payment_type: movementInput.value.paymentType,
@@ -242,10 +260,9 @@ async function saveMovement() {
             resetForm();
 
             // Redirigir a la URL con el ID del nuevo movimiento
-            emit('movementsinput-agregado');
- const url = `/insumos/movimientos/detalles/${movementId}`;
-                router.visit(url);
-
+            emit('movementsinputAgregado');
+            const url = `/insumos/movimientos/detalles/${movementId}`;
+            router.visit(url);
 
         })
         .catch(error => {
@@ -262,16 +279,14 @@ async function saveMovement() {
         });
 }
 
-
-
-function formatDate(date) {
+function formatDate(date: Date | null): string | null {
     if (!date) return null;
     const d = new Date(date);
     return d.toISOString().split('T')[0];  // Formato "YYYY-MM-DD"
 }
 
-function getMovementTypeValue(type) {
-    const types = {
+function getMovementTypeValue(type: string): number {
+    const types: Record<string, number> = {
         'FACTURA': 1,
         'GUIA': 2,
         'BOLETA': 3
@@ -279,12 +294,13 @@ function getMovementTypeValue(type) {
     return types[type] || 0;  // Default to 0 if the type is invalid
 }
 
-function getIgvStateValue(igvState) {
+function getIgvStateValue(igvState: string | null): number | null {
     if (igvState === undefined || igvState === null) {
         return null;  // Deja vacío si no tiene datos
     }
     return igvState === 'INCLUIDO' ? 0 : 1;  // Convert 'INCLUIDO' to 0, 'NO INCLUIDO' to 1
 }
+
 // Función para resetear los campos del formulario
 function resetForm() {
     movementInput.value = {

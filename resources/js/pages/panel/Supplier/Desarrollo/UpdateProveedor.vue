@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -8,19 +8,35 @@ import Tag from 'primevue/tag';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    proveedorId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Proveedor {
+    name: string;
+    ruc: string;
+    address: string;
+    phone: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    proveedorId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const proveedor = ref({
+const proveedor = ref<Proveedor>({
     name: '',
     ruc: '',
     address: '',
@@ -28,15 +44,15 @@ const proveedor = ref({
     state: false,
 });
 
-watch(() => props.visible, (val) => {
+watch(() => props.visible, (val: boolean) => {
     dialogVisible.value = val;
     if (val && props.proveedorId) {
         fetchProveedor();
     }
 });
-watch(dialogVisible, (val) => emit('update:visible', val));
+watch(dialogVisible, (val: boolean) => emit('update:visible', val));
 
-const fetchProveedor = async () => {
+const fetchProveedor = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/proveedor/${props.proveedorId}`);
@@ -48,7 +64,7 @@ const fetchProveedor = async () => {
             phone: data.phone || '',
             state: data.state
         };
-    } catch (error) {
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el proveedor', life: 3000 });
         console.error(error);
     } finally {
@@ -56,7 +72,7 @@ const fetchProveedor = async () => {
     }
 };
 
-const updateProveedor = async () => {
+const updateProveedor = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -80,7 +96,7 @@ const updateProveedor = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({

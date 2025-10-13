@@ -153,7 +153,7 @@ onMounted(() => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar almacen..." />
                     </IconField>
                     <Select v-model="selectedEstadoAlmacen" :options="estadoAlmacenOptions" optionLabel="name"
                         placeholder="Estado" class="w-full md:w-auto" />

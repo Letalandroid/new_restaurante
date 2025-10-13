@@ -88,7 +88,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
@@ -102,35 +102,56 @@ import { useToast } from 'primevue/usetoast';
 import Dropdown from 'primevue/dropdown';
 import ToolsProduct from './toolsProduct.vue';
 
-const toast = useToast();
-const submitted = ref(false);
-const productoDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['producto-agregado']);
+interface Producto {
+    name: string;
+    details: string;
+    state: boolean;
+    idCategory: number | null;
+    idAlmacen: number | null;
+}
 
-const producto = ref({
+interface OpcionSelect {
+    label: string;
+    value: number;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const productoDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'producto-agregado'): void;
+}>();
+
+const producto = ref<Producto>({
     name: '',
     details: '',
     state: true,
     idCategory: null,
     idAlmacen: null
 });
+
 // Método para recargar la lista de productos
-const loadProducto = async () => {
+const loadProducto = async (): Promise<void> => {
     try {
         const response = await axios.get('/producto');  // Aquí haces una solicitud GET para obtener los productos
         console.log(response.data);
         // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('producto-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('producto-agregado');  // Si quieres que un componente padre reciba la notificación de la actualización
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los productos', life: 3000 });
         console.error(error);
     }
-}
-const categorias = ref([]);
-const almacenes = ref([]);
+};
 
-function resetProducto() {
+const categorias = ref<OpcionSelect[]>([]);
+const almacenes = ref<OpcionSelect[]>([]);
+
+function resetProducto(): void {
     producto.value = {
         name: '',
         details: '',
@@ -142,37 +163,39 @@ function resetProducto() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetProducto();
     fetchCategorias();
     fetchAlmacenes();
     productoDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     productoDialog.value = false;
     resetProducto();
 }
 
-async function fetchCategorias() {
+async function fetchCategorias(): Promise<void> {
     try {
         const { data } = await axios.get('/categoria', { params: { state: 1 } });
-        categorias.value = data.data.map(c => ({ label: c.name, value: c.id }));
+        categorias.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar categorías' });
+        console.error(e);
     }
 }
 
-async function fetchAlmacenes() {
+async function fetchAlmacenes(): Promise<void> {
     try {
         const { data } = await axios.get('/almacen', { params: { state: 1 } });
-        almacenes.value = data.data.map(a => ({ label: a.name, value: a.id }));
+        almacenes.value = data.data.map((a: any) => ({ label: a.name, value: a.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar almacenes' });
+        console.error(e);
     }
 }
 
-function guardarProducto() {
+function guardarProducto(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -182,7 +205,7 @@ function guardarProducto() {
             hideDialog();
             emit('producto-agregado');
         })
-        .catch(error => {
+        .catch((error) => {
             if (error.response?.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {

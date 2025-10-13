@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -12,45 +12,59 @@ import Select from 'primevue/select';
 import { debounce } from 'lodash';
 import DeleteTable from './DeleteTables.vue';
 import UpdateTable from './UpdateTables.vue';
-import MultiSelect from 'primevue/multiselect';
 
-const tables = ref([]);
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteTableDialog = ref(false);
-const updateTableDialog = ref(false);
-const selectedTableId = ref(null);
-const table = ref({});
-const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedAreas = ref(null);
-const selectedFloor = ref(null);
-const selectedEstadoTable = ref(null);
+// Tipos
+interface Table {
+    id: number;
+    name: string;
+    tablenum: string;
+    capacity: number;
+    area_name?: string;
+    floor_name?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state: boolean;
+}
 
-const pagination = ref({
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | '';
+}
+
+// Variables
+const tables = ref<Table[]>([]);
+const loading = ref<boolean>(false);
+const selectedTables = ref<Table[] | null>(null);
+const globalFilterValue = ref<string>('');
+const deleteTableDialog = ref<boolean>(false);
+const updateTableDialog = ref<boolean>(false);
+const selectedTableId = ref<number | null>(null);
+const table = ref<Table | null>(null);
+const currentPage = ref<number>(1);
+const selectedAreas = ref<number | null>(null);
+const selectedFloor = ref<number | null>(null);
+const selectedEstadoTable = ref<EstadoOption | null>(null);
+
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const estadoTableOptions = ref([
+const estadoTableOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
 ]);
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some(col => col.field === fieldName);
-};
-
-const optionalColumns = ref([
-    { field: 'tablenum', header: 'Numero' },
-    { field: 'capacity', header: 'Capacidad' }
-
-]);
-
-
-const loadTables = async () => {
+// Cargar mesas
+const loadTables = async (): Promise<void> => {
     loading.value = true;
     try {
         const params = {
@@ -72,13 +86,12 @@ const loadTables = async () => {
     }
 };
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+// Props
+const props = defineProps<{
+    refresh: number;
+}>();
 
+// Watchers
 watch(() => props.refresh, loadTables);
 watch(() => selectedEstadoTable.value, () => {
     currentPage.value = 1;
@@ -88,38 +101,42 @@ watch(deleteTableDialog, (val) => {
     console.log('Dialogo eliminar visible:', val);
 });
 
-const onPage = (event) => {
+// Paginación
+const onPage = (event: { page: number; rows: number }): void => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadTables();
 };
 
-const onGlobalSearch = debounce(() => {
+// Búsqueda global con debounce
+const onGlobalSearch = debounce((): void => {
     pagination.value.currentPage = 1;
     loadTables();
 }, 500);
 
-const getSeverity = (value) => {
+// Estado (Tag)
+const getSeverity = (value: boolean): string => {
     return value ? 'success' : 'danger';
 };
 
-const editarTable = (prod) => {
+// Editar mesa
+const editarTable = (prod: Table): void => {
     selectedTableId.value = prod.id;
     updateTableDialog.value = true;
 };
 
-const confirmarDeleteTable = (prod) => {
+// Confirmar eliminación
+const confirmarDeleteTable = (prod: Table): void => {
     table.value = prod;
     deleteTableDialog.value = true;
 };
 
-
-
-function handleTableUpdated() {
+// Eventos emitidos desde los hijos
+function handleTableUpdated(): void {
     loadTables();
 }
 
-function handleTableDeleted() {
+function handleTableDeleted(): void {
     loadTables();
 }
 
@@ -140,7 +157,7 @@ onMounted(loadTables);
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por N° mesa..." />
                     </IconField>
                     
                     <Select v-model="selectedEstadoTable" :options="estadoTableOptions" optionLabel="name" placeholder="Estado" />

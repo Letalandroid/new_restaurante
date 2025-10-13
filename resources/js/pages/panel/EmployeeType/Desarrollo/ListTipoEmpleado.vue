@@ -32,7 +32,7 @@
                         v-model="selectedEstadoTipoEmpleado"
                         :options="estadoTipoEmpleadoOptions"
                         optionLabel="name"
-                        placeholder="Estado del tipo empleado"
+                        placeholder="Estado"
                         class="w-full md:w-auto"
                     />
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadTipoEmpleado" />

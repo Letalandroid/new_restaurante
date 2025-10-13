@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -14,36 +14,66 @@ import DeleteProducto from './DeleteProductos.vue';
 import UpdateProducto from './UpdateProductos.vue';
 import MultiSelect from 'primevue/multiselect';
 
-const productos = ref([]);
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteProductoDialog = ref(false);
-const updateProductoDialog = ref(false);
-const selectedProductoId = ref(null);
-const producto = ref({});
-const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedCategory = ref(null);
-const selectedAlmacen = ref(null);
-const selectedEstadoProducto = ref(null);
+// Tipos
+interface Producto {
+    id: number;
+    name: string;
+    details?: string;
+    Categoria_name?: string;
+    Almacen_name?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state?: boolean | number;
+}
 
-const pagination = ref({
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface ColumnOption {
+    field: string;
+    header: string;
+}
+
+interface EstadoProducto {
+    name: string;
+    value: number | string;
+}
+
+const dt = ref<any>(null);
+const productos = ref<Producto[]>([]);
+const selectedProductos = ref<Producto[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteProductoDialog = ref<boolean>(false);
+const updateProductoDialog = ref<boolean>(false);
+const selectedProductoId = ref<number | null>(null);
+const producto = ref<Producto | null>(null);
+const currentPage = ref<number>(1);
+const selectedColumns = ref<ColumnOption[]>([]);
+const selectedCategory = ref<{ value?: number } | null>(null);
+const selectedAlmacen = ref<{ value?: number } | null>(null);
+const selectedEstadoProducto = ref<EstadoProducto | null>(null);
+
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const estadoProductoOptions = ref([
+const estadoProductoOptions = ref<EstadoProducto[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
 ]);
 
-const isColumnSelected = (fieldName) => {
+const isColumnSelected = (fieldName: string) => {
     return selectedColumns.value.some(col => col.field === fieldName);
 };
 
-const optionalColumns = ref([
+const optionalColumns = ref<ColumnOption[]>([
     { field: 'details', header: 'Detalles' }
 ]);
 
@@ -54,8 +84,8 @@ const loadProductos = async () => {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
-            category: selectedCategory?.value,
-            almacen: selectedAlmacen?.value,
+            category: selectedCategory?.value?.value,
+            almacen: selectedAlmacen?.value?.value,
             state: selectedEstadoProducto.value?.value ?? '',
         };
         const response = await axios.get('/producto', { params });
@@ -69,12 +99,9 @@ const loadProductos = async () => {
     }
 };
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const props = defineProps<{
+    refresh: number;
+}>();
 
 watch(() => props.refresh, loadProductos);
 watch(() => selectedEstadoProducto.value, () => {
@@ -82,7 +109,7 @@ watch(() => selectedEstadoProducto.value, () => {
     loadProductos();
 });
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadProductos();
@@ -93,16 +120,16 @@ const onGlobalSearch = debounce(() => {
     loadProductos();
 }, 500);
 
-const getSeverity = (value) => {
+const getSeverity = (value: boolean | number) => {
     return value ? 'success' : 'danger';
 };
 
-const editarProducto = (prod) => {
-    selectedProductoId.value = prod.id;
+const editarProducto = (prod: Producto) => {
+    selectedProductoId.value = prod.id ?? null;
     updateProductoDialog.value = true;
 };
 
-const confirmarDeleteProducto = (prod) => {
+const confirmarDeleteProducto = (prod: Producto) => {
     producto.value = prod;
     deleteProductoDialog.value = true;
 };
@@ -120,6 +147,8 @@ onMounted(loadProductos);
 
 <template>
     <DataTable
+        ref="dt"
+        v-model:selection="selectedProductos"
         :value="productos"
         :paginator="true"
         :rows="pagination.perPage"
@@ -127,10 +156,12 @@ onMounted(loadProductos);
         :loading="loading"
         :lazy="true"
         @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
         dataKey="id"
         scrollable scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+        class="w-full"
     >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -140,7 +171,7 @@ onMounted(loadProductos);
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar producto..." />
                     </IconField>
                     <MultiSelect v-model="selectedColumns" :options="optionalColumns" optionLabel="header"
                         display="chip" placeholder="Seleccionar" />

@@ -69,7 +69,7 @@
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Cantidad <span class="text-red-500">*</span></label>
-                    <InputNumber v-model="movementInput.quantity" required min="1" class="w-full" :class="{ 'p-invalid': serverErrors.quantity }" />
+                    <InputNumber v-model="movementInput.quantity" required :min="1" class="w-full" :class="{ 'p-invalid': serverErrors.quantity }" />
                     <small v-if="serverErrors.quantity" class="text-red-500">{{ serverErrors.quantity[0] }}</small>
                 </div>
             </div>
@@ -81,9 +81,9 @@
                     <InputNumber
                         v-model="movementInput.totalPrice"
                         required
-                        min="0"
-                        minFractionDigits="2" 
-                        maxFractionDigits="2"
+                        :min="0"
+                        :minFractionDigits="2" 
+                        :maxFractionDigits="2"
                         class="w-full"
                         :class="{ 'p-invalid': serverErrors.totalPrice }"
                     />
@@ -106,7 +106,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -117,21 +117,44 @@ import InputText from 'primevue/inputtext';
 import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
 import { ref, watch } from 'vue';
+import { router } from '@inertiajs/core';
+
+// Interfaces
+interface Insumo {
+    id: number;
+    name: string;
+    quantityUnitMeasure: string;
+    unitMeasure: string;
+}
+
+interface MovementInput {
+    inputName: string;
+    batch: string;
+    quantity: number | null;
+    expirationDate: Date | null;
+    totalPrice: number | null;
+    unitPrice: string;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
 const { id } = usePage().props;
 const toast = useToast();
-const submitted = ref(false);
 const inputDialog = ref(false);
 
-const emit = defineEmits(['movementsinputAgregado']);
+const emit = defineEmits<{
+    (e: 'movementsinputAgregado'): void;
+}>();
 
-const serverErrors = ref({}); // Para manejar errores de validación
-const insumos = ref([]); // Aquí almacenamos los resultados de la búsqueda
-const searchTerm = ref('');
-const showResults = ref(false);
-const insumosOptions = ref([]);
-const timeoutId = ref(null);
-const selectedInsumo = ref(null);
-const movementInput = ref({
+const serverErrors = ref<ServerErrors>({}); // Para manejar errores de validación
+const searchTerm = ref<string>('');
+const showResults = ref<boolean>(false);
+const insumosOptions = ref<Insumo[]>([]);
+const timeoutId = ref<ReturnType<typeof setTimeout> | null>(null);
+const selectedInsumo = ref<Insumo | null>(null);
+const movementInput = ref<MovementInput>({
     inputName: '', // Aquí se almacenará el nombre del insumo seleccionado
     batch: '',
     quantity: null,
@@ -139,6 +162,7 @@ const movementInput = ref({
     totalPrice: null,
     unitPrice: '',
 });
+
 // Watcher para calcular el precio unitario
 watch([() => movementInput.value.quantity, () => movementInput.value.totalPrice], () => {
     if (movementInput.value.quantity && movementInput.value.totalPrice) {
@@ -147,7 +171,7 @@ watch([() => movementInput.value.quantity, () => movementInput.value.totalPrice]
 });
 
 // Función de búsqueda para insumos
-const handleSearch = async () => {
+const handleSearch = async (): Promise<void> => {
     if (timeoutId.value) clearTimeout(timeoutId.value);
     showResults.value = true;
     timeoutId.value = setTimeout(async () => {
@@ -173,7 +197,7 @@ const handleSearch = async () => {
 };
 
 // Función para seleccionar un insumo de la lista
-const selectInsumo = (insumo) => {
+const selectInsumo = (insumo: Insumo): void => {
     selectedInsumo.value = insumo; // Asignamos el insumo seleccionado
     searchTerm.value = insumo.name; // Mostramos el nombre del insumo seleccionado en el input
     insumosOptions.value = []; // Limpiamos las opciones después de la selección
@@ -181,30 +205,23 @@ const selectInsumo = (insumo) => {
 };
 
 // Función para limpiar la selección
-const clearSelection = () => {
+const clearSelection = (): void => {
     selectedInsumo.value = null;
     searchTerm.value = '';
     insumosOptions.value = [];
     showResults.value = false;
 };
 
-function openNew() {
+function openNew(): void {
     inputDialog.value = true;
 }
 
-
-    import {
-        router
-    } from '@inertiajs/core';
-
-function goBack() {
-
- const url = `/insumos/movimientos`;
-                router.visit(url);
+function goBack(): void {
+    const url = `/insumos/movimientos`;
+    router.visit(url);
 }
 
-
-async function fetchUserId() {
+async function fetchUserId(): Promise<number | null> {
     try {
         // Hacemos la solicitud al backend para obtener el user_id
         const { data } = await axios.get('/user-id');
@@ -222,16 +239,14 @@ async function fetchUserId() {
     }
 }
 
-
-
-const saveMovement = async () => {
+const saveMovement = async (): Promise<void> => {
     try {
-        const expirationDate = new Date(movementInput.value.expirationDate);
+        const expirationDate = new Date(movementInput.value.expirationDate!);
 
         // Enviar los datos al backend
         const response = await axios.post('/insumos/movimientos/detalle', {
             idMovementInput: id, // ID del movimiento
-            idInput: selectedInsumo.value.id, // ID del insumo
+            idInput: selectedInsumo.value?.id, // ID del insumo
             quantity: movementInput.value.quantity, // Cantidad
             totalPrice: movementInput.value.totalPrice, // Precio total
             priceUnit: movementInput.value.unitPrice, // Precio unitario
@@ -240,21 +255,20 @@ const saveMovement = async () => {
         });
 
         if (response.data.state) {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Insumo agregado correctamente al Movimiento',
-            life: 3000});
-            emit('movementsinput-agregado');
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Insumo agregado correctamente al Movimiento', life: 3000 });
+            emit('movementsinputAgregado');
             // Aquí pasas los valores correctos de totalPrice y idInput a la función enviarkardexinputs
-            enviarkardexinputs(selectedInsumo.value.id, movementInput.value.totalPrice); 
+            enviarkardexinputs(selectedInsumo.value!.id, movementInput.value.totalPrice!); 
             hideDialog();
         }
     } catch (error) {
         // Manejo de errores
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un error al guardar los datos',
-            life: 3000});
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un error al guardar los datos', life: 3000 });
+        console.error(error);
     }
 };
 
-const enviarkardexinputs = async (idInput, totalPrice) => {
+const enviarkardexinputs = async (idInput: number, totalPrice: number): Promise<void> => {
     const userId = await fetchUserId(); // Esperar a obtener el user_id
 
     if (!userId) {
@@ -267,9 +281,11 @@ const enviarkardexinputs = async (idInput, totalPrice) => {
         const movementResponse = await axios.get(`/insumos/movimientos/detalle/${id}`);
         
         // Extraer el code y payment_type desde el movimiento
-        const movementInput = movementResponse.data.data[0].movementInput; // Suponiendo que solo tienes un movimiento
-        const code = movementInput.code;
-        const payment_type = movementInput.payment_type;
+        const movementInputResponse = movementResponse.data.data[0].movementInput;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const code = movementInputResponse.code;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const payment_type = movementInputResponse.payment_type;
 
         // Crear los datos para el kardex
         const movementDataKardex = {
@@ -283,7 +299,7 @@ const enviarkardexinputs = async (idInput, totalPrice) => {
         // Enviar los datos para registrar el Kardex
         const response = await axios.post('/insumos/karde', movementDataKardex);
         console.log('Kardex registrado correctamente:', response.data);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al registrar el kardex:', error);
         if (error.response && error.response.data && error.response.data.errors) {
             console.error('Errores de validación:', error.response.data.errors);
@@ -293,9 +309,7 @@ const enviarkardexinputs = async (idInput, totalPrice) => {
     }
 };
 
-
-
-function hideDialog() {
+function hideDialog(): void {
     inputDialog.value = false;
     // Restablecer el formulario después de agregar el insumo
     movementInput.value = {
@@ -309,7 +323,7 @@ function hideDialog() {
     clearSearch();
     selectedInsumo.value = null;
 }
-const clearSearch = () => {
+const clearSearch = (): void => {
     searchTerm.value = ''; // Vaciar el campo de búsqueda
 };
 </script>

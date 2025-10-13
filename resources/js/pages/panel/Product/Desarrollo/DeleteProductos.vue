@@ -1,28 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    producto: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Producto {
+    id: number;
+    name: string;
+    [key: string]: any;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    producto: Producto | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteProducto() {
+async function deleteProducto(): Promise<void> {
+    if (!props.producto) return;
     try {
         await axios.delete(`/producto/${props.producto.id}`);
         emit('deleted');
@@ -36,8 +47,9 @@ async function deleteProducto() {
     } catch (error) {
         console.error(error);
         let errorMessage = 'Error eliminando el producto';
-        if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+        const err = error as AxiosError<{ message?: string }>;
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
         }
         toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
     }

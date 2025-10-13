@@ -111,7 +111,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
@@ -126,13 +126,40 @@ import { ref } from 'vue';
 import ToolsInput from './toolsInput.vue';
 import Dropdown from 'primevue/dropdown';
 
-const toast = useToast();
-const submitted = ref(false);
-const inputDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['inputs-agregado']);
+interface InputData {
+    name: string;
+    priceSale: number | null;
+    priceBuy: number | null;
+    state: boolean;
+    idAlmacen: number | null;
+    description: string | null;
+    unitMeasure: string | null;
+    quantityUnitMeasure: number | null;
+}
 
-const input = ref({
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+interface AlmacenOption {
+    label: string;
+    value: number;
+}
+
+interface UnitMeasureOption {
+    label: string;
+    value: string;
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const inputDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'inputs-agregado'): void;
+}>();
+
+const input = ref<InputData>({
     name: '',
     priceSale: null,
     priceBuy: null,
@@ -143,8 +170,7 @@ const input = ref({
     quantityUnitMeasure: null,
 });
 
-// Listado de unidades de medida
-const unitMeasures = ref([
+const unitMeasures = ref<UnitMeasureOption[]>([
     { label: 'Kilogramos', value: 'kg' },
     { label: 'Gramos', value: 'g' },
     { label: 'Litros', value: 'litros' },
@@ -152,21 +178,20 @@ const unitMeasures = ref([
     { label: 'Unidad', value: 'unidad' },
 ]);
 
-// Método para recargar la lista de insumos
-const loadInsumo = async () => {
+const loadInsumo = async (): Promise<void> => {
     try {
-        const response = await axios.get('/insumo'); // Aquí haces una solicitud GET para obtener los insumos
+        const response = await axios.get('/insumo');
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('insumo-agregado'); // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('inputs-agregado');
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los insumos', life: 3000 });
         console.error(error);
     }
 };
-const almacens = ref([]);
 
-function resetInput() {
+const almacens = ref<AlmacenOption[]>([]);
+
+function resetInput(): void {
     input.value = {
         name: '',
         priceSale: null,
@@ -181,32 +206,33 @@ function resetInput() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetInput();
     fetchAlmacens();
     inputDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     inputDialog.value = false;
     resetInput();
 }
 
-async function fetchAlmacens() {
+async function fetchAlmacens(): Promise<void> {
     try {
         const { data } = await axios.get('/almacen', { params: { state: 1 } });
-        almacens.value = data.data.map((c) => ({ label: c.name, value: c.id }));
+        almacens.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los almacenes' });
+        console.error(e);
     }
 }
 
-function guardarInput() {
+function guardarInput(): void {
     submitted.value = true;
     serverErrors.value = {};
     const dataToSend = {
         name: input.value.name,
-        priceSale: parseFloat(input.value.priceSale),
+        priceSale: parseFloat(String(input.value.priceSale)),
         priceBuy: null,
         state: input.value.state === true,
         idAlmacen: input.value.idAlmacen,

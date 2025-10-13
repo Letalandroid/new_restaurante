@@ -18,7 +18,8 @@
             <InputText 
               :value="vendedor" 
               class="w-full bg-gray-100" 
-              readonly 
+              readonly
+              disabled 
             />
           </div>
         </div>

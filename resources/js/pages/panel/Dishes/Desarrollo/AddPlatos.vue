@@ -80,7 +80,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Toolbar from 'primevue/toolbar';
@@ -96,17 +96,41 @@ import MultiSelect from 'primevue/multiselect'; // Importar MultiSelect de Prime
 import ToolsDish from './toolsDish.vue';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 
+interface Category {
+    value: number;
+    label: string;
+}
+
+interface Insumo {
+    id: number;
+    name: string;
+    stock: number;
+}
+
+interface Plato {
+    name: string;
+    price: number;
+    quantity: number;
+    idCategory: number | null;
+    state: boolean;
+    insumos: number[];
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
 const toast = useToast();
 const emit = defineEmits(['plato-agregado']);
 const submitted = ref(false);
 const platoDialog = ref(false);
 const loadingCategories = ref(false);
 const loadingInsumos = ref(false);
-const serverErrors = ref({});
-const categories = ref([]);
-const insumos = ref([]); // Array para almacenar los insumos disponibles
+const serverErrors = ref<ServerErrors>({});
+const categories = ref<Category[]>([]);
+const insumos = ref<Insumo[]>([]);
 
-const plato = ref({
+const plato = ref<Plato>({
     name: '',
     price: 0,
     quantity: 0,
@@ -116,18 +140,18 @@ const plato = ref({
 });
 
 // Método para recargar la lista de platos
-const loadPlato = async () => {
+const loadPlato = async (): Promise<void> => {
     try {
         const response = await axios.get('/plato');  // Aquí haces una solicitud GET para obtener los platos
         console.log(response.data);
-        emit('plato-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('plato-agregado');  // Si quieres que un componente padre reciba la notificación de la actualización
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los platos', life: 3000 });
         console.error(error);
     }
 };
 
-function resetPlato() {
+function resetPlato(): void {
     plato.value = {
         name: '',
         price: 0,
@@ -140,17 +164,17 @@ function resetPlato() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetPlato();
     platoDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     platoDialog.value = false;
     resetPlato();
 }
 
-function guardarPlato() {
+function guardarPlato(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -160,7 +184,7 @@ function guardarPlato() {
             hideDialog();
             emit('plato-agregado');
         })
-        .catch(error => {
+        .catch((error) => {
             if (error.response && error.response.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {
@@ -174,12 +198,12 @@ function guardarPlato() {
         });
 }
 
-function cargarCategorias() {
+function cargarCategorias(): void {
     loadingCategories.value = true;
     axios.get('/categoria', { params: { state: 1 } })
-        .then(response => {
+        .then((response) => {
             if (response.data && response.data.data) {
-                categories.value = response.data.data.map(cat => ({
+                categories.value = response.data.data.map((cat: any) => ({
                     value: cat.id,
                     label: cat.name
                 }));
@@ -193,12 +217,12 @@ function cargarCategorias() {
         });
 }
 
-function cargarInsumos() {
+function cargarInsumos(): void {
     loadingInsumos.value = true;
     axios.get('/insumos/con-stock')
-        .then(response => {
+        .then((response) => {
             if (response.data && response.data.inputs) {
-                insumos.value = response.data.inputs.map(insumo => ({
+                insumos.value = response.data.inputs.map((insumo: any) => ({
                     id: insumo.id,
                     name: `${insumo.name} - ${insumo.quantityUnitMeasure} ${insumo.unitMeasure}`,
                     stock: insumo.stock  // Incluimos el stock en el objeto

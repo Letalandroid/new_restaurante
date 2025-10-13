@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
@@ -9,36 +9,63 @@ import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import { ref, watch } from 'vue';
 import InputNumber from 'primevue/inputnumber';
-import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
+import Dropdown from 'primevue/dropdown';
 
-const props = defineProps({
-    visible: Boolean,
-    inputId: Number,
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface InputData {
+    name: string;
+    priceSale: number | null;
+    state: boolean;
+    idAlmacen: number | null;
+    description: string | null;
+    unitMeasure: string | null;
+    quantity?: number | null;
+    quantityUnitMeasure?: number | null;
+}
+
+interface AlmacenOption {
+    label: string;
+    value: number;
+}
+
+interface UnitMeasureOption {
+    label: string;
+    value: string;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    inputId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const serverErrors = ref({});
+const serverErrors = ref<Record<string, string[]>>({});
 const submitted = ref(false);
 const loading = ref(false);
 
-const dialogVisible = ref(props.visible);
+const dialogVisible = ref<boolean>(props.visible);
 watch(
     () => props.visible,
-    (val) => (dialogVisible.value = val),
+    (val) => (dialogVisible.value = val)
 );
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const input = ref({
+const input = ref<InputData>({
     name: '',
     priceSale: null,
     state: true,
     idAlmacen: null,
     description: null,
     unitMeasure: null,
+    quantity: null,
+    quantityUnitMeasure: null,
 });
 
-const almacens = ref([]);
+const almacens = ref<AlmacenOption[]>([]);
 
 watch(
     () => props.visible,
@@ -47,10 +74,10 @@ watch(
             await fetchInput();
             await fetchAlmacens();
         }
-    },
+    }
 );
 
-const fetchInput = async () => {
+const fetchInput = async (): Promise<void> => {
     loading.value = true;
     try {
         const { data } = await axios.get(`/insumo/${props.inputId}`);
@@ -63,7 +90,7 @@ const fetchInput = async () => {
             idAlmacen: i.idAlmacen,
             description: i.description,
             unitMeasure: i.unitMeasure,
-            quantityUnitMeasure:i.quantityUnitMeasure,
+            quantityUnitMeasure: i.quantityUnitMeasure,
         };
     } catch (error) {
         toast.add({
@@ -72,51 +99,48 @@ const fetchInput = async () => {
             detail: 'No se pudo cargar los insumos',
             life: 3000,
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
     
 };
 // Listado de unidades de medida
-const unitMeasures = ref([
+const unitMeasures = ref<UnitMeasureOption[]>([
     { label: 'Kilogramos', value: 'kg' },
     { label: 'Gramos', value: 'g' },
     { label: 'Litros', value: 'litros' },
     { label: 'Mililitros', value: 'ml' },
     { label: 'Unidad', value: 'unidad' },
 ]);
-const fetchAlmacens = async () => {
+
+const fetchAlmacens = async (): Promise<void> => {
     try {
         const { data } = await axios.get('/almacen', { params: { state: 1 } });
-        almacens.value = data.data.map((c) => ({ label: c.name, value: c.id }));
+        almacens.value = data.data.map((c: any) => ({ label: c.name, value: c.id }));
     } catch (e) {
         toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los almacens' });
+        console.error(e);
     }
 };
 
-
-
-const updateInput = async () => {
+const updateInput = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
     try {
         const dataToSend = {
             name: input.value.name,
-priceSale: parseFloat(input.value.priceSale),
+            priceSale: parseFloat(String(input.value.priceSale)),
             state: input.value.state === true,
-            idAlmacen: input.value.idAlmacen, 
+            idAlmacen: input.value.idAlmacen,
             description: input.value.description,
             unitMeasure: input.value.unitMeasure,
-            quantityUnitMeasure:input.value.quantityUnitMeasure,
+            quantityUnitMeasure: input.value.quantityUnitMeasure,
         };
-console.log('Datos a enviar:', {
-    name: input.value.name,
-    priceSale: input.value.priceSale,
-    state: input.value.state === true,
-    idAlmacen: input.value.idAlmacen,
-    description: input.value.description,
-});
+
+        console.log('Datos a enviar:', dataToSend);
+
         await axios.put(`/insumo/${props.inputId}`, dataToSend);
 
         toast.add({
@@ -128,7 +152,7 @@ console.log('Datos a enviar:', {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response?.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
@@ -153,14 +177,12 @@ console.log('Datos a enviar:', {
     <Dialog v-model:visible="dialogVisible" header="Editar Insumo" modal :closable="true" :closeOnEscape="true" :style="{ width: '700px' }">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <!-- Nombre -->
                 <div class="col-span-10">
                     <label class="mb-2 block font-bold">Nombre <span class="text-red-500">*</span></label>
                     <InputText v-model="input.name" required maxlength="100" fluid :class="{ 'p-invalid': serverErrors.name }" />
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <!-- Estado -->
                 <div class="col-span-2">
                     <label class="mb-2 block font-bold">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
@@ -168,9 +190,8 @@ console.log('Datos a enviar:', {
                         <Tag :value="input.state ? 'Activo' : 'Inactivo'" :severity="input.state ? 'success' : 'danger'" />
                     </div>
                 </div>
-                <!-- precio -->
 
- <div class="col-span-6">
+                <div class="col-span-6">
                     <label for="priceSale" class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
                     <InputNumber
                         id="priceSale"
@@ -185,8 +206,6 @@ console.log('Datos a enviar:', {
                     />
                     <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
                 </div>
-
-       <!-- Cantidad por medida -->
 
                 <div class="col-span-6">
                     <label for="quantityUnitMeasure" class="mb-2 block font-bold">Cantidad por medida<span class="text-red-500">*</span></label>
@@ -203,7 +222,7 @@ console.log('Datos a enviar:', {
                     />
                     <small v-if="serverErrors.quantityUnitMeasure" class="p-error">{{ serverErrors.quantityUnitMeasure[0] }}</small>
                 </div>
-<!-- Unidad de Medida -->
+
                 <div class="col-span-6">
                     <label class="mb-2 block font-bold">Unidad de Medida <span class="text-red-500">*</span></label>
                     <Select
@@ -216,9 +235,7 @@ console.log('Datos a enviar:', {
                     />
                     <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-             
 
-                <!-- Almacen (Dropdown con búsqueda) -->
                 <div class="col-span-6">
                     <label class="mb-2 block font-bold">Almacen <span class="text-red-500">*</span></label>
                     <Dropdown
@@ -230,15 +247,13 @@ console.log('Datos a enviar:', {
                         placeholder="Seleccione Almacen"
                         filter
                         filterBy="label"
-                        filterPlaceholder="Buscar almacen..."  
+                        filterPlaceholder="Buscar almacen..."
                         style="width: 325px;"
                     />
                     <small v-if="submitted && !input.idAlmacen" class="text-red-500">El Almacen es obligatorio.</small>
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
-
-                <!-- description -->
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Descripcion <span class="text-red-500">*</span></label>
                     <InputText v-model="input.description" required maxlength="150" fluid :class="{ 'p-invalid': serverErrors.description }" />

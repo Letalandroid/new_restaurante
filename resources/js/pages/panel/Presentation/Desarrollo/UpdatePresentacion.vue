@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -6,22 +6,39 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    presentacionId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+// Tipos
+interface Presentacion {
+    name: string;
+    description: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+interface Props {
+    visible: boolean;
+    presentacionId: number | null;
+}
+
+// Props y Emits
+const props = defineProps<Props>();
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const presentacion = ref({
+const presentacion = ref<Presentacion>({
     name: '',
     description: '',
     state: false,
@@ -35,11 +52,11 @@ watch(() => props.visible, (val) => {
 });
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const fetchPresentacion = async () => {
+const fetchPresentacion = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/presentacion/${props.presentacionId}`);
-        const data = res.data.presentation;
+        const data = res.data.presentation as Presentacion;
         presentacion.value = {
             name: data.name,
             description: data.description || '',
@@ -53,7 +70,7 @@ const fetchPresentacion = async () => {
     }
 };
 
-const updatePresentacion = async () => {
+const updatePresentacion = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -75,7 +92,8 @@ const updatePresentacion = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (err) {
+        const error = err as AxiosError<any>;
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
