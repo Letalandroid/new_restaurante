@@ -16,7 +16,19 @@ class Product extends Model
         'idCategory',
         'details',
         'idAlmacen',
+        'priceSale',
+        'quantityUnitMeasure',
+        'unitMeasure',
+        'stock',
         'state',
+        'foto',
+    ];
+
+    protected $casts = [
+        'priceSale' => 'decimal:2',
+        'quantityUnitMeasure' => 'decimal:2',
+        'stock' => 'integer',
+        'state' => 'boolean',
     ];
     public function category()
     {

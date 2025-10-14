@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Dropdown from 'primevue/dropdown';
@@ -16,11 +17,16 @@ interface Producto {
     state: boolean;
     idCategory: number | null;
     idAlmacen: number | null;
+    priceSale: number | null;
+    quantityUnitMeasure: number | null;
+    unitMeasure: string;
+    stock: number | null;
+    foto: File | null;
 }
 
 interface Option {
     label: string;
-    value: number;
+    value: number | string;
 }
 
 interface ServerErrors {
@@ -41,6 +47,8 @@ const toast = useToast();
 const serverErrors = ref<ServerErrors>({});
 const submitted = ref<boolean>(false);
 const loading = ref<boolean>(false);
+const imagePreview = ref<string | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const dialogVisible = ref<boolean>(props.visible);
 watch(() => props.visible, (val) => dialogVisible.value = val);
@@ -51,8 +59,22 @@ const producto = ref<Producto>({
     details: '',
     state: false,
     idCategory: null,
-    idAlmacen: null
+    idAlmacen: null,
+    priceSale: null,
+    quantityUnitMeasure: null,
+    unitMeasure: '',
+    stock: null,
+    foto: null
 });
+
+// Opciones para unidades de medida
+const unidadesMedida = ref<Option[]>([
+    { label: 'Kilogramos', value: 'kg' },
+    { label: 'Gramos', value: 'g' },
+    { label: 'Litros', value: 'litros' },
+    { label: 'Mililitros', value: 'ml' },
+    { label: 'Unidad', value: 'unidad' },
+]);
 
 const categorias = ref<Option[]>([]);
 const almacenes = ref<Option[]>([]);
@@ -68,15 +90,34 @@ watch(() => props.visible, async (val) => {
 const fetchProducto = async (): Promise<void> => {
     loading.value = true;
     try {
+        // 🔹 Reiniciamos antes de cargar un nuevo producto
+        imagePreview.value = null;
+        producto.value.foto = null;
+        if (fileInput.value) {
+            fileInput.value.value = '';
+        }
+
         const { data } = await axios.get(`/producto/${props.productoId}`);
         const p = data.product;
+
         producto.value = {
             name: p.name,
             details: p.details,
-            state: p.state,
+            state: !!p.state, // asegurar booleano
             idCategory: p.idCategory,
-            idAlmacen: p.idAlmacen
+            idAlmacen: p.idAlmacen,
+            priceSale: p.priceSale,
+            quantityUnitMeasure: p.quantityUnitMeasure,
+            unitMeasure: p.unitMeasure,
+            stock: p.stock,
+            foto: null
         };
+
+        // 🔹 Solo asigna preview si realmente tiene imagen
+        if (p.foto && p.foto !== 'sin imagen') {
+            imagePreview.value = `/uploads/fotos/productos/${p.foto}`;
+        }
+
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -110,20 +151,60 @@ const fetchAlmacenes = async (): Promise<void> => {
     }
 };
 
+function onFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        const file = target.files[0];
+        producto.value.foto = file;
+        
+        // Crear vista previa
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeFoto(): void {
+    producto.value.foto = null;
+    imagePreview.value = null;
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+}
+
 const updateProducto = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
     try {
-        const dataToSend = {
-            name: producto.value.name,
-            details: producto.value.details,
-            state: producto.value.state === true,
-            idCategory: producto.value.idCategory,
-            idAlmacen: producto.value.idAlmacen
-        };
+        const formData = new FormData();
+        formData.append('name', producto.value.name);
+        formData.append('details', producto.value.details);
+        formData.append('state', producto.value.state? '1' : '0');
+        formData.append('idCategory', producto.value.idCategory?.toString() || '');
+        formData.append('idAlmacen', producto.value.idAlmacen?.toString() || '');
+        formData.append('priceSale', producto.value.priceSale?.toString() || '');
+        formData.append('quantityUnitMeasure', producto.value.quantityUnitMeasure?.toString() || '');
+        formData.append('unitMeasure', producto.value.unitMeasure);
+        formData.append('stock', producto.value.stock?.toString() || '');
+        
+        if (producto.value.foto) {
+            formData.append('foto', producto.value.foto);
+        }
 
-        await axios.put(`/producto/${props.productoId}`, dataToSend);
+        // Usar PUT para edición
+        // Nota: Algunos servidores pueden requerir POST para FormData, 
+        // pero Laravel normalmente maneja PUT con _method
+        await axios.post(`/producto/${props.productoId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            params: {
+                '_method': 'PUT'
+            }
+        });
 
         toast.add({
             severity: 'success',
@@ -136,8 +217,8 @@ const updateProducto = async (): Promise<void> => {
         emit('updated');
     } catch (error) {
         const err = error as AxiosError<{ message?: string; errors?: ServerErrors }>;
-        if (err.response?.data?.errors) {
-            serverErrors.value = err.response.data.errors;
+        if (err.response?.status === 422) {
+            serverErrors.value = err.response.data.errors || {};
             toast.add({
                 severity: 'error',
                 summary: 'Error de validación',
@@ -181,13 +262,13 @@ const updateProducto = async (): Promise<void> => {
 
                 <!-- Detalle -->
                 <div class="col-span-12">
-                    <label class="block font-bold mb-2">Detalle <span class="text-red-500">*</span></label>
-                    <Textarea v-model="producto.details" autoResize maxlength="200" rows="3" fluid
+                    <label class="block font-bold mb-2">Detalle</label>
+                    <Textarea v-model="producto.details" autoResize maxlength="500" rows="3" fluid
                         :class="{ 'p-invalid': serverErrors.details }" />
                     <small v-if="serverErrors.details" class="p-error">{{ serverErrors.details[0] }}</small>
                 </div>
 
-                <!-- Categoría (Dropdown con búsqueda) -->
+                <!-- Categoría -->
                 <div class="col-span-6">
                     <label class="block font-bold mb-2">Categoría <span class="text-red-500">*</span></label>
                     <Dropdown
@@ -223,6 +304,101 @@ const updateProducto = async (): Promise<void> => {
                         :class="{ 'p-invalid': serverErrors.idAlmacen }"
                     />
                     <small v-if="serverErrors.idAlmacen" class="p-error">{{ serverErrors.idAlmacen[0] }}</small>
+                </div>
+
+                <!-- Precio de Venta -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.priceSale" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        fluid
+                        :min="0"
+                        :class="{ 'p-invalid': serverErrors.priceSale }"
+                    />
+                    <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
+                </div>
+
+                <!-- Stock -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Stock <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.stock" 
+                        fluid
+                        :min="1"
+                        :max="1000000"
+                        :class="{ 'p-invalid': serverErrors.stock }"
+                    />
+                    <small v-if="serverErrors.stock" class="p-error">{{ serverErrors.stock[0] }}</small>
+                </div>
+
+                <!-- Cantidad de Medida -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.quantityUnitMeasure" 
+                        fluid
+                        :min="0"
+                        :fractionDigits="2"
+                        :class="{ 'p-invalid': serverErrors.quantityUnitMeasure }"
+                    />
+                    <small v-if="serverErrors.quantityUnitMeasure" class="p-error">{{ serverErrors.quantityUnitMeasure[0] }}</small>
+                </div>
+
+                <!-- Unidad de Medida -->
+                <div class="col-span-4">
+                    <label class="block font-bold mb-2">Unidad de Medida <span class="text-red-500">*</span></label>
+                    <Dropdown 
+                        v-model="producto.unitMeasure" 
+                        :options="unidadesMedida" 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        fluid
+                        placeholder="Seleccione unidad" 
+                        style="width: 325px"
+                        :class="{ 'p-invalid': serverErrors.unitMeasure }"
+                    />
+                    <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
+                </div>
+
+                <!-- Foto -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Foto</label>
+                    <div class="flex flex-col gap-3">
+                        <input 
+                            type="file" 
+                            accept="image/jpg,image/jpeg,image/png"
+                            @change="onFileSelected"
+                            class="w-full p-2 border border-gray-300 rounded"
+                            ref="fileInput"
+                        />
+                        
+                        <!-- Vista previa de la imagen -->
+                        <div v-if="imagePreview" class="mt-2">
+                            <label class="block font-medium mb-2">Vista previa:</label>
+                            <div class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center">
+                                <img 
+                                    :src="imagePreview" 
+                                    alt="Vista previa de la foto" 
+                                    class="max-h-[70vh] object-contain rounded"
+                                />
+                            
+                            <Button 
+                                label="Quitar foto" 
+                                icon="pi pi-times" 
+                                severity="danger" 
+                                text 
+                                size="small" 
+                                @click="removeFoto"
+                                class="mt-4"
+                            />
+                        </div>
+                        </div>
+                        <small class="text-gray-500">Formatos: JPG, JPEG, PNG (Máx. 5MB)</small>
+                        <small v-if="serverErrors.foto" class="p-error">{{ serverErrors.foto[0] }}</small>
+                    </div>
                 </div>
             </div>
         </div>

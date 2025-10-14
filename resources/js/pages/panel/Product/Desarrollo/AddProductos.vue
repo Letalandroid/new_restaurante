@@ -34,10 +34,9 @@
 
                 <!-- Detalles -->
                 <div class="col-span-12">
-                    <label class="block font-bold mb-2">Detalle <span class="text-red-500">*</span></label>
-                    <Textarea v-model="producto.details" autoResize rows="3" fluid maxlength="200" />
-                    <small v-if="submitted && !producto.details" class="text-red-500">El detalle es obligatorio.</small>
-                    <small v-else-if="serverErrors.details" class="text-red-500">{{ serverErrors.details[0] }}</small>
+                    <label class="block font-bold mb-2">Detalle</label>
+                    <Textarea v-model="producto.details" autoResize rows="3" fluid maxlength="500" />
+                    <small v-if="serverErrors.details" class="text-red-500">{{ serverErrors.details[0] }}</small>
                 </div>
 
                 <!-- Categoría -->
@@ -78,6 +77,101 @@
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
+                <!-- Precio de Venta -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.priceSale" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        fluid
+                        :min="0"
+                    />
+                    <small v-if="submitted && producto.priceSale === null" class="text-red-500">El precio de venta es obligatorio.</small>
+                    <small v-else-if="serverErrors.priceSale" class="text-red-500">{{ serverErrors.priceSale[0] }}</small>
+                </div>
+
+                <!-- Stock -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Stock <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.stock" 
+                        fluid
+                        :min="1"
+                        :max="1000000"
+                    />
+                    <small v-if="submitted && producto.stock === null" class="text-red-500">El stock es obligatorio.</small>
+                    <small v-else-if="serverErrors.stock" class="text-red-500">{{ serverErrors.stock[0] }}</small>
+                </div>
+
+                <!-- Cantidad de Medida -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.quantityUnitMeasure" 
+                        fluid
+                        :min="0"
+                        :fractionDigits="2"
+                    />
+                    <small v-if="submitted && producto.quantityUnitMeasure === null" class="text-red-500">La cantidad de medida es obligatoria.</small>
+                    <small v-else-if="serverErrors.quantityUnitMeasure" class="text-red-500">{{ serverErrors.quantityUnitMeasure[0] }}</small>
+                </div>
+
+                <!-- Unidad de Medida -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Unidad de Medida <span class="text-red-500">*</span></label>
+                    <Dropdown 
+                        v-model="producto.unitMeasure" 
+                        :options="unidadesMedida" 
+                        optionLabel="label" 
+                        optionValue="value" 
+                        fluid
+                        placeholder="Seleccione unidad" 
+                        style="width: 325px;"
+                    />
+                    <small v-if="submitted && !producto.unitMeasure" class="text-red-500">La unidad de medida es obligatoria.</small>
+                    <small v-else-if="serverErrors.unitMeasure" class="text-red-500">{{ serverErrors.unitMeasure[0] }}</small>
+                </div>
+
+                <!-- Foto -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Foto</label>
+                    <div class="flex flex-col gap-3">
+                        <input 
+                            type="file" 
+                            accept="image/jpg,image/jpeg,image/png"
+                            @change="onFileSelected"
+                            class="w-full p-2 border border-gray-300 rounded"
+                            ref="fileInput"
+                        />
+                        
+                        <!-- Vista previa centrada en el modal -->
+                        <div v-if="imagePreview" class="mt-2">
+                            <label class="block font-medium mb-2">Vista previa:</label>
+                            <div class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center">
+                            <img
+                            :src="imagePreview"
+                            alt="Vista previa de la foto"
+                            class="max-h-[70vh] object-contain rounded"
+                            />
+                            <Button
+                            label="Quitar foto"
+                            icon="pi pi-times"
+                            severity="danger"
+                            text
+                            size="small"
+                            @click="removeFoto"
+                            class="mt-4"
+                            />
+                        </div>
+                        </div>
+                        
+                        <small class="text-gray-500">Formatos: JPG, JPEG, PNG (Máx. 5MB)</small>
+                        <small v-if="serverErrors.foto" class="text-red-500">{{ serverErrors.foto[0] }}</small>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -95,6 +189,7 @@ import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
@@ -108,11 +203,16 @@ interface Producto {
     state: boolean;
     idCategory: number | null;
     idAlmacen: number | null;
+    priceSale: number | null;
+    quantityUnitMeasure: number | null;
+    unitMeasure: string;
+    stock: number | null;
+    foto: File | null;
 }
 
 interface OpcionSelect {
     label: string;
-    value: number;
+    value: number | string;
 }
 
 interface ServerErrors {
@@ -123,6 +223,8 @@ const toast = useToast();
 const submitted = ref<boolean>(false);
 const productoDialog = ref<boolean>(false);
 const serverErrors = ref<ServerErrors>({});
+const imagePreview = ref<string | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 const emit = defineEmits<{
     (e: 'producto-agregado'): void;
 }>();
@@ -132,8 +234,22 @@ const producto = ref<Producto>({
     details: '',
     state: true,
     idCategory: null,
-    idAlmacen: null
+    idAlmacen: null,
+    priceSale: null,
+    quantityUnitMeasure: null,
+    unitMeasure: '',
+    stock: null,
+    foto: null
 });
+
+// Opciones para unidades de medida
+const unidadesMedida = ref<OpcionSelect[]>([
+    { label: 'Kilogramos', value: 'kg' },
+    { label: 'Gramos', value: 'g' },
+    { label: 'Litros', value: 'litros' },
+    { label: 'Mililitros', value: 'ml' },
+    { label: 'Unidad', value: 'unidad' },
+]);
 
 // Método para recargar la lista de productos
 const loadProducto = async (): Promise<void> => {
@@ -151,16 +267,50 @@ const loadProducto = async (): Promise<void> => {
 const categorias = ref<OpcionSelect[]>([]);
 const almacenes = ref<OpcionSelect[]>([]);
 
+function onFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        const file = target.files[0];
+        producto.value.foto = file;
+        
+        // Crear vista previa
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeFoto(): void {
+    producto.value.foto = null;
+    imagePreview.value = null;
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+}
+
 function resetProducto(): void {
     producto.value = {
         name: '',
         details: '',
         state: true,
         idCategory: null,
-        idAlmacen: null
+        idAlmacen: null,
+        priceSale: null,
+        quantityUnitMeasure: null,
+        unitMeasure: '',
+        stock: null,
+        foto: null
     };
+    imagePreview.value = null;
     serverErrors.value = {};
     submitted.value = false;
+    
+    // Resetear el input file
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
 }
 
 function openNew(): void {
@@ -199,23 +349,43 @@ function guardarProducto(): void {
     submitted.value = true;
     serverErrors.value = {};
 
-    axios.post('/producto', producto.value)
-        .then(() => {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto registrado', life: 3000 });
-            hideDialog();
-            emit('producto-agregado');
-        })
-        .catch((error) => {
-            if (error.response?.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
-            } else {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'No se pudo registrar el producto',
-                    life: 3000
-                });
-            }
+    const formData = new FormData();
+    formData.append('name', producto.value.name);
+    formData.append('details', producto.value.details);
+    formData.append('state', producto.value.state ? '1' : '0');
+    formData.append('idCategory', producto.value.idCategory?.toString() || '');
+    formData.append('idAlmacen', producto.value.idAlmacen?.toString() || '');
+    formData.append('priceSale', producto.value.priceSale?.toString() || '');
+    formData.append('quantityUnitMeasure', producto.value.quantityUnitMeasure?.toString() || '');
+    formData.append('unitMeasure', producto.value.unitMeasure);
+    formData.append('stock', producto.value.stock?.toString() || '');
+    
+    if (producto.value.foto) {
+        formData.append('foto', producto.value.foto);
+    }
+
+    axios.post('/producto', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    .then(() => {
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Producto registrado', life: 3000 });
+        hideDialog();
+        emit('producto-agregado');
+    })
+    .catch((error) => {
+    if (error.response?.status === 422) {
+        console.log(error.response.data.errors); // 👈 muestra los errores exactos en consola
+        serverErrors.value = error.response.data.errors || {};
+    } else {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo registrar el producto',
+            life: 3000
         });
+    }
+});
 }
 </script>

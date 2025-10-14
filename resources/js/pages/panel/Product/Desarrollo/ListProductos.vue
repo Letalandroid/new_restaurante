@@ -13,6 +13,15 @@ import { debounce } from 'lodash';
 import DeleteProducto from './DeleteProductos.vue';
 import UpdateProducto from './UpdateProductos.vue';
 import MultiSelect from 'primevue/multiselect';
+import Dialog from 'primevue/dialog';
+
+const imageDialogVisible = ref(false);
+const selectedImageUrl = ref<string | null>(null);
+
+function openImageDialog(foto: string) {
+    selectedImageUrl.value = getFotoUrl(foto);
+    imageDialogVisible.value = true;
+}
 
 // Tipos
 interface Producto {
@@ -21,6 +30,11 @@ interface Producto {
     details?: string;
     Categoria_name?: string;
     Almacen_name?: string;
+    priceSale?: number;
+    quantityUnitMeasure?: number;
+    unitMeasure?: string;
+    stock?: number;
+    foto?: string;
     creacion?: string;
     actualizacion?: string;
     state?: boolean | number;
@@ -74,8 +88,10 @@ const isColumnSelected = (fieldName: string) => {
 };
 
 const optionalColumns = ref<ColumnOption[]>([
-    { field: 'details', header: 'Detalles' }
+    { field: 'details', header: 'Detalles' },
+    { field: 'foto', header: 'Foto' }
 ]);
+
 
 const loadProductos = async () => {
     loading.value = true;
@@ -122,6 +138,42 @@ const onGlobalSearch = debounce(() => {
 
 const getSeverity = (value: boolean | number) => {
     return value ? 'success' : 'danger';
+};
+
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN'
+    }).format(value);
+};
+
+const formatQuantity = (value: number) => {
+    return new Intl.NumberFormat('es-PE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value);
+};
+
+const formatStock = (value: number) => {
+    return new Intl.NumberFormat('es-PE').format(value);
+};
+
+const getUnitMeasureLabel = (value: string) => {
+    const units: { [key: string]: string } = {
+        'Kilogramos':'kg',
+        'Gramos':'g',
+        'Litros':'litros',
+        'Mililitros':'ml',
+        'Unidad':'unidad'
+    };
+    return units[value] || value;
+};
+
+const getFotoUrl = (foto: string) => {
+    if (!foto || foto === 'sin imagen') {
+        return '/images/placeholder-product.png';
+    }
+    return `/uploads/fotos/productos/${foto}`;
 };
 
 const editarProducto = (prod: Producto) => {
@@ -188,6 +240,58 @@ onMounted(loadProductos);
         </Column>
         <Column field="Categoria_name" header="Categoría" sortable style="min-width: 15rem" />
         <Column field="Almacen_name" header="Almacén" sortable style="min-width: 15rem"/>
+        
+        <!-- Campos adicionales -->
+        <Column field="priceSale" header="Precio Venta" sortable style="min-width: 12rem">
+            <template #body="{ data }">
+                <span v-if="data.priceSale">{{ formatCurrency(data.priceSale) }}</span>
+                <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+
+        <Column field="quantityUnitMeasure" header="Cantidad Medida" sortable style="min-width: 12rem">
+            <template #body="{ data }">
+                <span v-if="data.quantityUnitMeasure">{{ formatQuantity(data.quantityUnitMeasure) }}</span>
+                <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+
+        <Column field="unitMeasure" header="Unidad Medida" sortable style="min-width: 12rem">
+            <template #body="{ data }">
+                <span v-if="data.unitMeasure">{{ getUnitMeasureLabel(data.unitMeasure) }}</span>
+                <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+
+        <Column field="stock" header="Stock" sortable style="min-width: 10rem">
+            <template #body="{ data }">
+                <span v-if="data.stock !== undefined && data.stock !== null" 
+                    :class="{ 'text-red-500 font-semibold': data.stock < 10 }">
+                    {{ formatStock(data.stock) }}
+                </span>
+                <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+                
+        <Column v-if="isColumnSelected('foto')" field="foto" header="Foto" style="min-width: 8rem">
+            <template #body="{ data }">
+                <div class="flex justify-center items-center">
+                    <template v-if="data.foto && data.foto !== 'sin imagen'">
+                        <img 
+                            :src="getFotoUrl(data.foto)" 
+                            :alt="data.name"
+                            class="w-12 h-12 object-cover rounded-full border cursor-pointer hover:scale-110 transition-transform"
+                            @click="openImageDialog(data.foto)"
+                            @error="(e: any) => e.target.src = '/images/placeholder-product.png'"
+                        />
+                    </template>
+                    <template v-else>
+                        <span class="text-gray-400 text-sm italic">Sin imagen</span>
+                    </template>
+                </div>
+            </template>
+        </Column>
+
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"/>
         <Column field="state" header="Estado" sortable>
@@ -213,4 +317,27 @@ onMounted(loadProductos);
         :productoId="selectedProductoId"
         @updated="handleProductoUpdated"
     />
+    <Dialog 
+        v-model:visible="imageDialogVisible" 
+        modal 
+        header="Vista de Imagen"
+        :closable="false"
+        :style="{ width: 'auto', maxWidth: '80vw' }"
+    >
+        <div class="flex flex-col items-center justify-center p-4">
+            <img 
+                v-if="selectedImageUrl" 
+                :src="selectedImageUrl" 
+                alt="Vista ampliada" 
+                class="max-h-[70vh] w-auto object-contain rounded-lg shadow-md"
+            />
+            <Button 
+                label="Cerrar" 
+                icon="pi pi-times" 
+                severity="secondary" 
+                class="mt-4"
+                @click="imageDialogVisible = false" 
+            />
+        </div>
+    </Dialog>
 </template>

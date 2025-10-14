@@ -17,7 +17,12 @@ return new class extends Migration
             $table->unsignedBigInteger('idCategory');
             $table->text('details')->nullable();
             $table->unsignedBigInteger('idAlmacen');
+            $table->decimal('priceSale', 10, 2);
+            $table->decimal('quantityUnitMeasure', 10, 2);
+            $table->string(column: 'unitMeasure');
+            $table->integer('stock');
             $table->boolean('state')->default(true);
+            $table->string('foto')->default('sin imagen');
             $table->timestamps();
 
             // Relaciones
