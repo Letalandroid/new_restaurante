@@ -34,10 +34,14 @@ interface MovementDetail {
   priceUnit: number;
   batch: string;
   totalPrice: number;
-  input: {
+  input?: {
     name: string;
     unitMeasure: string;
-  };
+  } | null;
+  product?: {
+    name: string;
+    unitMeasure: string;
+  } | null;
 }
 
 interface Pagination {
@@ -118,9 +122,14 @@ const generatePDF = () => {
 
   doc.line(10, yStart + 5, 200, yStart + 5);
 
-  const tableHead = [['Cantidad', 'Insumo', 'Unidad', 'Precio Unitario', 'Lote', 'Total']];
+  const tableHead = [['Cantidad', 'Nombre', 'Unidad', 'Precio Unitario', 'Lote', 'Total']];
   const tableBody = movementDetailsDetails.value.map(item => [
-    item.quantity, item.input.name, item.input.unitMeasure, item.priceUnit, item.batch, item.totalPrice
+    item.quantity,
+    item.input?.name || item.product?.name || '-',
+    item.input?.unitMeasure || item.product?.unitMeasure || '-',
+    item.priceUnit,
+    item.batch,
+    item.totalPrice
   ]);
 
   autoTable(doc, {
@@ -377,8 +386,21 @@ const maximized = ref<boolean>(false);
       <hr />
       <DataTable :value="movementDetailsDetails" :paginator="true" :rows="10" :scrollable="true">
         <Column field="quantity" header="Cantidad" sortable />
-        <Column field="input.name" header="Insumo" sortable />
-        <Column field="input.unitMeasure" header="Unidad" sortable />
+        
+        <!-- Muestra nombre dinámico: input o product -->
+        <Column header="Nombre" sortable>
+          <template #body="{ data }">
+            {{ data.input?.name || data.product?.name || '-' }}
+          </template>
+        </Column>
+
+        <!-- Muestra unidad dinámica -->
+        <Column header="Unidad" sortable>
+          <template #body="{ data }">
+            {{ data.input?.unitMeasure || data.product?.unitMeasure || '-' }}
+          </template>
+        </Column>
+
         <Column field="priceUnit" header="Precio Unitario" sortable />
         <Column field="batch" header="Lote" sortable />
         <Column field="totalPrice" header="Total" sortable />

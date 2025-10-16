@@ -6,6 +6,7 @@ import InputDate from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
+import RadioButton from 'primevue/radiobutton';
 import { useToast } from 'primevue/usetoast';
 
 // Tipos de datos
@@ -22,25 +23,34 @@ interface Input {
     state?: boolean;
 }
 
+interface Product {
+    id: number;
+    name: string;
+    quantityUnitMeasure?: string;
+    unitMeasure?: string;
+    stock?: number;
+}
+
 interface MovementInputDetail {
     id: number;
     idMovementInput: number;
-    idInput: number;
+    idInput: number | null;
+    idProduct: number | null;
     quantity: string;
     totalPrice: string;
     priceUnit: string;
     batch: string;
     expirationDate: string;
-    input?: Input;
+    input?: Input | null;
+    product?: Product | null;
 }
-
 
 const inputDialog = ref(false);
 
 const props = defineProps<{
     visible: boolean;
     movementInputId: number | null;
-    detailId: number | null; // <-- Nuevo prop
+    detailId: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -68,8 +78,16 @@ const movementInput = ref({
     expirationDate: null as Date | null,
 });
 
+// Variables para items
+const searchTerm = ref('');
+const showResults = ref(false);
+const itemsOptions = ref<(Input | Product)[]>([]);
+const timeoutId = ref<number | null>(null);
+const selectedItem = ref<Input | Product | null>(null);
+const itemType = ref<'insumo' | 'producto'>('insumo');
+
 const clearSearch = () => {
-    searchTerm.value = ''; // Vaciar el campo de búsqueda
+    searchTerm.value = '';
 };
 
 watch(
@@ -99,14 +117,21 @@ const fetchMovementInput = async () => {
                 idMovementInput: detail.idMovementInput.toString(),
             };
 
+            // Determinar el tipo de item y cargar datos
             if (detail.input) {
-                selectedInsumo.value = detail.input;
+                selectedItem.value = detail.input;
                 searchTerm.value = detail.input.name;
+                itemType.value = 'insumo';
+            } else if (detail.product) {
+                selectedItem.value = detail.product;
+                searchTerm.value = detail.product.name;
+                itemType.value = 'producto';
             }
+
             if (detail.expirationDate) {
-                const parts = detail.expirationDate.split('-'); // ["31", "10", "2025"]
+                const parts = detail.expirationDate.split('-');
                 const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // JS months: 0-11
+                const month = parseInt(parts[1], 10) - 1;
                 const year = parseInt(parts[2], 10);
                 movementInput.value.expirationDate = new Date(year, month, day);
             } else {
@@ -117,7 +142,7 @@ const fetchMovementInput = async () => {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'No se pudo cargar los insumos',
+            detail: 'No se pudo cargar los datos del item',
             life: 3000,
         });
         console.error(error);
@@ -133,21 +158,37 @@ watch([() => movementInput.value.quantity, () => movementInput.value.totalPrice]
     }
 });
 
-// Función de búsqueda para insumos
+// Función de búsqueda para items (insumos o productos)
 const handleSearch = async () => {
     if (timeoutId.value) clearTimeout(timeoutId.value);
     showResults.value = true;
     timeoutId.value = setTimeout(async () => {
         try {
             if (searchTerm.value.trim()) {
-                const response = await axios.get('/insumo', {
-                    params: { search: searchTerm.value },
-                });
+                let response;
+                
+                if (itemType.value === 'insumo') {
+                    // Búsqueda de insumos
+                    response = await axios.get('/insumo', {
+                        params: {
+                            search: searchTerm.value,
+                            state: 1
+                        },
+                    });
+                } else {
+                    // Búsqueda de productos
+                    response = await axios.get('/producto', {
+                        params: {
+                            search: searchTerm.value
+                        },
+                    });
+                }
+
                 if (response.data && Array.isArray(response.data.data)) {
-                    insumosOptions.value = response.data.data;
+                    itemsOptions.value = response.data.data;
                 }
             } else {
-                insumosOptions.value = [];
+                itemsOptions.value = [];
             }
         } catch (error) {
             console.error('Error en la búsqueda:', error);
@@ -155,63 +196,72 @@ const handleSearch = async () => {
     }, 300);
 };
 
-// Función para seleccionar un insumo de la lista
-const selectInsumo = (insumo: Input) => {
-    selectedInsumo.value = insumo;
-    searchTerm.value = insumo.name;
-    insumosOptions.value = [];
+// Función para seleccionar un item de la lista
+const selectItem = (item: Input | Product) => {
+    selectedItem.value = item;
+    searchTerm.value = item.name;
+    itemsOptions.value = [];
     showResults.value = false;
 };
 
 // Función para limpiar la selección
 const clearSelection = () => {
-    selectedInsumo.value = null;
+    selectedItem.value = null;
     searchTerm.value = '';
-    insumosOptions.value = [];
+    itemsOptions.value = [];
     showResults.value = false;
 };
 
-const searchTerm = ref('');
-const showResults = ref(false);
-const insumosOptions = ref<Input[]>([]);
-const timeoutId = ref<number | null>(null);
-const selectedInsumo = ref<Input | null>(null);
+// Función cuando cambia el tipo de item
+const onItemTypeChange = () => {
+    clearSelection();
+};
 
 function hideDialog() {
     dialogVisible.value = false;
     inputDialog.value = false;
 
     clearSearch();
-    selectedInsumo.value = null; 
-    showResults.value = false; 
+    selectedItem.value = null;
+    showResults.value = false;
+    itemType.value = 'insumo'; // Resetear a insumo por defecto
 }
 
 const saveMovement = async () => {
     loading.value = true;
     try {
-        if (!movementInput.value.batch || !movementInput.value.quantity || !movementInput.value.expirationDate || !movementInput.value.totalPrice || !movementInput.value.unitPrice) {
+        if (!movementInput.value.batch || !movementInput.value.quantity || !movementInput.value.expirationDate || !movementInput.value.totalPrice || !movementInput.value.unitPrice || !selectedItem.value) {
             toast.add({
                 severity: 'error',
                 summary: 'Error',
                 detail: 'Todos los campos son obligatorios.',
                 life: 3000,
             });
-            return; 
+            return;
         }
 
-        const formData = {
+        const formData: any = {
             idMovementInput: movementInput.value.idMovementInput,
-            idInput: selectedInsumo.value ? selectedInsumo.value.id : null,
             quantity: movementInput.value.quantity,
             totalPrice: movementInput.value.totalPrice,
             priceUnit: movementInput.value.unitPrice,
             batch: movementInput.value.batch,
             expirationDate: movementInput.value.expirationDate
                 ? movementInput.value.expirationDate.toISOString().split('T')[0]
-                : null, 
+                : null,
         };
 
-        console.log(formData);
+        // Asignar SOLO el campo correspondiente según el tipo
+        if (itemType.value === 'insumo') {
+            formData.idInput = selectedItem.value.id;
+            delete formData.idProduct;
+        } else {
+            formData.idProduct = selectedItem.value.id;
+            delete formData.idInput;
+        }
+
+        console.log('Datos a actualizar (limpios):', formData);
+        console.log('Tipo de item:', itemType.value);
 
         const response = await axios.put(`/insumos/movimientos/detalle/${props.detailId}`, formData);
 
@@ -219,14 +269,19 @@ const saveMovement = async () => {
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
-                detail: 'Detalle de movimiento actualizado correctamente.',
+                detail: `${itemType.value === 'insumo' ? 'Insumo' : 'Producto'} actualizado correctamente.`,
                 life: 3000,
             });
             emit('updated');
-            hideDialog(); // cerrar modal inmediatamente
+            hideDialog();
 
-            // actualizar kardex en segundo plano sin bloquear
-            updateKardex().catch((err) => console.error(err));
+            // Solo actualizar kardex si es un insumo y hay idInput válido
+            if (itemType.value === 'insumo' && selectedItem.value?.id) {
+                // Ejecutar en segundo plano sin bloquear
+                setTimeout(() => {
+                    updateKardex().catch((err) => console.error('Error en kardex background:', err));
+                }, 100);
+            }
         } else {
             toast.add({
                 severity: 'error',
@@ -235,14 +290,33 @@ const saveMovement = async () => {
                 life: 3000,
             });
         }
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Ocurrió un error al actualizar el detalle del movimiento.',
-            life: 3000,
-        });
-        console.error(error);
+    } catch (error: any) {
+        // Manejo de errores mejorado
+        if (error.response && error.response.data && error.response.data.message) {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.response.data.message,
+                life: 3000,
+            });
+        } else if (error.response && error.response.data && error.response.data.errors) {
+            const errors = error.response.data.errors;
+            const errorMessages = Object.values(errors).flat().join(', ');
+            toast.add({
+                severity: 'error',
+                summary: 'Error de validación',
+                detail: errorMessages,
+                life: 5000,
+            });
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Ocurrió un error al actualizar el detalle del movimiento.',
+                life: 3000,
+            });
+        }
+        console.error('Error completo:', error);
     } finally {
         loading.value = false;
     }
@@ -251,7 +325,7 @@ const saveMovement = async () => {
 const updateKardex = async () => {
     try {
         const idMovementInput = movementInput.value.idMovementInput;
-        const idInput = selectedInsumo.value ? selectedInsumo.value.id : null;
+        const idInput = selectedItem.value ? selectedItem.value.id : null;
 
         const response = await axios.get(`/insumos/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
         const id = response.data.data[0].id;
@@ -276,53 +350,89 @@ const updateKardex = async () => {
 <template>
     <Dialog
         v-model:visible="dialogVisible"
-        header="Editar Movimiento de Insumo"
+        header="Editar Movimiento de Item"
         modal
         :closable="true"
         :closeOnEscape="true"
         :style="{ width: '500px' }"
-          @hide="hideDialog" 
+        @hide="hideDialog"
     >
-           <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-6">
+            <!-- Selector de Tipo -->
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-12">
+                    <label class="mb-2 block font-bold">Tipo de Item <span class="text-red-500">*</span></label>
+                    <div class="flex gap-4">
+                        <div class="flex items-center">
+                            <RadioButton 
+                                v-model="itemType" 
+                                inputId="edit-insumo" 
+                                name="editItemType" 
+                                value="insumo" 
+                                @change="onItemTypeChange"
+                            />
+                            <label for="edit-insumo" class="ml-2">Insumo</label>
+                        </div>
+                        <div class="flex items-center">
+                            <RadioButton 
+                                v-model="itemType" 
+                                inputId="edit-producto" 
+                                name="editItemType" 
+                                value="producto" 
+                                @change="onItemTypeChange"
+                            />
+                            <label for="edit-producto" class="ml-2">Producto</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Búsqueda de Items -->
             <div class="relative w-full">
-                <!-- InputText para búsqueda -->
-<InputText v-model="searchTerm" @input="handleSearch" placeholder="Buscar insumo..." class="w-full" />
+                <InputText 
+                    v-model="searchTerm" 
+                    @input="handleSearch" 
+                    :placeholder="itemType === 'insumo' ? 'Buscar insumo...' : 'Buscar producto...'" 
+                    class="w-full" 
+                />
 
                 <!-- Resultados del autocompletado -->
                 <div
-                    v-if="showResults && insumosOptions.length > 0"
+                    v-if="showResults && itemsOptions.length > 0"
                     class="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-lg"
                 >
                     <div
-                        v-for="insumo in insumosOptions"
-                        :key="insumo.id"
-                        @click="selectInsumo(insumo)"
+                        v-for="item in itemsOptions"
+                        :key="item.id"
+                        @click="selectItem(item)"
                         class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                     >
                         <div class="flex flex-col">
-                            <span class="font-semibold text-gray-800">{{ insumo.id }} - {{ insumo.name }}</span>
-                            <span class="text-sm text-gray-600">{{ insumo.quantityUnitMeasure }}{{ insumo.unitMeasure }}</span>
+                            <span class="font-semibold text-gray-800">{{ item.id }} - {{ item.name }}</span>
+                            <span class="text-sm text-gray-600">
+                                {{ item.quantityUnitMeasure }} {{ item.unitMeasure }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Mensaje de no encontrados -->
                 <div
-                    v-if="showResults && searchTerm && insumosOptions.length === 0"
+                    v-if="showResults && searchTerm && itemsOptions.length === 0"
                     class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg"
                 >
                     No se encontraron resultados
                 </div>
             </div>
 
-            <!-- Insumo seleccionado -->
-            <div v-if="selectedInsumo" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
-                <span class="font-medium text-primary-800"
-                    >{{ selectedInsumo.id }} - {{ selectedInsumo.name }} - {{ selectedInsumo.quantityUnitMeasure
-                    }}{{ selectedInsumo.unitMeasure }}</span
-                >
+            <!-- Item seleccionado -->
+            <div v-if="selectedItem" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
+                <span class="font-medium text-primary-800">
+                    {{ selectedItem.id }} - {{ selectedItem.name }} - {{ selectedItem.quantityUnitMeasure }} {{ selectedItem.unitMeasure }}
+                </span>
                 <Button icon="pi pi-times" @click="clearSelection" />
             </div>
+
             <!-- Número de Lote -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
@@ -359,7 +469,7 @@ const updateKardex = async () => {
                         required
                         :min="0"
                         mode="decimal"
-                        :minFractionDigits="2" 
+                        :minFractionDigits="2"
                         :maxFractionDigits="2"
                         class="w-full"
                         :class="{ 'p-invalid': serverErrors.totalPrice }"
@@ -378,7 +488,7 @@ const updateKardex = async () => {
         </div>
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-            <Button label="Guardar" icon="pi pi-check" @click="saveMovement" />
+            <Button label="Guardar" icon="pi pi-check" @click="saveMovement" :loading="loading" />
         </template>
     </Dialog>
 </template>

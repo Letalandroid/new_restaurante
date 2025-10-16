@@ -10,8 +10,9 @@ class CreateDetailMovementsInputsTable extends Migration
     {
         Schema::create('detail_movements_inputs', function (Blueprint $table) {
             $table->id(); // id
-            $table->foreignId('idMovementInput')->nullable()->constrained('movementsInput'); // Puede ser nulo
-            $table->foreignId('idInput')->constrained('inputs'); // No puede ser nulo
+            $table->foreignId('idMovementInput')->nullable()->constrained('movementsInput');
+            $table->foreignId('idInput')->nullable()->constrained('inputs');
+            $table->foreignId('idProduct')->nullable()->constrained('products'); // Puede ser nulo
             $table->decimal('quantity', 10, 2); // No puede ser nulo
             $table->decimal('totalPrice', 10, 2)->nullable(); // Puede ser nulo
             $table->decimal('priceUnit', 10, 2)->nullable(); // Puede ser nulo

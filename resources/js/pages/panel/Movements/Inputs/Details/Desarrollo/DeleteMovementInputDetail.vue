@@ -11,10 +11,16 @@ interface Input {
     name: string;
 }
 
+interface Product {
+    id: number;
+    name: string;
+}
+
 interface MovementInput {
     id: number;
     idMovementInput: number;
-    input: Input;
+    input: Input | null;
+    product: Product | null;
 }
 
 const props = defineProps<{
@@ -43,25 +49,44 @@ function closeDialog(): void {
     emit('update:visible', false);
 }
 
+// Función para obtener el nombre del item
+function getItemName(): string {
+    if (!props.movementInput) return '';
+    return props.movementInput.input?.name || props.movementInput.product?.name || '';
+}
+
+// Función para obtener el tipo de item
+function getItemType(): string {
+    if (!props.movementInput) return '';
+    if (props.movementInput.input) return 'insumo';
+    if (props.movementInput.product) return 'producto';
+    return '';
+}
+
 async function deleteInput(): Promise<void> {
     if (!props.movementInput) return;
-    console.log('ID a eliminar:', props.movementInput.id);  // Verifica que el ID es correcto
+    console.log('ID a eliminar:', props.movementInput.id);
 
     try {
         await axios.delete(`/insumos/movimientos/detalle/${props.movementInput.id}`);
-        deleteInputKardex();
+        
+        // Solo eliminar del kardex si es un insumo
+        if (getItemType() === 'insumo') {
+            deleteInputKardex();
+        }
+        
         emit('deleted');
         closeDialog();
         toast.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: 'Movimiento de Insumo eliminado correctamente',
+            detail: `${getItemType() === 'insumo' ? 'Insumo' : 'Producto'} eliminado correctamente del movimiento`,
             life: 3000
         });
 
     } catch (error: any) {
         console.error(error);
-        let errorMessage = 'Error al eliminar el movimiento de insumo';
+        let errorMessage = `Error al eliminar el ${getItemType() === 'insumo' ? 'insumo' : 'producto'} del movimiento`;
         if (error.response?.data?.message) {
             errorMessage = error.response.data.message;
         }
@@ -72,7 +97,7 @@ async function deleteInput(): Promise<void> {
 async function deleteInputKardex(): Promise<void> {
     if (!props.movementInput) return;
     const { idMovementInput } = props.movementInput;  
-    const idInput = props.movementInput.input.id;   
+    const idInput = props.movementInput.input?.id;   
 
     try {
         const response = await axios.get(`/insumos/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
@@ -98,7 +123,11 @@ async function deleteInputKardex(): Promise<void> {
     <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
-            <span v-if="movementInput">¿Estás seguro de eliminar el insumo <b>{{ movementInput.input.name }}</b> del movimiento?</span>
+            <span v-if="movementInput">
+                ¿Estás seguro de eliminar el 
+                <b>{{ getItemType() === 'insumo' ? 'insumo' : 'producto' }} {{ getItemName() }}</b> 
+                del movimiento?
+            </span>
         </div>
         <template #footer>
             <Button label="No" icon="pi pi-times" text @click="closeDialog" />

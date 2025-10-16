@@ -1,50 +1,86 @@
 <template>
     <Toolbar class="mb-6">
         <template #start>
-            <Button label="Nuevo Insumo" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <Button label="Nuevo Item" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
             <Button label="Volver" icon="pi pi-arrow-left" severity="secondary" class="mr-2" @click="goBack" />
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="inputDialog" :style="{ width: '500px' }" header="NUEVO INSUMO" :modal="true">
+    <Dialog v-model:visible="inputDialog" :style="{ width: '500px' }" header="NUEVO SERVICIO" :modal="true" @hide="onDialogHide">
         <div class="flex flex-col gap-6">
+            <!-- Selector de Tipo -->
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-12">
+                    <label class="mb-2 block font-bold">Tipo de Item <span class="text-red-500">*</span></label>
+                    <div class="flex gap-4">
+                        <div class="flex items-center">
+                            <RadioButton 
+                                v-model="itemType" 
+                                inputId="insumo" 
+                                name="itemType" 
+                                value="insumo" 
+                                @change="clearSelection"
+                            />
+                            <label for="insumo" class="ml-2">Insumo</label>
+                        </div>
+                        <div class="flex items-center">
+                            <RadioButton 
+                                v-model="itemType" 
+                                inputId="producto" 
+                                name="itemType" 
+                                value="producto" 
+                                @change="clearSelection"
+                            />
+                            <label for="producto" class="ml-2">Producto</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Búsqueda de Items -->
             <div class="relative w-full">
                 <!-- InputText para búsqueda -->
-                <InputText v-model="searchTerm" @input="handleSearch" placeholder="Buscar insumo..." class="w-full" />
+                <InputText 
+                    v-model="searchTerm" 
+                    @input="handleSearch" 
+                    :placeholder="itemType === 'insumo' ? 'Buscar insumo...' : 'Buscar producto...'" 
+                    class="w-full" 
+                />
 
                 <!-- Resultados del autocompletado -->
                 <div
-                    v-if="showResults && insumosOptions.length > 0"
+                    v-if="showResults && itemsOptions.length > 0"
                     class="absolute z-50 mt-2 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 shadow-lg"
                 >
                     <div
-                        v-for="insumo in insumosOptions"
-                        :key="insumo.id"
-                        @click="selectInsumo(insumo)"
+                        v-for="item in itemsOptions"
+                        :key="item.id"
+                        @click="selectItem(item)"
                         class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                     >
                         <div class="flex flex-col">
-                            <span class="font-semibold text-gray-800">{{ insumo.id }} - {{ insumo.name }}</span>
-                            <span class="text-sm text-gray-600">{{ insumo.quantityUnitMeasure }}{{ insumo.unitMeasure }}</span>
+                            <span class="font-semibold text-gray-800">{{ item.id }} - {{ item.name }}</span>
+                            <span class="text-sm text-gray-600">
+                                {{ item.quantityUnitMeasure }} {{ item.unitMeasure }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Mensaje de no encontrados -->
                 <div
-                    v-if="showResults && searchTerm && insumosOptions.length === 0"
+                    v-if="showResults && searchTerm && itemsOptions.length === 0"
                     class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg"
                 >
                     No se encontraron resultados
                 </div>
             </div>
 
-            <!-- Insumo seleccionado -->
-            <div v-if="selectedInsumo" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
-                <span class="font-medium text-primary-800"
-                    >{{ selectedInsumo.id }} - {{ selectedInsumo.name }} - {{ selectedInsumo.quantityUnitMeasure
-                    }}{{ selectedInsumo.unitMeasure }}</span
-                >
+            <!-- Item seleccionado -->
+            <div v-if="selectedItem" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
+                <span class="font-medium text-primary-800">
+                    {{ selectedItem.id }} - {{ selectedItem.name }} - {{ selectedItem.quantityUnitMeasure }} {{ selectedItem.unitMeasure }}
+                </span>
                 <Button icon="pi pi-times" @click="clearSelection" />
             </div>
             <!-- Número de Lote -->
@@ -114,17 +150,19 @@ import InputDate from 'primevue/datepicker';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
+import RadioButton from 'primevue/radiobutton';
 import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
 import { ref, watch } from 'vue';
 import { router } from '@inertiajs/core';
 
 // Interfaces
-interface Insumo {
+interface Item {
     id: number;
     name: string;
     quantityUnitMeasure: string;
     unitMeasure: string;
+    stock?: number;
 }
 
 interface MovementInput {
@@ -139,7 +177,9 @@ interface MovementInput {
 interface ServerErrors {
     [key: string]: string[];
 }
-
+function onDialogHide(): void {
+    hideDialog();
+}
 const { id } = usePage().props;
 const toast = useToast();
 const inputDialog = ref(false);
@@ -151,9 +191,11 @@ const emit = defineEmits<{
 const serverErrors = ref<ServerErrors>({}); // Para manejar errores de validación
 const searchTerm = ref<string>('');
 const showResults = ref<boolean>(false);
-const insumosOptions = ref<Insumo[]>([]);
+const itemsOptions = ref<Item[]>([]);
 const timeoutId = ref<ReturnType<typeof setTimeout> | null>(null);
-const selectedInsumo = ref<Insumo | null>(null);
+const selectedItem = ref<Item | null>(null);
+const itemType = ref<'insumo' | 'producto'>('insumo');
+
 const movementInput = ref<MovementInput>({
     inputName: '', // Aquí se almacenará el nombre del insumo seleccionado
     batch: '',
@@ -170,25 +212,37 @@ watch([() => movementInput.value.quantity, () => movementInput.value.totalPrice]
     }
 });
 
-// Función de búsqueda para insumos
+// Función de búsqueda para items (insumos o productos)
 const handleSearch = async (): Promise<void> => {
     if (timeoutId.value) clearTimeout(timeoutId.value);
     showResults.value = true;
     timeoutId.value = setTimeout(async () => {
         try {
             if (searchTerm.value.trim()) {
-                const response = await axios.get('/insumo', {
-                    params: {
-                        search: searchTerm.value, // Se pasa el término de búsqueda
-                        state: 1
-                    },
-                });
+                let response;
+                
+                if (itemType.value === 'insumo') {
+                    // Búsqueda de insumos
+                    response = await axios.get('/insumo', {
+                        params: {
+                            search: searchTerm.value,
+                            state: 1
+                        },
+                    });
+                } else {
+                    // Búsqueda de productos
+                    response = await axios.get('/producto', {
+                        params: {
+                            search: searchTerm.value
+                        },
+                    });
+                }
 
                 if (response.data && Array.isArray(response.data.data)) {
-                    insumosOptions.value = response.data.data; // Guardamos los resultados en insumosOptions
+                    itemsOptions.value = response.data.data;
                 }
             } else {
-                insumosOptions.value = []; // Limpiamos los resultados si no hay texto
+                itemsOptions.value = [];
             }
         } catch (error) {
             console.error('Error en la búsqueda:', error);
@@ -196,19 +250,19 @@ const handleSearch = async (): Promise<void> => {
     }, 300);
 };
 
-// Función para seleccionar un insumo de la lista
-const selectInsumo = (insumo: Insumo): void => {
-    selectedInsumo.value = insumo; // Asignamos el insumo seleccionado
-    searchTerm.value = insumo.name; // Mostramos el nombre del insumo seleccionado en el input
-    insumosOptions.value = []; // Limpiamos las opciones después de la selección
-    showResults.value = false; // Ocultamos los resultados
+// Función para seleccionar un item de la lista
+const selectItem = (item: Item): void => {
+    selectedItem.value = item;
+    searchTerm.value = item.name;
+    itemsOptions.value = [];
+    showResults.value = false;
 };
 
 // Función para limpiar la selección
 const clearSelection = (): void => {
-    selectedInsumo.value = null;
+    selectedItem.value = null;
     searchTerm.value = '';
-    insumosOptions.value = [];
+    itemsOptions.value = [];
     showResults.value = false;
 };
 
@@ -241,30 +295,85 @@ async function fetchUserId(): Promise<number | null> {
 
 const saveMovement = async (): Promise<void> => {
     try {
+        // Validación frontend
+        if (!selectedItem.value) {
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: 'Por favor seleccione un item', 
+                life: 3000 
+            });
+            return;
+        }
+
         const expirationDate = new Date(movementInput.value.expirationDate!);
 
+        // Preparar datos base
+        const requestData: any = {
+            idMovementInput: id,
+            quantity: movementInput.value.quantity,
+            totalPrice: movementInput.value.totalPrice,
+            priceUnit: movementInput.value.unitPrice,
+            batch: movementInput.value.batch,
+            expirationDate: expirationDate,
+        };
+
+        // Asignar SOLO el campo correspondiente según el tipo (NO enviar el otro campo)
+        if (itemType.value === 'insumo') {
+            requestData.idInput = selectedItem.value?.id;
+            // NO enviar idProduct cuando es insumo
+        } else {
+            requestData.idProduct = selectedItem.value?.id;
+            // NO enviar idInput cuando es producto
+        }
+
         // Enviar los datos al backend
-        const response = await axios.post('/insumos/movimientos/detalle', {
-            idMovementInput: id, // ID del movimiento
-            idInput: selectedInsumo.value?.id, // ID del insumo
-            quantity: movementInput.value.quantity, // Cantidad
-            totalPrice: movementInput.value.totalPrice, // Precio total
-            priceUnit: movementInput.value.unitPrice, // Precio unitario
-            batch: movementInput.value.batch, // Lote
-            expirationDate: expirationDate, // Fecha de vencimiento
-        });
+        const response = await axios.post('/insumos/movimientos/detalle', requestData);
 
         if (response.data.state) {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Insumo agregado correctamente al Movimiento', life: 3000 });
+            toast.add({ 
+                severity: 'success', 
+                summary: 'Éxito', 
+                detail: `${itemType.value === 'insumo' ? 'Insumo' : 'Producto'} agregado correctamente al Movimiento`, 
+                life: 3000 
+            });
             emit('movementsinputAgregado');
-            // Aquí pasas los valores correctos de totalPrice y idInput a la función enviarkardexinputs
-            enviarkardexinputs(selectedInsumo.value!.id, movementInput.value.totalPrice!); 
+            
+            // Solo registrar en kardex si es un insumo
+            if (itemType.value === 'insumo') {
+                enviarkardexinputs(selectedItem.value!.id, movementInput.value.totalPrice!); 
+            }
+            
             hideDialog();
         }
-    } catch (error) {
-        // Manejo de errores
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un error al guardar los datos', life: 3000 });
-        console.error(error);
+    } catch (error: any) {
+        // Manejo de errores mejorado
+        if (error.response && error.response.data && error.response.data.message) {
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: error.response.data.message, 
+                life: 3000 
+            });
+        } else if (error.response && error.response.data && error.response.data.errors) {
+            // Mostrar errores de validación específicos
+            const errors = error.response.data.errors;
+            const errorMessages = Object.values(errors).flat().join(', ');
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error de validación', 
+                detail: errorMessages, 
+                life: 5000 
+            });
+        } else {
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: 'Hubo un error al guardar los datos', 
+                life: 3000 
+            });
+        }
+        console.error('Error completo:', error);
     }
 };
 
@@ -321,7 +430,8 @@ function hideDialog(): void {
         unitPrice: '',
     };
     clearSearch();
-    selectedInsumo.value = null;
+    selectedItem.value = null;
+    itemType.value = 'insumo'; // Resetear a insumo por defecto
 }
 const clearSearch = (): void => {
     searchTerm.value = ''; // Vaciar el campo de búsqueda
