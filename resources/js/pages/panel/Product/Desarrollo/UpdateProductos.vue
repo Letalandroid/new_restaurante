@@ -115,7 +115,7 @@ const fetchProducto = async (): Promise<void> => {
 
         // 🔹 Solo asigna preview si realmente tiene imagen
         if (p.foto && p.foto !== 'sin imagen') {
-            imagePreview.value = `/uploads/fotos/productos/${p.foto}`;
+            imagePreview.value = `/storage/uploads/fotos/productos/${p.foto}`;
         }
 
     } catch (error) {

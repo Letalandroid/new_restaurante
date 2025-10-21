@@ -102,7 +102,7 @@ watch(
 const fetchMovementInput = async () => {
     loading.value = true;
     try {
-        const { data } = await axios.get(`/insumos/movimientos/detalle/${props.movementInputId}`);
+        const { data } = await axios.get(`/items/movimientos/detalle/${props.movementInputId}`);
 
         // Buscar solo el detalle que quieres editar
         const detail = data.data.find((item: MovementInputDetail) => item.id === props.detailId);
@@ -263,7 +263,7 @@ const saveMovement = async () => {
         console.log('Datos a actualizar (limpios):', formData);
         console.log('Tipo de item:', itemType.value);
 
-        const response = await axios.put(`/insumos/movimientos/detalle/${props.detailId}`, formData);
+        const response = await axios.put(`/items/movimientos/detalle/${props.detailId}`, formData);
 
         if (response.data.state) {
             toast.add({
@@ -327,7 +327,7 @@ const updateKardex = async () => {
         const idMovementInput = movementInput.value.idMovementInput;
         const idInput = selectedItem.value ? selectedItem.value.id : null;
 
-        const response = await axios.get(`/insumos/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
+        const response = await axios.get(`/items/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
         const id = response.data.data[0].id;
 
         const formDataKardex = {
@@ -338,7 +338,7 @@ const updateKardex = async () => {
 
         console.log(formDataKardex); 
 
-        await axios.put(`/insumos/karde/${id}`, formDataKardex);
+        await axios.put(`/items/karde/${id}`, formDataKardex);
     } catch (error) {
         console.error(error);
     }

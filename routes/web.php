@@ -111,10 +111,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/platos', [DishesWebController::class, 'index'])->name('index.view');
     Route::get('/mesas', [TableWebController::class, 'index'])->name('index.view');
     Route::get('/insumos', [InputWebController::class, 'index'])->name('index.view');
-    Route::get('/insumos/movimientos', action: [MovementInputsWebController::class, 'index'])->name('index.view');
+    Route::get('/items/movimientos', action: [MovementInputsWebController::class, 'index'])->name('index.view');
     Route::get('/roles', [UsuarioWebController::class, 'roles'])->name('roles.view');
-    Route::get(uri: '/insumos/movimientos/detalles/{id}', action: [MovementInputDetailWebController::class, 'index'])->name('index.view');
-    Route::get('/insumos/kardex', [MovementInputKardexWebController::class, 'index'])->name('index.view');
+    Route::get(uri: '/items/movimientos/detalles/{id}', action: [MovementInputDetailWebController::class, 'index'])->name('index.view');
+    Route::get('/items/kardex', [MovementInputKardexWebController::class, 'index'])->name('index.view');
     Route::get('/ordenes', [OrdersWebController::class, 'index'])->name('index.view');
     Route::get('/ordenes/mesas', [OrdersTablesWebController::class, 'index'])->name('index.view');
     Route::get('/caja/aperturar', [CajaWebController::class, 'aperturar'])->name('caja.aperturar');
@@ -205,16 +205,16 @@ Route::prefix('insumos')->group(function () {
 });
 
 
-    // INSUMOS -> MOVIMIENTOS (BACKEND)
-    Route::prefix('insumos/movimiento')->group(function () {
+    // ITEMS -> MOVIMIENTOS (BACKEND)
+    Route::prefix('items/movimiento')->group(function () {
         Route::get('/', [MovementInputController::class, 'index'])->name('movimientos.index');
         Route::post('/', [MovementInputController::class, 'store'])->name('movimientos.store');
         Route::get('{movementInput}', [MovementInputController::class, 'show'])->name('movimientos.show');
         Route::put('{movementInput}', [MovementInputController::class, 'update'])->name('movimientos.update');
         Route::delete('{movementInput}', [MovementInputController::class, 'destroy'])->name('movimientos.destroy');
     });
-    // INSUMOS -> MOVIMIENTOS -> DETALLES (BACKEND)
-    Route::prefix('insumos/movimientos/detalle')->group(function () {
+    // ITEMS -> MOVIMIENTOS -> DETALLES (BACKEND)
+    Route::prefix('items/movimientos/detalle')->group(function () {
         Route::get('{id}', [MovementInputDetailController::class, 'index'])->name('movimientosinput.index');
         Route::delete('{id}', [MovementInputDetailController::class, 'destroy'])->name('movimientosinput.destroy');
         Route::put('{MovementInputDetail}', [MovementInputDetailController::class, 'update'])->name('movimientosinput.update');
@@ -222,7 +222,7 @@ Route::prefix('insumos')->group(function () {
     });
 
   // INSUMOS -> KARDEX  (BACKEND)
-    Route::prefix('insumos/karde')->group(function () {
+    Route::prefix('items/karde')->group(function () {
         Route::get('/', [MovementInputKardexController::class, 'index'])->name('kardexinput.index');
         Route::post('/', [MovementInputKardexController::class, 'store'])->name('kardexinput.store');
         Route::get('{kardexInput}', action: [MovementInputKardexController::class, 'show'])->name('kardexinput.show');

@@ -20,7 +20,7 @@ use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller{
-    private $uploadPath = 'uploads/fotos/productos';
+    private $uploadPath = 'storage/uploads/fotos/productos';
     public function index(Request $request){
         Gate::authorize('viewAny', Product::class);
         $perPage = $request->input('per_page', 15);
@@ -125,6 +125,13 @@ class ProductController extends Controller{
     }
     public function destroy(Product $product){
         Gate::authorize('delete', $product);
+        if($product->tieneRelaciones())
+        {
+            return response()->json([
+                'state'=>false,
+                'message'=> 'No se puede eliminar este producto porque tiene relaciones con otros registros.'
+            ],400);
+        }
         // Construir la ruta completa de la foto
         $fotoPath = $product->foto ? public_path($this->uploadPath . '/' . $product->foto) : null;
 

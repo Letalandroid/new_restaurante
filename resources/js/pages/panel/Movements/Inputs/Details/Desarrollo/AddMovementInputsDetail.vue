@@ -271,7 +271,7 @@ function openNew(): void {
 }
 
 function goBack(): void {
-    const url = `/insumos/movimientos`;
+    const url = `/items/movimientos`;
     router.visit(url);
 }
 
@@ -328,7 +328,7 @@ const saveMovement = async (): Promise<void> => {
         }
 
         // Enviar los datos al backend
-        const response = await axios.post('/insumos/movimientos/detalle', requestData);
+        const response = await axios.post('/items/movimientos/detalle', requestData);
 
         if (response.data.state) {
             toast.add({ 
@@ -387,7 +387,7 @@ const enviarkardexinputs = async (idInput: number, totalPrice: number): Promise<
 
     try {
         // Obtener los detalles del movimiento de insumo
-        const movementResponse = await axios.get(`/insumos/movimientos/detalle/${id}`);
+        const movementResponse = await axios.get(`/items/movimientos/detalle/${id}`);
         
         // Extraer el code y payment_type desde el movimiento
         const movementInputResponse = movementResponse.data.data[0].movementInput;
@@ -406,7 +406,7 @@ const enviarkardexinputs = async (idInput: number, totalPrice: number): Promise<
         };
 
         // Enviar los datos para registrar el Kardex
-        const response = await axios.post('/insumos/karde', movementDataKardex);
+        const response = await axios.post('/items/karde', movementDataKardex);
         console.log('Kardex registrado correctamente:', response.data);
     } catch (error: any) {
         console.error('Error al registrar el kardex:', error);

@@ -115,9 +115,9 @@ async function obtenerInsumosPorPedido(idOrder: number) {
                     // Imprimimos los datos antes de enviarlos a la API kardex
                     console.log('Datos a insertar en kardex_inputs:', kardexInput);
 
-                    // Enviamos el objeto a la API /insumos/karde
+                    // Enviamos el objeto a la API /items/karde
                     try {
-                        const response = await axios.post('/insumos/karde', kardexInput);
+                        const response = await axios.post('/items/karde', kardexInput);
                         console.log('Insumo insertado en kardex:', response.data);
                     } catch (error) {
                         console.error('Error al insertar insumo en kardex:', error);
@@ -135,11 +135,11 @@ async function obtenerInsumosPorPedido(idOrder: number) {
                     };
 
                     // Imprimimos los datos antes de enviarlos a la API de movimiento de insumos
-                    console.log('Datos a insertar en /insumos/movimientos/detalle:', movimientoDetalle);
+                    console.log('Datos a insertar en /items/movimientos/detalle:', movimientoDetalle);
 
-                    // Enviamos el objeto a la API /insumos/movimientos/detalle/{idDish}
+                    // Enviamos el objeto a la API /items/movimientos/detalle/{idDish}
                     try {
-                        const detalleResponse = await axios.post(`/insumos/movimientos/detalle`, movimientoDetalle);
+                        const detalleResponse = await axios.post(`/items/movimientos/detalle`, movimientoDetalle);
                         console.log('Detalle de movimiento de insumo insertado:', detalleResponse.data);
                     } catch (error) {
                         console.error('Error al insertar detalle de movimiento de insumo:', error);

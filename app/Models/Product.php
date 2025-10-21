@@ -39,4 +39,12 @@ class Product extends Model
     {
         return $this->belongsTo(Almacen::class, 'idAlmacen');
     }
+    public function MovementDetail(): HasMany {
+        return $this->hasMany(MovementInputDetail::class, 'idProduct');
+    }
+    public function tieneRelaciones(): bool
+    {
+        //se agrega todas las relaciones que existan
+        return $this->MovementDetail()->exists();
+    }
 }

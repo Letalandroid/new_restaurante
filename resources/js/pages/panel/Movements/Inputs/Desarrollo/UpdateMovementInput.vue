@@ -97,7 +97,7 @@ watch(
 const fetchMovementInput = async () => {
     loading.value = true;
     try {
-        const { data } = await axios.get(`/insumos/movimiento/${props.movementInputId}`);
+        const { data } = await axios.get(`/items/movimiento/${props.movementInputId}`);
         const i = data.movement;
         movementInput.value = {
             idmovement: i.id,
@@ -168,17 +168,17 @@ const updateMovementInput = async () => {
 
 
         // Enviar la solicitud PUT
-        const response = await axios.put(`/insumos/movimiento/${props.movementInputId}`, dataToSend);
+        const response = await axios.put(`/items/movimiento/${props.movementInputId}`, dataToSend);
 
         if (response.status === 200) {
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
-                detail: 'Movimiento de insumo actualizado correctamente',
+                detail: 'Movimiento de items actualizado correctamente',
                 life: 3000,
             });
 
-            const url = `/insumos/movimientos/detalles/${props.movementInputId}`;
+            const url = `/items/movimientos/detalles/${props.movementInputId}`;
             router.visit(url);
 
 
@@ -221,7 +221,7 @@ function getIgvStateValueNum(igvState: string): number | null {
 <template>
     <Dialog
         v-model:visible="dialogVisible"
-        header="Editar Movimiento de Insumo"
+        header="Editar Movimiento de Items"
         modal
         :closable="true"
         :closeOnEscape="true"

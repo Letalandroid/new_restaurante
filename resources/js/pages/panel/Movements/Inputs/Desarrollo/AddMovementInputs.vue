@@ -5,7 +5,7 @@
         </template>
     </Toolbar>
 
-     <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Movimiento de Insumo" :modal="true" @hide="resetForm">
+     <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Movimiento de Items" :modal="true" @hide="resetForm">
         <div class="flex flex-col gap-6">
             <!-- Tipo de Documento -->
             <div class="grid grid-cols-12 gap-4">
@@ -244,7 +244,7 @@ async function saveMovement() {
 
     console.log("Datos enviados:", movementData.value); 
 
-    axios.post('/insumos/movimiento', movementData.value)
+    axios.post('/items/movimiento', movementData.value)
         .then(response => {
            
             // Si la solicitud es exitosa
@@ -261,7 +261,7 @@ async function saveMovement() {
 
             // Redirigir a la URL con el ID del nuevo movimiento
             emit('movementsinputAgregado');
-            const url = `/insumos/movimientos/detalles/${movementId}`;
+            const url = `/items/movimientos/detalles/${movementId}`;
             router.visit(url);
 
         })

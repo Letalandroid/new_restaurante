@@ -50,7 +50,7 @@ const loadKardexInputs = async () => {
             end_date: dateRange.value && dateRange.value[1] ? dateRange.value[1].toISOString().split('T')[0] : null,  // Fecha de fin
         };
 
-        const response = await axios.get('/insumos/karde', { params });
+        const response = await axios.get('/items/karde', { params });
         inputs.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
@@ -245,11 +245,11 @@ const downloadPDF = () => {
         scrollable
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Kardexes de Insumos"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Kardexes de Items"
     >
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h4 class="m-0">Kardex de Insumos</h4>
+                <h4 class="m-0">Kardex de Items</h4>
                 <div class="flex flex-wrap gap-2">
                     <div class="flex gap-2">
                         <Calendar 

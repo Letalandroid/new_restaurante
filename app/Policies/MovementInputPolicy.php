@@ -13,7 +13,7 @@ class MovementInputPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('ver facturas insumos');     
+        return $user->can('ver facturas items');     
     }
 
     /**
@@ -21,7 +21,7 @@ class MovementInputPolicy
      */
     public function view(User $user, MovementInput $movementInput): bool
     {
-        return $user->can('ver facturas insumos');
+        return $user->can('ver facturas items');
     }
 
     /**
@@ -29,7 +29,7 @@ class MovementInputPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('crear facturas insumos');
+        return $user->can('crear facturas items');
     }
 
     /**
@@ -37,7 +37,7 @@ class MovementInputPolicy
      */
     public function update(User $user, MovementInput $movementInput): bool
     {
-        return $user->can('editar facturas insumos');
+        return $user->can('editar facturas items');
     }
 
     /**
@@ -45,7 +45,7 @@ class MovementInputPolicy
      */
     public function delete(User $user, MovementInput $movementInput): bool
     {
-        return $user->can('eliminar facturas insumos');
+        return $user->can('eliminar facturas items');
     }
 
     /**

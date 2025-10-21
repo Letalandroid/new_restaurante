@@ -98,7 +98,12 @@ class InputController extends Controller
     public function destroy(Input $input)
     {
         Gate::authorize('delete', $input);
-
+        if ($input->tieneRelaciones()) {
+            return response()->json([
+                'state' => false,
+                'message' => 'No se puede eliminar este almacén porque está relacionado con otros registros.'
+            ], 400);
+        }
         $input->delete();
 
         return response()->json([

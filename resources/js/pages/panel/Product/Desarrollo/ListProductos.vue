@@ -173,7 +173,7 @@ const getFotoUrl = (foto: string) => {
     if (!foto || foto === 'sin imagen') {
         return '/images/placeholder-product.png';
     }
-    return `/uploads/fotos/productos/${foto}`;
+    return `/storage/uploads/fotos/productos/${foto}`;
 };
 
 const editarProducto = (prod: Producto) => {

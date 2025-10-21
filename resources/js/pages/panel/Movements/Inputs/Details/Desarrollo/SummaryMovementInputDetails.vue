@@ -79,17 +79,17 @@ function getMovementType(type: number) {
 // Función para cargar los datos del movimiento desde la API
 async function loadMovementDetails() {
     try {
-        const response = await axios.get(`/insumos/movimiento/${id}`);
+        const response = await axios.get(`/items/movimiento/${id}`);
         if (response.data.state) {
             movement.value = response.data.movement;
         } else {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Movimiento no encontrado.' });
-                        window.location.href = '/insumos/movimientos/';
+                        window.location.href = '/items/movimientos/';
 
         }
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar los datos del movimiento.' });
-                    window.location.href = '/insumos/movimientos/';
+                    window.location.href = '/items/movimientos/';
         console.error(error);
 
     }

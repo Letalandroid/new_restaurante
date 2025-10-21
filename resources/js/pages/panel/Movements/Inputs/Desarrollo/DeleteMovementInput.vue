@@ -43,13 +43,13 @@ function closeDialog(): void {
 
 async function deleteInput(): Promise<void> {
     try {
-        await axios.delete(`/insumos/movimiento/${props.movementInput.id}`);
+        await axios.delete(`/items/movimiento/${props.movementInput.id}`);
         emit('deleted');
         closeDialog();
         toast.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: 'Movimiento de Insumo eliminado correctamente',
+            detail: 'Movimiento de Items eliminado correctamente',
             life: 3000
         });
     } catch (error: any) {
@@ -70,7 +70,7 @@ async function deleteInput(): Promise<void> {
     <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
-            <span v-if="movementInput">¿Estás seguro de eliminar el movimiento de compra de insumo con codigo: <b>{{ movementInput.code }}</b>?</span>
+            <span v-if="movementInput">¿Estás seguro de eliminar el movimiento de compra de items con codigo: <b>{{ movementInput.code }}</b>?</span>
         </div>
         <template #footer>
             <Button label="No" icon="pi pi-times" text @click="closeDialog" />

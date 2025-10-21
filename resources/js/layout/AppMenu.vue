@@ -79,8 +79,8 @@ const model = computed<MenuItem[]>(() => [
         label: 'Movimientos',
         icon: 'pi pi-fw pi-box layout-menuitem-icon',
         items: [
-          hasPermission('ver facturas insumos') && { label: 'Compras de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/movimientos' },
-                    hasPermission('ver kardex insumos') && { label: 'Kardex de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/kardex' },
+          hasPermission('ver facturas items') && { label: 'Compras de Items', icon: 'pi pi-fw pi-users', to: '/items/movimientos' },
+                    hasPermission('ver kardex items') && { label: 'Kardex de Items', icon: 'pi pi-fw pi-users', to: '/items/kardex' },
 
         ].filter(Boolean) as MenuItem[],
       },

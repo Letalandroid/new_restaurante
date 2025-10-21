@@ -1,5 +1,5 @@
 <template>
-    <Head title="Kardex de Insumos" />
+    <Head title="Kardex de Items" />
     <AppLayout>
         <div>
             <template v-if="isLoading">

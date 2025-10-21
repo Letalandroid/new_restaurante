@@ -68,7 +68,7 @@ async function deleteInput(): Promise<void> {
     console.log('ID a eliminar:', props.movementInput.id);
 
     try {
-        await axios.delete(`/insumos/movimientos/detalle/${props.movementInput.id}`);
+        await axios.delete(`/items/movimientos/detalle/${props.movementInput.id}`);
         
         // Solo eliminar del kardex si es un insumo
         if (getItemType() === 'insumo') {
@@ -100,11 +100,11 @@ async function deleteInputKardex(): Promise<void> {
     const idInput = props.movementInput.input?.id;   
 
     try {
-        const response = await axios.get(`/insumos/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
+        const response = await axios.get(`/items/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
         
         const id = response.data.data[0].id;
 
-        const deleteResponse = await axios.delete(`/insumos/karde/${id}`);
+        const deleteResponse = await axios.delete(`/items/karde/${id}`);
         console.log('Respuesta del servidor:', deleteResponse);  // Verifica la respuesta
 
         emit('deleted');

@@ -80,7 +80,7 @@ const loadMovementInputs = async () => {
         };
 
         // Realizamos la solicitud a la API con el 'id' en la URL
-        const response = await axios.get(`/insumos/movimientos/detalle/${id}`, { params });
+        const response = await axios.get(`/items/movimientos/detalle/${id}`, { params });
 
         // Asignamos los datos de la respuesta a la variable reactiva
         movementInputs.value = response.data.data;

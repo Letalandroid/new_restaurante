@@ -184,10 +184,10 @@ const viewMovementDetails = async (movementId: number) => {
   try {
     detailModalVisible.value = true;
 
-    const response = await axios.get(`/insumos/movimiento/${movementId}`);
+    const response = await axios.get(`/items/movimiento/${movementId}`);
     movementDetails.value = response.data.movement;
 
-    const detailsResponse = await axios.get(`/insumos/movimientos/detalle/${movementId}`);
+    const detailsResponse = await axios.get(`/items/movimientos/detalle/${movementId}`);
     movementDetailsDetails.value = detailsResponse.data.data;
     subtotal.value = detailsResponse.data.subtotal;
     igv.value = detailsResponse.data.total_igv;
@@ -216,7 +216,7 @@ const loadMovementInputs = async () => {
       supplier: selectedSupplier.value?.value,
       state: selectedEstadoMovementInput.value?.value ?? '',
     };
-    const response = await axios.get('/insumos/movimiento', { params });
+    const response = await axios.get('/items/movimiento', { params });
     movementInputs.value = response.data.data;
     pagination.value.currentPage = response.data.meta.current_page;
     pagination.value.total = response.data.meta.total;
@@ -293,10 +293,10 @@ const maximized = ref<boolean>(false);
         :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
         :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Movimientos de Insumo">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Movimientos de Items">
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
-                <h4 class="m-0">Movimientos de Insumos</h4>
+                <h4 class="m-0">Movimientos de Items</h4>
                 <div class="flex flex-wrap gap-2">
                     <IconField>
                         <InputIcon>
@@ -414,7 +414,7 @@ const maximized = ref<boolean>(false);
       <hr />
       <!-- CAMBIO: Botones juntos -->
       <div class="p-d-flex p-jc-between">
-        <span>Mostrando 1 a {{ movementDetailsDetails.length }} de {{ movementDetailsDetails.length }} Insumos comprados</span>
+        <span>Mostrando 1 a {{ movementDetailsDetails.length }} de {{ movementDetailsDetails.length }} Items comprados</span>
         <div class="action-buttons">
           <Button label="Imprimir" icon="pi pi-file-pdf" @click="generatePDF" />
           <Button label="Volver" icon="pi pi-arrow-left" @click="closeDetailModal" />
