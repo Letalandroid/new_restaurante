@@ -24,6 +24,8 @@ interface Totales {
   total_orders: number;
   total_dishes: number;
   total_income: string;
+  total_employees: number; // Nuevo campo
+  total_products: number; // Nuevo campo
 }
 
 interface PaymentMethodStats {
@@ -93,12 +95,16 @@ const dashboardData = ref<DashboardData>({
     total_orders: 0,
     total_dishes: 0,
     total_income: '0.00',
+    total_employees: 0, // Inicializar nuevo campo
+    total_products: 0, // Inicializar nuevo campo
   },
   total_in_range: {
     total_customers: 0,
     total_orders: 0,
     total_dishes: 0,
     total_income: '0.00',
+    total_employees: 0, // Inicializar nuevo campo
+    total_products: 0, // Inicializar nuevo campo
   },
   payment_method_stats: {
     Efectivo: 0,
@@ -260,7 +266,7 @@ onMounted(() => {
             </div>
           </div>
           <span class="font-medium text-primary">{{ dashboardData.total_in_range.total_customers }}</span>
-          <span class="text-muted-color"> nuevos filtrados</span>
+          <span class="text-muted-color"> registrados</span>
         </div>
       </div>
 
@@ -286,7 +292,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Comments Card -->
+      <!-- Dishes Card -->
       <div class="col-span-12 lg:col-span-6 xl:col-span-3">
         <div class="card mb-0">
           <div class="mb-4 flex justify-between">
@@ -307,16 +313,50 @@ onMounted(() => {
           <span class="text-muted-color"> filtrados</span>
         </div>
       </div>
-
-      <!-- Revenue Stream Chart -->
-      <div class="col-span-12 xl:col-span-6">
-        <div class="card">
-          <div class="mb-4 text-xl font-semibold">FRECUENCIA DE LOS METODOS DE PAGO</div>
-          <Chart type="bar" :data="paymentMethodChartData" />
+      <!-- Employees Card -->
+      <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+        <div class="card mb-0">
+          <div class="mb-4 flex justify-between">
+            <div>
+              <span class="mb-4 block font-medium text-muted-color">Nº Empleados</span>
+              <div class="text-xl font-medium text-surface-900 dark:text-surface-0">
+                {{ dashboardData.totales.total_employees }}
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-center bg-green-100 rounded-border dark:bg-green-400/10"
+              style="width: 2.5rem; height: 2.5rem"
+            >
+              <i class="pi pi-user !text-xl text-green-500"></i>
+            </div>
+          </div>
+          <span class="font-medium text-primary">{{ dashboardData.total_in_range.total_employees }}</span>
+          <span class="text-muted-color"> registrados</span>
         </div>
       </div>
 
-      <!-- Mesas Frecuentes -->
+      <!-- Products Card -->
+      <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+        <div class="card mb-0">
+          <div class="mb-4 flex justify-between">
+            <div>
+              <span class="mb-4 block font-medium text-muted-color">Nº Productos</span>
+              <div class="text-xl font-medium text-surface-900 dark:text-surface-0">
+                {{ dashboardData.totales.total_products }}
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-center bg-red-100 rounded-border dark:bg-red-400/10"
+              style="width: 2.5rem; height: 2.5rem"
+            >
+              <i class="pi pi-box !text-xl text-red-500"></i>
+            </div>
+          </div>
+          <span class="font-medium text-primary">{{ dashboardData.total_in_range.total_products }}</span>
+          <span class="text-muted-color"> en inventario</span>
+        </div>
+      </div>
+            <!-- Mesas Frecuentes -->
       <div class="col-span-12 xl:col-span-6">
         <div class="card">
           <div class="mb-4 text-xl font-semibold">Mesas Frecuentes</div>
@@ -324,6 +364,13 @@ onMounted(() => {
             <Column field="puesto" header="Puesto" />
             <Column field="tablenum" header="Número de Mesa" />
           </DataTable>
+        </div>
+      </div>
+      <!-- Revenue Stream Chart -->
+      <div class="col-span-12 xl:col-span-6">
+        <div class="card">
+          <div class="mb-4 text-xl font-semibold">FRECUENCIA DE LOS METODOS DE PAGO</div>
+          <Chart type="bar" :data="paymentMethodChartData" />
         </div>
       </div>
     </div>

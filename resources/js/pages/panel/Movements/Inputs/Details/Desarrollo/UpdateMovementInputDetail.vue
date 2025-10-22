@@ -370,6 +370,7 @@ const updateKardex = async () => {
                                 name="editItemType" 
                                 value="insumo" 
                                 @change="onItemTypeChange"
+                                :disabled="true"
                             />
                             <label for="edit-insumo" class="ml-2">Insumo</label>
                         </div>
@@ -380,6 +381,7 @@ const updateKardex = async () => {
                                 name="editItemType" 
                                 value="producto" 
                                 @change="onItemTypeChange"
+                                :disabled="true"
                             />
                             <label for="edit-producto" class="ml-2">Producto</label>
                         </div>
@@ -393,7 +395,8 @@ const updateKardex = async () => {
                     v-model="searchTerm" 
                     @input="handleSearch" 
                     :placeholder="itemType === 'insumo' ? 'Buscar insumo...' : 'Buscar producto...'" 
-                    class="w-full" 
+                    class="w-full"
+                    :disabled="true" 
                 />
 
                 <!-- Resultados del autocompletado -->
@@ -430,7 +433,6 @@ const updateKardex = async () => {
                 <span class="font-medium text-primary-800">
                     {{ selectedItem.id }} - {{ selectedItem.name }} - {{ selectedItem.quantityUnitMeasure }} {{ selectedItem.unitMeasure }}
                 </span>
-                <Button icon="pi pi-times" @click="clearSelection" />
             </div>
 
             <!-- Número de Lote -->
