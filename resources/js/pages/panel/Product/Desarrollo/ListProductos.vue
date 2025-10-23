@@ -33,11 +33,11 @@ interface Producto {
     priceSale?: number;
     quantityUnitMeasure?: number;
     unitMeasure?: string;
-    stock?: number;
     foto?: string;
     creacion?: string;
     actualizacion?: string;
     state?: boolean | number;
+    stock_quantity?: number; // Nuevo campo
 }
 
 interface Pagination {
@@ -89,7 +89,8 @@ const isColumnSelected = (fieldName: string) => {
 
 const optionalColumns = ref<ColumnOption[]>([
     { field: 'details', header: 'Detalles' },
-    { field: 'foto', header: 'Foto' }
+    { field: 'foto', header: 'Foto' },
+    { field: 'stock_quantity', header: 'Stock' } // Nueva columna opcional
 ]);
 
 
@@ -154,8 +155,12 @@ const formatQuantity = (value: number) => {
     }).format(value);
 };
 
+// Nueva función para formatear el stock
 const formatStock = (value: number) => {
-    return new Intl.NumberFormat('es-PE').format(value);
+    return new Intl.NumberFormat('es-PE', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(value);
 };
 
 const getUnitMeasureLabel = (value: string) => {
@@ -195,6 +200,20 @@ function handleProductoDeleted() {
 }
 
 onMounted(loadProductos);
+
+// Función para determinar el color del tag según el nivel de stock
+const getStockSeverity = (stock: number) => {
+    if (stock === 0) return 'danger';
+    if (stock < 10) return 'warning';
+    return 'success';
+};
+
+// Función para obtener la etiqueta del stock
+const getStockLabel = (stock: number) => {
+    if (stock === 0) return 'Sin stock';
+    if (stock < 10) return 'Bajo';
+    return 'Disponible';
+};
 </script>
 
 <template>
@@ -235,6 +254,26 @@ onMounted(loadProductos);
 
         <Column selectionMode="multiple" style="width: 1rem" />
         <Column field="name" header="Nombre" sortable style="min-width: 20rem" />
+        
+        <!-- Columna de Stock (opcional) -->
+        <Column v-if="isColumnSelected('stock_quantity')" field="stock_quantity" header="Stock" sortable style="min-width: 10rem">
+            <template #body="{ data }">
+                <div class="flex items-center gap-2">
+                    <span v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
+                          class="font-semibold text-blue-600">
+                        {{ formatStock(data.stock_quantity) }}
+                    </span>
+                    <span v-else class="text-gray-400">-</span>
+                    
+                    <!-- Indicador visual del nivel de stock -->
+                    <Tag v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
+                         :severity="getStockSeverity(data.stock_quantity)"
+                         :value="getStockLabel(data.stock_quantity)"
+                         class="text-xs" />
+                </div>
+            </template>
+        </Column>
+        
         <Column v-if="isColumnSelected('details')" field="details" header="Detalles" sortable
             style="min-width: 41rem">
         </Column>
@@ -259,16 +298,6 @@ onMounted(loadProductos);
         <Column field="unitMeasure" header="Unidad Medida" sortable style="min-width: 12rem">
             <template #body="{ data }">
                 <span v-if="data.unitMeasure">{{ getUnitMeasureLabel(data.unitMeasure) }}</span>
-                <span v-else class="text-gray-400">-</span>
-            </template>
-        </Column>
-
-        <Column field="stock" header="Stock" sortable style="min-width: 10rem">
-            <template #body="{ data }">
-                <span v-if="data.stock !== undefined && data.stock !== null" 
-                    :class="{ 'text-red-500 font-semibold': data.stock < 10 }">
-                    {{ formatStock(data.stock) }}
-                </span>
                 <span v-else class="text-gray-400">-</span>
             </template>
         </Column>

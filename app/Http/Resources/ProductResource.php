@@ -19,9 +19,9 @@ class ProductResource extends JsonResource{
             'priceSale' => $this->priceSale,
             'quantityUnitMeasure' => $this->quantityUnitMeasure,
             'unitMeasure' => $this->unitMeasure,
-            'stock' => $this->stock,
             'state' => $this->state,
             'foto' => $this->foto ?? 'sin imagen',
+            'stock_quantity' => $this->stock_quantity, // Agregar el stock
             'creacion' => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
             'actualizacion' => Carbon::parse($this->updated_at)->format('d-m-Y H:i:s A'),
       ];

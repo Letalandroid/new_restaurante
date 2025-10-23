@@ -302,22 +302,21 @@ onMounted(() => {
 
                     
                 </div>
-                   <!-- Campo para seleccionar insumos -->
+                <!-- Campo para seleccionar insumos CON BÚSQUEDA -->
                 <div class="col-span-12">
                     <label for="insumos" class="block font-bold mb-3">Insumos</label>
-      <MultiSelect 
-    v-model="plato.insumos" 
-    :options="insumos" 
-    optionLabel="name" 
-    optionValue="id" 
-    placeholder="Seleccionar insumos" 
-    :loading="loadingInsumos" 
-    display="chip" 
-    class="w-full" 
-/>
-
-
-
+                    <MultiSelect 
+                        v-model="plato.insumos" 
+                        :options="insumos" 
+                        optionLabel="name" 
+                        optionValue="id" 
+                        placeholder="Seleccionar insumos" 
+                        :loading="loadingInsumos" 
+                        display="chip" 
+                        class="w-full"
+                        filter
+                        filterPlaceholder="Buscar insumos..."
+                    />
                     <small v-if="submitted && plato.insumos.length === 0" class="text-red-500">Debe seleccionar al menos un insumo.</small>
                     <small v-else-if="serverErrors.insumos" class="text-red-500">{{ serverErrors.insumos[0] }}</small>
                 </div>

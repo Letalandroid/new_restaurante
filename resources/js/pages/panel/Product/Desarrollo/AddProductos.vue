@@ -77,34 +77,6 @@
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
-                <!-- Precio de Venta -->
-                <div class="col-span-6">
-                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
-                    <InputNumber 
-                        v-model="producto.priceSale" 
-                        mode="currency" 
-                        currency="PEN" 
-                        locale="es-PE" 
-                        fluid
-                        :min="0"
-                    />
-                    <small v-if="submitted && producto.priceSale === null" class="text-red-500">El precio de venta es obligatorio.</small>
-                    <small v-else-if="serverErrors.priceSale" class="text-red-500">{{ serverErrors.priceSale[0] }}</small>
-                </div>
-
-                <!-- Stock -->
-                <div class="col-span-6">
-                    <label class="block font-bold mb-2">Stock <span class="text-red-500">*</span></label>
-                    <InputNumber 
-                        v-model="producto.stock" 
-                        fluid
-                        :min="1"
-                        :max="1000000"
-                    />
-                    <small v-if="submitted && producto.stock === null" class="text-red-500">El stock es obligatorio.</small>
-                    <small v-else-if="serverErrors.stock" class="text-red-500">{{ serverErrors.stock[0] }}</small>
-                </div>
-
                 <!-- Cantidad de Medida -->
                 <div class="col-span-6">
                     <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
@@ -133,7 +105,21 @@
                     <small v-if="submitted && !producto.unitMeasure" class="text-red-500">La unidad de medida es obligatoria.</small>
                     <small v-else-if="serverErrors.unitMeasure" class="text-red-500">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-
+                                <!-- Precio de Venta -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.priceSale" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        fluid
+                        :min="0"
+                    />
+                    <small v-if="submitted && producto.priceSale === null" class="text-red-500">El precio de venta es obligatorio.</small>
+                    <small v-else-if="serverErrors.priceSale" class="text-red-500">{{ serverErrors.priceSale[0] }}</small>
+                </div>
+                
                 <!-- Foto -->
                 <div class="col-span-6">
                     <label class="block font-bold mb-2">Foto</label>
@@ -206,7 +192,6 @@ interface Producto {
     priceSale: number | null;
     quantityUnitMeasure: number | null;
     unitMeasure: string;
-    stock: number | null;
     foto: File | null;
 }
 
@@ -238,7 +223,6 @@ const producto = ref<Producto>({
     priceSale: null,
     quantityUnitMeasure: null,
     unitMeasure: '',
-    stock: null,
     foto: null
 });
 
@@ -300,7 +284,6 @@ function resetProducto(): void {
         priceSale: null,
         quantityUnitMeasure: null,
         unitMeasure: '',
-        stock: null,
         foto: null
     };
     imagePreview.value = null;
@@ -358,7 +341,6 @@ function guardarProducto(): void {
     formData.append('priceSale', producto.value.priceSale?.toString() || '');
     formData.append('quantityUnitMeasure', producto.value.quantityUnitMeasure?.toString() || '');
     formData.append('unitMeasure', producto.value.unitMeasure);
-    formData.append('stock', producto.value.stock?.toString() || '');
     
     if (producto.value.foto) {
         formData.append('foto', producto.value.foto);

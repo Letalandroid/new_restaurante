@@ -31,7 +31,7 @@ class ProductController extends Controller{
         $almacen = $request->input('almacen');
 
         $query = app(Pipeline::class)
-            ->send(Product::query()->with(['category', 'almacen']))
+            ->send(Product::query()->with(['category', 'almacen', 'MovementDetail']))
             ->through([
                 new FilterByName($search),
                 new FilterByState($state),

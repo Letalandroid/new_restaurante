@@ -43,30 +43,41 @@
                 </div>
 
                 <!-- Categoría (Dropdown con búsqueda) -->
-                    <div class="col-span-12">
-                        <label for="category" class="block font-bold mb-3">Categoría <span class="text-red-500">*</span></label>
-                        <Dropdown
-                            id="category"
-                            v-model="plato.idCategory"
-                            :options="categories"
-                            optionLabel="label"
-                            optionValue="value"
-                            fluid
-                            placeholder="Seleccionar categoría"
-                            filter
-                            filterBy="label"
-                            filterPlaceholder="Buscar categoria..."
-                            class="w-full"
-                            :loading="loadingCategories"
-                        />
-                        <small v-if="submitted && !plato.idCategory" class="text-red-500">La categoría es obligatoria.</small>
-                        <small v-else-if="serverErrors.idCategory" class="text-red-500">{{ serverErrors.idCategory[0] }}</small>
-                    </div>
+                <div class="col-span-12">
+                    <label for="category" class="block font-bold mb-3">Categoría <span class="text-red-500">*</span></label>
+                    <Dropdown
+                        id="category"
+                        v-model="plato.idCategory"
+                        :options="categories"
+                        optionLabel="label"
+                        optionValue="value"
+                        fluid
+                        placeholder="Seleccionar categoría"
+                        filter
+                        filterBy="label"
+                        filterPlaceholder="Buscar categoria..."
+                        class="w-full"
+                        :loading="loadingCategories"
+                    />
+                    <small v-if="submitted && !plato.idCategory" class="text-red-500">La categoría es obligatoria.</small>
+                    <small v-else-if="serverErrors.idCategory" class="text-red-500">{{ serverErrors.idCategory[0] }}</small>
+                </div>
 
-                <!-- Campo para seleccionar insumos -->
+                <!-- Campo para seleccionar insumos CON BÚSQUEDA -->
                 <div class="col-span-12">
                     <label for="insumos" class="block font-bold mb-3">Insumos</label>
-                    <MultiSelect v-model="plato.insumos" :options="insumos" optionLabel="name" optionValue="id" placeholder="Seleccionar insumos" :loading="loadingInsumos" display="chip" class="w-full" />
+                    <MultiSelect 
+                        v-model="plato.insumos" 
+                        :options="insumos" 
+                        optionLabel="name" 
+                        optionValue="id" 
+                        placeholder="Seleccionar insumos" 
+                        :loading="loadingInsumos" 
+                        display="chip" 
+                        class="w-full"
+                        filter
+                        filterPlaceholder="Buscar insumos..."
+                    />
                     <small v-if="submitted && plato.insumos.length === 0" class="text-red-500">Debe seleccionar al menos un insumo.</small>
                     <small v-else-if="serverErrors.insumos" class="text-red-500">{{ serverErrors.insumos[0] }}</small>
                 </div>

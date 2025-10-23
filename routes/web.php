@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Web\CertificadoWebController;
 use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
+use App\Http\Controllers\Api\ProductStockController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
@@ -329,7 +330,9 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{product}', [ProductController::class, 'update'])->name('Productos.update');
         Route::delete('/{product}', [ProductController::class, 'destroy'])->name('Productos.destroy');
     });
-
+    Route::prefix('productos')->group(function () {
+        Route::get('/con-stock', [ProductStockController::class, 'index'])->name('products.withStock');
+    });
     #CAJAS -> BACKEND
     Route::prefix('caja')->group(function () {
         Route::get('/', [CajaController::class, 'index'])->name('Cajas.index');

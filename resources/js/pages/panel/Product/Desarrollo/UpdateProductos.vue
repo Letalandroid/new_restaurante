@@ -20,7 +20,6 @@ interface Producto {
     priceSale: number | null;
     quantityUnitMeasure: number | null;
     unitMeasure: string;
-    stock: number | null;
     foto: File | null;
 }
 
@@ -63,7 +62,6 @@ const producto = ref<Producto>({
     priceSale: null,
     quantityUnitMeasure: null,
     unitMeasure: '',
-    stock: null,
     foto: null
 });
 
@@ -109,7 +107,6 @@ const fetchProducto = async (): Promise<void> => {
             priceSale: p.priceSale,
             quantityUnitMeasure: p.quantityUnitMeasure,
             unitMeasure: p.unitMeasure,
-            stock: p.stock,
             foto: null
         };
 
@@ -188,7 +185,6 @@ const updateProducto = async (): Promise<void> => {
         formData.append('priceSale', producto.value.priceSale?.toString() || '');
         formData.append('quantityUnitMeasure', producto.value.quantityUnitMeasure?.toString() || '');
         formData.append('unitMeasure', producto.value.unitMeasure);
-        formData.append('stock', producto.value.stock?.toString() || '');
         
         if (producto.value.foto) {
             formData.append('foto', producto.value.foto);
@@ -306,34 +302,6 @@ const updateProducto = async (): Promise<void> => {
                     <small v-if="serverErrors.idAlmacen" class="p-error">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
-                <!-- Precio de Venta -->
-                <div class="col-span-6">
-                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
-                    <InputNumber 
-                        v-model="producto.priceSale" 
-                        mode="currency" 
-                        currency="PEN" 
-                        locale="es-PE" 
-                        fluid
-                        :min="0"
-                        :class="{ 'p-invalid': serverErrors.priceSale }"
-                    />
-                    <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
-                </div>
-
-                <!-- Stock -->
-                <div class="col-span-6">
-                    <label class="block font-bold mb-2">Stock <span class="text-red-500">*</span></label>
-                    <InputNumber 
-                        v-model="producto.stock" 
-                        fluid
-                        :min="1"
-                        :max="1000000"
-                        :class="{ 'p-invalid': serverErrors.stock }"
-                    />
-                    <small v-if="serverErrors.stock" class="p-error">{{ serverErrors.stock[0] }}</small>
-                </div>
-
                 <!-- Cantidad de Medida -->
                 <div class="col-span-6">
                     <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
@@ -362,7 +330,20 @@ const updateProducto = async (): Promise<void> => {
                     />
                     <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-
+                                <!-- Precio de Venta -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
+                    <InputNumber 
+                        v-model="producto.priceSale" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        fluid
+                        :min="0"
+                        :class="{ 'p-invalid': serverErrors.priceSale }"
+                    />
+                    <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
+                </div>
                 <!-- Foto -->
                 <div class="col-span-6">
                     <label class="block font-bold mb-2">Foto</label>

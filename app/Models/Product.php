@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    
     use HasFactory;
 
     protected $fillable = [
@@ -19,7 +18,6 @@ class Product extends Model
         'priceSale',
         'quantityUnitMeasure',
         'unitMeasure',
-        'stock',
         'state',
         'foto',
     ];
@@ -27,9 +25,11 @@ class Product extends Model
     protected $casts = [
         'priceSale' => 'decimal:2',
         'quantityUnitMeasure' => 'decimal:2',
-        'stock' => 'integer',
         'state' => 'boolean',
     ];
+
+    protected $appends = ['stock_quantity']; // Agregar campo calculado
+
     public function category()
     {
         return $this->belongsTo(Category::class, 'idCategory');
@@ -42,6 +42,13 @@ class Product extends Model
     public function MovementDetail(): HasMany {
         return $this->hasMany(MovementInputDetail::class, 'idProduct');
     }
+
+    // Nuevo: Accesor para obtener el stock total
+    public function getStockQuantityAttribute()
+    {
+        return $this->MovementDetail()->sum('quantity');
+    }
+
     public function tieneRelaciones(): bool
     {
         //se agrega todas las relaciones que existan
