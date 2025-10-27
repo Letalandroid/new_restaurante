@@ -52,6 +52,7 @@ use App\Http\Controllers\Web\CertificadoWebController;
 use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
 use App\Http\Controllers\Api\ProductStockController;
+use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
@@ -76,7 +77,7 @@ use App\Http\Controllers\Web\UsuarioWebController;
 use App\Http\Controllers\Web\OrdersTablesWebController;
 use App\Http\Controllers\Web\MovementInputKardexWebController;
 use App\Http\Controllers\Web\MovementInputDetailWebController;
-
+use App\Http\Controllers\Web\ReservationWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -98,6 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/categorias', [CategoryWebController::class, 'index'])->name('index.view');
     Route::get('/proveedores', [SupplierWebController::class, 'index'])->name('index.view');
     Route::get('/presentaciones', [PresentationWebController::class, 'index'])->name('index.view');
+    Route::get('/reservaciones', [ReservationWebController::class, 'index'])->name('index.view');
     Route::get('/clientes', [CustomerWebController::class, 'index'])->name('index.view');
     Route::get('/empleados', [EmployeeWebController::class, 'index'])->name('index.view');
     Route::get('/tipo_clientes', [ClientTypeWebController::class, 'index'])->name('index.view');
@@ -297,11 +299,18 @@ Route::prefix('insumos')->group(function () {
 
     #TIPOS DE CLIENTES -> BACKEND
     Route::prefix('tipo_cliente')->group(function () {
-        Route::get('/', [ClientTypeController::class, 'index'])->name('Tipos_Clientes.index');
         Route::post('/', [ClientTypeController::class, 'store'])->name('Tipos_Clientes.store');
         Route::get('/{clientType}', [ClientTypeController::class, 'show'])->name('Tipos_Clientes.show');
         Route::put('/{clientType}', [ClientTypeController::class, 'update'])->name('Tipos_Clientes.update');
         Route::delete('/{clientType}', [ClientTypeController::class, 'destroy'])->name('Tipos_Clientes.destroy');
+    });
+
+        #RESERVACIONES -> BACKEND
+    Route::prefix('reservacion')->group(function () {
+        Route::get('/', [ReservationController::class, 'index'])->name('reservaciones.index');
+        Route::get('/{reservation}', [ReservationController::class, 'show'])->name('reservaciones.show');
+        Route::put('/{reservation}', [ReservationController::class, 'update'])->name('reservaciones.update');
+        Route::delete('/{reservation}', [ReservationController::class, 'destroy'])->name('reservaciones.destroy');
     });
 
     #TIPOS DE EMPLEADOS -> BACKEND
@@ -461,6 +470,8 @@ Route::prefix('insumos')->group(function () {
 
         Route::post('/register', [RegisteredUserController::class, 'store'])
             ->middleware('guest');
+        Route::get('/tipo_cliente', [ClientTypeController::class, 'index'])->name('Tipos_Clientes.index');
+        Route::post('/reservacionL', [ReservationController::class, 'storeLanding'])->name('reservacionL.storeLanding');
 // Archivos de configuración adicionales
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

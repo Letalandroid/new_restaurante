@@ -18,7 +18,6 @@ use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\DB;
 class ClientTypeController extends Controller{
     public function index(Request $request){
-        Gate::authorize('viewAny', ClientType::class);
         $perPage = $request->input('per_page', 15);
         $search = $request->input('search');
         $state = $request->input('state');
@@ -47,7 +46,6 @@ class ClientTypeController extends Controller{
         ]);
     }
     public function show(ClientType $clientType){
-        Gate::authorize('view', $clientType);
         return response()->json([
             'state' => true,
             'message' => 'Tipo de cliente encontrado',

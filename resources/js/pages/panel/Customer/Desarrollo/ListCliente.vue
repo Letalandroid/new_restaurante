@@ -17,6 +17,9 @@ import { useToast } from 'primevue/usetoast';
 interface Cliente {
     id: number;
     name: string;
+    lastname: string;
+    email: string;
+    phone: string;
     codigo: string;
     Cliente_Tipo?: string;
     creacion?: string;
@@ -173,6 +176,9 @@ onMounted(() => {
 
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
         <Column field="name" header="Nombre" sortable style="min-width: 12rem" />
+        <Column field="lastname" header="Apellido" sortable style="min-width: 12rem" />
+        <Column field="email" header="Email" sortable style="min-width: 15rem" />
+        <Column field="phone" header="Teléfono" sortable style="min-width: 10rem" />
         <Column field="codigo" header="Código" sortable style="min-width: 10rem" />
         <Column field="Cliente_Tipo" header="Tipo de Cliente" sortable style="min-width: 12rem" />
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />

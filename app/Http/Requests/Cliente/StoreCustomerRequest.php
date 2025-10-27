@@ -10,7 +10,10 @@ class StoreCustomerRequest extends FormRequest{
     {
         return [
             'name' => 'required|string|max:150',
-            'codigo' => ['required', 'regex:/^\d{8}$|^\d{11}$/', 'unique:customers,codigo'],
+            'lastname' => 'required|string|max:150',
+            'email' => 'required|email',
+            'phone' => 'required|digits:9',
+            'codigo' => ['required', 'regex:/^\d{8}$|^\d{11}$/'],
             'client_type_id' => 'required|exists:client_types,id',
             'state' => 'required|boolean',
         ];
@@ -21,9 +24,18 @@ class StoreCustomerRequest extends FormRequest{
             'name.string' => 'El nombre debe ser una cadena de texto.',
             'name.max' => 'El nombre no debe exceder los 150 caracteres.',
 
+            'lastname.required' => 'El apellido es obligatorio.',
+            'lastname.string' => 'El apellido debe ser una cadena de texto.',
+            'lastname.max' => 'El apellido no debe exceder los 150 caracteres.',
+
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'El email debe ser una dirección de correo válida.',
+
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.digits' => 'El teléfono debe contener exactamente 9 dígitos.',
+
             'codigo.required' => 'El código es obligatorio.',
             'codigo.regex' => 'El código debe contener exactamente 8/11 números (DNI/RUC).',
-            'codigo.unique' => 'El código ya está en uso.',
 
             'client_type_id.required' => 'El tipo de cliente es obligatorio.',
             'client_type_id.exists' => 'El tipo de cliente seleccionado no es válido.',

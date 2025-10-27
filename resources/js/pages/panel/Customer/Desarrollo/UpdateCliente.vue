@@ -12,6 +12,9 @@ import Dropdown from 'primevue/dropdown';
 interface Cliente {
     id?: number;
     name: string;
+    lastname: string;
+    email: string;
+    phone: string;
     codigo: string;
     client_type_id: number | null;
     state: boolean;
@@ -45,6 +48,9 @@ const serverErrors = ref<ServerErrors>({});
 
 const cliente = ref<Cliente>({
     name: '',
+    lastname: '',
+    email: '',
+    phone: '',
     codigo: '',
     client_type_id: null,
     state: false,
@@ -72,6 +78,9 @@ const fetchCliente = async (): Promise<void> => {
         const data = res.data.customer;
         cliente.value = {
             name: data.name,
+            lastname: data.lastname,
+            email: data.email,
+            phone: data.phone,
             codigo: data.codigo,
             client_type_id: data.client_type_id,
             state: data.state
@@ -100,6 +109,12 @@ const updateCliente = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
+    // Validación de campos requeridos
+    if (!cliente.value.name || !cliente.value.lastname || !cliente.value.email || !cliente.value.phone || !cliente.value.codigo || !cliente.value.client_type_id) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Todos los campos son obligatorios', life: 3000 });
+        return;
+    }
+
     // Validación de longitud de código dependiendo del tipo de cliente
     if (cliente.value.client_type_id === 1 && cliente.value.codigo.length !== 8) { // Persona natural (DNI)
         serverErrors.value.codigo = ['El código debe tener 8 dígitos para persona natural.'];
@@ -115,9 +130,28 @@ const updateCliente = async (): Promise<void> => {
         return;
     }
 
+    // Validación de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cliente.value.email)) {
+        serverErrors.value.email = ['El formato del email no es válido.'];
+        toast.add({ severity: 'error', summary: 'Error', detail: 'El formato del email no es válido.', life: 3000 });
+        return;
+    }
+
+    // Validación de teléfono (9 dígitos)
+    const phoneRegex = /^\d{9}$/;
+    if (!phoneRegex.test(cliente.value.phone)) {
+        serverErrors.value.phone = ['El teléfono debe tener exactamente 9 dígitos.'];
+        toast.add({ severity: 'error', summary: 'Error', detail: 'El teléfono debe tener exactamente 9 dígitos.', life: 3000 });
+        return;
+    }
+
     try {
         const clienteData = {
             name: cliente.value.name,
+            lastname: cliente.value.lastname,
+            email: cliente.value.email,
+            phone: cliente.value.phone,
             codigo: cliente.value.codigo,
             client_type_id: cliente.value.client_type_id,
             state: cliente.value.state
@@ -165,21 +199,79 @@ const onTipoClienteChange = (): void => {
 
         if (cliente.value.client_type_id === 1) {
             codigoMaxLength.value = 8; // Persona natural (DNI)
+            codigoPlaceholder.value = 'Ingrese su número de DNI';
         } else if (cliente.value.client_type_id === 2) {
             codigoMaxLength.value = 11; // Persona jurídica (RUC)
+            codigoPlaceholder.value = 'Ingrese su número de RUC';
         } else {
             // Para otros tipos de clientes, puedes ajustar la longitud y el patrón
             codigoMaxLength.value = 10;
+            codigoPlaceholder.value = 'Ingrese su código';
         }
     }
 };
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Cliente" modal :closable="true" :style="{ width: '600px' }">
+    <Dialog v-model:visible="dialogVisible" header="Editar Cliente" modal :closable="true" :style="{ width: '700px' }">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+                <!-- Campos de nombre y apellido -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model="cliente.name"
+                        required
+                        placeholder="Ingrese el nombre del cliente"
+                        maxlength="150"
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.name }"
+                    />
+                    <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
+                </div>
+
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Apellido <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model="cliente.lastname"
+                        required
+                        placeholder="Ingrese el apellido del cliente"
+                        maxlength="150"
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.lastname }"
+                    />
+                    <small v-if="serverErrors.lastname" class="text-red-500">{{ serverErrors.lastname[0] }}</small>
+                </div>
+
+                <!-- Campos de email y teléfono -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Email <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model="cliente.email"
+                        required
+                        placeholder="Ingrese el email del cliente"
+                        type="email"
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.email }"
+                    />
+                    <small v-if="serverErrors.email" class="text-red-500">{{ serverErrors.email[0] }}</small>
+                </div>
+
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Teléfono <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model="cliente.phone"
+                        required
+                        placeholder="Ingrese el teléfono (9 dígitos)"
+                        maxlength="9"
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.phone }"
+                    />
+                    <small v-if="serverErrors.phone" class="text-red-500">{{ serverErrors.phone[0] }}</small>
+                </div>
+
+                <!-- Código y Estado -->
+                <div class="col-span-8">
                     <label class="block font-bold mb-2">Código <span class="text-red-500">*</span></label>
                     <InputText
                         v-model="cliente.codigo"
@@ -192,25 +284,14 @@ const onTipoClienteChange = (): void => {
                     />
                     <small v-if="serverErrors.codigo" class="text-red-500">{{ serverErrors.codigo[0] }}</small>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-4">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="cliente.state" :binary="true" />
                         <Tag :value="cliente.state ? 'Activo' : 'Inactivo'" :severity="cliente.state ? 'success' : 'danger'" />
                     </div>
                 </div>
-                <div class="col-span-12">
-                    <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
-                    <InputText
-                        v-model="cliente.name"
-                        required
-                        placeholder="Ingrese el nombre correspondiente"
-                        maxlength="150"
-                        fluid
-                        :class="{ 'p-invalid': serverErrors.name }"
-                    />
-                    <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
-                </div>
+                <!-- Tipo de Cliente -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Tipo de Cliente <span class="text-red-500">*</span></label>
                     <Dropdown

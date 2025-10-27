@@ -114,6 +114,7 @@ const model = computed<MenuItem[]>(() => [
   label: 'Reportes y Finanzas',
   items: [
     hasPermission('ver reporte_cajas') && { label: 'Reporte de Caja', icon: 'pi pi-fw pi-file', to: '/reporte-cajas' },
+    hasPermission('ver reservaciones') && { label: 'Reservaciones', icon: 'pi pi-calendar', to: '/reservaciones' },
     // ...otros reportes/finanzas
   ].filter(Boolean) as MenuItem[],
 }

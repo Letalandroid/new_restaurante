@@ -9,10 +9,11 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="clienteDialog" :style="{ width: '600px' }" header="Registro de cliente" :modal="true">
+    <Dialog v-model:visible="clienteDialog" :style="{ width: '700px' }" header="Registro de cliente" :modal="true">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+                <!-- Campos de nombre y apellido -->
+                <div class="col-span-6">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.name"
@@ -25,6 +26,46 @@
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
 
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Apellido <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model.trim="cliente.lastname"
+                        required
+                        placeholder="Ingrese el apellido del cliente"
+                        maxlength="150"
+                        fluid
+                    />
+                    <small v-if="submitted && !cliente.lastname" class="text-red-500">El apellido es obligatorio.</small>
+                    <small v-if="serverErrors.lastname" class="text-red-500">{{ serverErrors.lastname[0] }}</small>
+                </div>
+
+                <!-- Campos de email y teléfono -->
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Email <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model.trim="cliente.email"
+                        required
+                        placeholder="Ingrese el email del cliente"
+                        type="email"
+                        fluid
+                    />
+                    <small v-if="submitted && !cliente.email" class="text-red-500">El email es obligatorio.</small>
+                    <small v-if="serverErrors.email" class="text-red-500">{{ serverErrors.email[0] }}</small>
+                </div>
+
+                <div class="col-span-6">
+                    <label class="block font-bold mb-2">Teléfono <span class="text-red-500">*</span></label>
+                    <InputText
+                        v-model.trim="cliente.phone"
+                        required
+                        placeholder="Ingrese el teléfono (9 dígitos)"
+                        maxlength="9"
+                        fluid
+                    />
+                    <small v-if="submitted && !cliente.phone" class="text-red-500">El teléfono es obligatorio.</small>
+                    <small v-if="serverErrors.phone" class="text-red-500">{{ serverErrors.phone[0] }}</small>
+                </div>
+
                 <div class="col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
@@ -34,7 +75,7 @@
                     <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                 </div>
 
-                <div class="col-span-12">
+                <div class="col-span-10">
                     <label class="block font-bold mb-2">Tipo de Cliente <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="cliente.client_type_id"
@@ -91,6 +132,9 @@ import ToolsCustomer from './toolsCustomer.vue';
 
 interface Cliente {
     name: string;
+    lastname: string;
+    email: string;
+    phone: string;
     codigo: string;
     client_type_id: number | null;
     state: boolean;
@@ -113,6 +157,9 @@ const emit = defineEmits(['cliente-agregado']);
 
 const cliente = ref<Cliente>({
     name: '',
+    lastname: '',
+    email: '',
+    phone: '',
     codigo: '',
     client_type_id: null,
     state: true
@@ -149,6 +196,9 @@ function onTipoClienteChange(): void {
 function resetCliente(): void {
     cliente.value = {
         name: '',
+        lastname: '',
+        email: '',
+        phone: '',
         codigo: '',
         client_type_id: null,
         state: true
@@ -182,7 +232,7 @@ function guardarCliente(): void {
     submitted.value = true;
     serverErrors.value = {};
 
-    if (!cliente.value.name || !cliente.value.codigo || !cliente.value.client_type_id) return;
+    if (!cliente.value.name || !cliente.value.lastname || !cliente.value.email || !cliente.value.phone || !cliente.value.codigo || !cliente.value.client_type_id) return;
 
     axios.post('/cliente', cliente.value)
         .then(() => {
