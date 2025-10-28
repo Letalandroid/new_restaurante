@@ -14,6 +14,7 @@ class KardexInput extends Model
     protected $fillable = [
         'idUser',
         'idInput',
+        'idProduct',
         'idMovementInput',
         'movement_type',
         'totalPrice',
@@ -34,13 +35,26 @@ class KardexInput extends Model
 {
     return $this->belongsTo(Input::class, 'idInput');
 }
+
+   public function Product()
+{
+    return $this->belongsTo(Product::class, 'idProduct');
+}
   
 public function getQuantity()
     {
-        // Obtener la cantidad de detail_movements_inputs basado en idMovementInput e idInput
-        return DB::table('detail_movements_inputs')
-            ->where('idMovementInput', $this->idMovementInput)
-            ->where('idInput', $this->idInput)
-            ->sum('quantity');  // Sumamos la cantidad de todos los registros coincidentes
+        $query = DB::table('detail_movements_inputs')
+            ->where('idMovementInput', $this->idMovementInput);
+
+        // Si es un Input, buscar por idInput
+        if ($this->idInput) {
+            $query->where('idInput', $this->idInput);
+        }
+        // Si es un Product, buscar por idProduct
+        elseif ($this->idProduct) {
+            $query->where('idProduct', $this->idProduct);
+        }
+
+        return $query->sum('quantity');
     }
 }

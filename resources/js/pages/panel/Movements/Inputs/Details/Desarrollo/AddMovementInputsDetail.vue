@@ -321,10 +321,10 @@ const saveMovement = async (): Promise<void> => {
         // Asignar SOLO el campo correspondiente según el tipo (NO enviar el otro campo)
         if (itemType.value === 'insumo') {
             requestData.idInput = selectedItem.value?.id;
-            // NO enviar idProduct cuando es insumo
+            // NO enviar idProduct
         } else {
             requestData.idProduct = selectedItem.value?.id;
-            // NO enviar idInput cuando es producto
+            // NO enviar idInput
         }
 
         // Enviar los datos al backend
@@ -340,9 +340,11 @@ const saveMovement = async (): Promise<void> => {
             emit('movementsinputAgregado');
             
             // Solo registrar en kardex si es un insumo
-            if (itemType.value === 'insumo') {
-                enviarkardexinputs(selectedItem.value!.id, movementInput.value.totalPrice!); 
-            }
+            enviarkardexinputs(
+                itemType.value === 'insumo' ? selectedItem.value!.id : null,
+                itemType.value === 'producto' ? selectedItem.value!.id : null,
+                movementInput.value.totalPrice!
+            ); 
             
             hideDialog();
         }
@@ -377,7 +379,7 @@ const saveMovement = async (): Promise<void> => {
     }
 };
 
-const enviarkardexinputs = async (idInput: number, totalPrice: number): Promise<void> => {
+const enviarkardexinputs = async (idInput: number | null, idProduct: number | null, totalPrice: number): Promise<void> => {
     const userId = await fetchUserId(); // Esperar a obtener el user_id
 
     if (!userId) {
@@ -400,20 +402,32 @@ const enviarkardexinputs = async (idInput: number, totalPrice: number): Promise<
         const movementDataKardex = {
             idUser: userId,
             idInput: idInput, // Recibido como parámetro
+            idProduct: idProduct,
             idMovementInput: id, // Asegúrate de que este id esté correctamente definido
             movement_type: "0", // Asegúrate de que movement_type esté presente en el movimiento
             totalPrice: totalPrice, // Recibido como parámetro
         };
-
+        if (idInput !== null) {
+            movementDataKardex.idInput = idInput;
+        } else if (idProduct !== null) {
+            movementDataKardex.idProduct = idProduct;
+        }
         // Enviar los datos para registrar el Kardex
         const response = await axios.post('/items/karde', movementDataKardex);
-        console.log('Kardex registrado correctamente:', response.data);
+        if (response.data.state) {
+            console.log('Kardex registrado correctamente:', response.data);
+        } else {
+            console.error('Error en respuesta del kardex:', response.data);
+        }
     } catch (error: any) {
         console.error('Error al registrar el kardex:', error);
-        if (error.response && error.response.data && error.response.data.errors) {
-            console.error('Errores de validación:', error.response.data.errors);
-        } else {
-            console.error('Error desconocido:', error);
+        if (error.response && error.response.data && error.response.data.message) {
+            toast.add({ 
+                severity: 'error', 
+                summary: 'Error en Kardex', 
+                detail: error.response.data.message, 
+                life: 5000 
+            });
         }
     }
 };

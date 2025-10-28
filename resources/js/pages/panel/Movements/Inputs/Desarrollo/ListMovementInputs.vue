@@ -184,26 +184,61 @@ const viewMovementDetails = async (movementId: number) => {
   try {
     detailModalVisible.value = true;
 
+    // 1. Obtener datos del movimiento principal
     const response = await axios.get(`/items/movimiento/${movementId}`);
     movementDetails.value = response.data.movement;
 
+    //Extraer valores numéricos de los strings con formato
+    if (response.data.movement) {
+      const movement = response.data.movement;
+      
+      // Convertir "S/.1,300.00" → 1300.00
+      subtotal.value = extractNumberFromCurrency(movement.sub);
+      igv.value = extractNumberFromCurrency(movement.igv);
+      total.value = extractNumberFromCurrency(movement.total);
+    }
+
+    // 2. Obtener detalles de los items
     const detailsResponse = await axios.get(`/items/movimientos/detalle/${movementId}`);
     movementDetailsDetails.value = detailsResponse.data.data;
-    subtotal.value = detailsResponse.data.subtotal;
-    igv.value = detailsResponse.data.total_igv;
-    total.value = detailsResponse.data.total;
+
+    console.log('Datos del movimiento:', {
+      movement: response.data.movement,
+      subtotal: subtotal.value,
+      igv: igv.value,
+      total: total.value,
+      details: detailsResponse.data.data
+    });
+
   } catch (error) {
     console.error('Error al cargar los detalles del movimiento:', error);
   }
+};
+
+//Extraer número de string con formato de moneda
+const extractNumberFromCurrency = (currencyString: string): number => {
+  if (!currencyString) return 0;
+  
+  // Remover "S/.", comas y espacios, luego convertir a número
+  const numericString = currencyString
+    .replace('S/.', '')
+    .replace(/,/g, '')
+    .trim();
+  
+  return parseFloat(numericString) || 0;
 };
 
 
 
 const formatCurrency = (value: number | null) => {
   if (value != null) {
-    return 'S/. ' + parseFloat(value.toString()).toFixed(2);
+    // ✅ Usar formato consistente con tu API: "S/.1,300.00"
+    return 'S/.' + value.toLocaleString('es-PE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
-  return '';
+  return 'S/.0.00';
 };
 
 const loadMovementInputs = async () => {

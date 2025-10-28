@@ -71,9 +71,7 @@ async function deleteInput(): Promise<void> {
         await axios.delete(`/items/movimientos/detalle/${props.movementInput.id}`);
         
         // Solo eliminar del kardex si es un insumo
-        if (getItemType() === 'insumo') {
-            deleteInputKardex();
-        }
+        await deleteInputKardex();
         
         emit('deleted');
         closeDialog();
@@ -97,18 +95,41 @@ async function deleteInput(): Promise<void> {
 async function deleteInputKardex(): Promise<void> {
     if (!props.movementInput) return;
     const { idMovementInput } = props.movementInput;  
-    const idInput = props.movementInput.input?.id;   
+    const idInput = props.movementInput.input?.id;
+    const idProduct = props.movementInput.product?.id;
+    const itemType = getItemType();   
 
     try {
-        const response = await axios.get(`/items/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
+        let url = `/items/karde?idMovementInput=${idMovementInput}`;
         
-        const id = response.data.data[0].id;
+        if (itemType === 'insumo' && idInput) {
+            url += `&idInput=${idInput}`;
+        } else if (itemType === 'producto' && idProduct) {
+            url += `&idProduct=${idProduct}`;
+        } else {
+            console.error('Tipo de item no válido o IDs faltantes');
+            return;
+        }
 
-        const deleteResponse = await axios.delete(`/items/karde/${id}`);
-        console.log('Respuesta del servidor:', deleteResponse);  // Verifica la respuesta
+        const response = await axios.get(url);
+        
+        if (!response.data.data || response.data.data.length === 0) {
+            console.warn('No se encontró registro en kardex para eliminar');
+            return;
+        }
 
-        emit('deleted');
-        closeDialog();
+        const kardexId = response.data.data[0].id;
+
+        if (!kardexId) {
+            console.error('ID del kardex no encontrado');
+            return;
+        }
+        
+        await axios.delete(`/items/karde/${kardexId}`);
+        console.log('Kardex eliminado correctamente');  // Verifica la respuesta
+
+        //emit('deleted');
+        //closeDialog();
 
     } catch (error: any) {
         console.error('Error al eliminar kardex:', error);

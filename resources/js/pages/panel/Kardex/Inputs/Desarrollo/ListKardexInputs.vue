@@ -117,6 +117,10 @@ const generatePDF = (row: any) => {
     const hasCode = row.code !== undefined && row.code !== null && row.code !== '';
     const hasTotalPrice = row.totalPrice !== undefined && row.totalPrice !== null && row.totalPrice !== '';
 
+    const isInput = row.idInput !== null && row.idInput !== undefined;
+    const itemType = isInput ? 'INSUMO' : 'PRODUCTO';
+    const itemName = isInput ? row.nameInput : row.nameProduct;
+
     // Nombre empresa centrado
     doc.setFontSize(15);
     doc.text('RESTAURANTE E.I.R.L', 105, 15, { align: 'center' });
@@ -136,6 +140,8 @@ const generatePDF = (row: any) => {
     // Datos a la izquierda
     doc.setFontSize(10);
     let yStart = 42;
+    doc.text(`Tipo de Item: ${itemType}`, 13, yStart);
+    yStart += 6;
     if (hasCode) {
         doc.text(`Código: ${row.code}`, 13, yStart);
         yStart += 6;
@@ -144,8 +150,8 @@ const generatePDF = (row: any) => {
     yStart += 6;
     doc.text(`Tipo de movimiento: ${row.movement_type || ''}`, 13, yStart);
     yStart += 6;
-    doc.text(`Insumo: ${row.nameInput || ''}`, 13, yStart);
-
+    doc.text(`${isInput ? 'Insumo' : 'Producto'}: ${itemName || ''}`, 13, yStart);
+    yStart += 6;
     // Fecha (de la fila) a la derecha
     doc.text(`Fecha: ${row.created_at || ''}`, 150, 42);
 
@@ -280,7 +286,19 @@ const downloadPDF = () => {
 <Column field="username" header="Usuario" sortable style="min-width: 7rem;" />
      
               <Column field="movement_type" header="Movimiento" sortable style="min-width: 7rem" />
-             
+            <Column field="item_type" header="Tipo" sortable style="min-width: 6rem">
+                <template #body="{ data }">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                        :class="data.idInput ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'">
+                        {{ data.idInput ? 'INSUMO' : 'PRODUCTO' }}
+                    </span>
+                </template>
+            </Column>
+            <Column field="name" header="Item" sortable style="min-width: 12rem">
+                <template #body="{ data }">
+                    <span>{{ data.nameInput || data.nameProduct || 'N/A' }}</span>
+                </template>
+            </Column>
 <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem" />
               <Column header="Unidad" sortable style="min-width: 7rem">
             <template #body="{ data }">

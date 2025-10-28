@@ -276,12 +276,11 @@ const saveMovement = async () => {
             hideDialog();
 
             // Solo actualizar kardex si es un insumo y hay idInput válido
-            if (itemType.value === 'insumo' && selectedItem.value?.id) {
-                // Ejecutar en segundo plano sin bloquear
-                setTimeout(() => {
-                    updateKardex().catch((err) => console.error('Error en kardex background:', err));
-                }, 100);
-            }
+            setTimeout(() => {
+                updateKardex().catch((err) => 
+                    console.error('Error en kardex background:', err)
+                );
+            }, 100);
         } else {
             toast.add({
                 severity: 'error',
@@ -325,22 +324,51 @@ const saveMovement = async () => {
 const updateKardex = async () => {
     try {
         const idMovementInput = movementInput.value.idMovementInput;
-        const idInput = selectedItem.value ? selectedItem.value.id : null;
+        const idInput = itemType.value === 'insumo' ? selectedItem.value?.id : null;
+        const idProduct = itemType.value === 'producto' ? selectedItem.value?.id : null;
 
-        const response = await axios.get(`/items/karde?idMovementInput=${idMovementInput}&idInput=${idInput}`);
-        const id = response.data.data[0].id;
+        let url = `/items/karde?idMovementInput=${idMovementInput}`;
+        
+        if (itemType.value === 'insumo' && idInput) {
+            url += `&idInput=${idInput}`;
+        } else if (itemType.value === 'producto' && idProduct) {
+            url += `&idProduct=${idProduct}`;
+        } else {
+            console.warn('No se puede actualizar kardex: tipo de item no válido');
+            return;
+        }
 
-        const formDataKardex = {
-            idInput: idInput, 
-            idMovementInput: idMovementInput, 
-            totalPrice: movementInput.value.totalPrice, 
+        const response = await axios.get(url);
+
+        if (!response.data.data || response.data.data.length === 0) {
+            console.warn('No se encontró registro en kardex para actualizar');
+            return;
+        }
+
+        const kardexId = response.data.data[0].id;
+
+        if (!kardexId) {
+            console.error('ID del kardex no encontrado');
+            return;
+        }
+
+        const formDataKardex: any = {
+            idMovementInput: idMovementInput,
+            totalPrice: movementInput.value.totalPrice,
         };
 
-        console.log(formDataKardex); 
+        if (itemType.value === 'insumo') {
+            formDataKardex.idInput = idInput;
+        } else if (itemType.value === 'producto') {
+            formDataKardex.idProduct = idProduct;
+        }
 
-        await axios.put(`/items/karde/${id}`, formDataKardex);
+        console.log('Actualizando kardex:', formDataKardex);
+
+        await axios.put(`/items/karde/${kardexId}`, formDataKardex);
+        console.log('Kardex actualizado correctamente');
     } catch (error) {
-        console.error(error);
+        console.error('Error al actualizar kardex:', error);
     }
 };
 </script>
