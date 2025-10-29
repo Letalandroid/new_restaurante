@@ -16,8 +16,6 @@ const isButtonDisabled = ref(false);
 
 import AddCliente from './AddCliente.vue';
 
-// Si el formulario de cliente está en un dialogo, asegúrate de que esté accesible en la vista
-const clienteDialog = ref(false);
 // Initialize toast
 const toast = useToast();
 const showInsumosDialog = ref(false); // Para mostrar el dialogo de insumos
@@ -40,8 +38,6 @@ const historialPagination = ref({
     total: 0,
 });
 const globalFilterValue = ref('');
-const platosSeleccionados = ref([]); // aquí se almacenan los platos seleccionados
-
 const order = ref({
     mesaId: null,
     tablenum: null,
@@ -411,11 +407,6 @@ const capitalizeFirstLetter = (str) => {
     if (!str) return ''; // Retorna vacío si no hay texto
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
-const calcularTotalPedido = () => {
-    return order.value.platos.reduce((total, plato) => {
-        return total + plato.price * plato.cantidad;
-    }, 0);
-};
 
 const cancelOrder = () => {
     // Limpiar el pedido (vaciar platos y otros datos)
@@ -486,19 +477,6 @@ async function fetchUserId() {
     }
 }
 
-const fetchOpenOrderIdByMesa = async (mesaId) => {
-    try {
-        const response = await axios.get('/orders');
-        const pedidos = response.data.data || [];
-
-        const pedidoAbierto = pedidos.find((pedido) => pedido.idTable === mesaId && pedido.state !== 'finalizado');
-
-        return pedidoAbierto ? pedidoAbierto.id : null;
-    } catch (error) {
-        console.error('Error obteniendo el pedido abierto:', error);
-        return null;
-    }
-};
 
 // Agrega la función para el cambio de página
 const onHistorialPageChange = (event) => {
@@ -507,16 +485,6 @@ const onHistorialPageChange = (event) => {
     loadHistorialPlatos(); // Recarga el historial de platos
 };
 
-// Asegúrate de que esta función esté definida para el cambio de filas por página
-const onRowsPerPageChange = (event) => {
-    console.log('Evento de cambio de filas por página recibido', event); // Verifica si el evento se está disparando
-    console.log('Filas por página seleccionadas:', event.rows); // Verifica que se emita el evento correctamente
-
-    historialPagination.value.perPage = event.rows; // Actualiza el número de filas por página
-    console.log('Nuevo valor de perPage:', historialPagination.value.perPage); // Verifica que el valor cambie
-
-    loadHistorialPlatos(); // Recarga los platos
-};
 
 // Lógica de búsqueda global
 const onGlobalSearch = async () => {
@@ -543,13 +511,14 @@ const stateOptions = ref([
 
 const cancelDish = async (dishId) => {
     try {
-        const response = await axios.put(`/order-dishes/${dishId}`, { state: 'cancelado' });
+        await axios.put(`/order-dishes/${dishId}`, { state: 'cancelado' });
         toast.add({ severity: 'success', summary: 'Éxito', detail: 'Platillo cancelado', life: 3000 });
 
         // Actualiza el historial de platos después de la cancelación
         loadHistorialPlatos();
         loadPlatos();
     } catch (error) {
+        console.error(error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cancelar el platillo', life: 3000 });
     }
 };
@@ -564,14 +533,6 @@ const totalHistorialPedido = computed(() => {
         .toFixed(2); // Redondea el resultado a dos decimales
 });
 
-const calcularTotalRecibo = () => {
-    // Calcula el total basado en el total de la orden, si no hay total lo calcula sumando los platos
-    return order.value.platos
-        .reduce((total, plato) => {
-            return total + plato.price * plato.cantidad;
-        }, 0)
-        .toFixed(2); // Redondea a 2 decimales
-};
 
 const actualizarestadomesa = async ()=>{
 
@@ -582,7 +543,7 @@ const actualizarestadomesa = async ()=>{
             };
 
             // Intentar actualizar la orden
-            const updateResponse = await axios.put(`/orders/${order.value.idOrder}`, updateOrderData);
+            await axios.put(`/orders/${order.value.idOrder}`, updateOrderData);
                  window.location.href = `/venta/pdf/${order.value.idOrder}`;
  goBackOrder();
 
@@ -645,16 +606,6 @@ const showFormularioRecibo = async () => { // Marca la función como async
     }
 };
 
-
-const openRegisterClienteDialog = () => {
-    clienteDialog.value = true;
-};
-
-function hideDialog() {
-    clienteDialog.value = false; // Cierra el diálogo
-    resetCliente(); // Reinicia los valores del cliente
-}
-
 const generarRecibo = async () => { 
     // Verificar que todos los platos estén en estado 'cancelado' o 'completado'
     const todosCompletadosOCancelados = historialPlatos.value.every((plato) => 
@@ -702,7 +653,7 @@ const generarRecibo = async () => {
 
 
   // Guardar el documentType y idSale en una variable general
-    let generalData = {
+    const generalData = {
         documentType: recibo.value.tipoRecibo,
         idSale: null
     };
@@ -716,7 +667,6 @@ const generarRecibo = async () => {
         idOrder: order.value.idOrder,
         stateSunat: 'No Enviado',
     };
-  documentType: recibo.value.tipoRecibo;
     console.log('Datos a enviar:', data);
     console.log('ID del pedido:', order.value.idOrder); // Imprimir el idOrder
 
@@ -737,8 +687,6 @@ const generarRecibo = async () => {
                 idOrder: order.value.idOrder, // ID del pedido
                 subtotal: totalHistorial, // Subtotal calculado
             };
-            
-            idSale: response.data.sale.id;
             // Enviar la solicitud POST a la API para registrar la relación entre sale y order
             const saleOrderResponse = await axios.post('/venta', saleOrderData);
 
@@ -833,10 +781,6 @@ const crearComprobante = async (idSale, prefix) => {
 
 // Estado para controlar la visibilidad del dialogo
 const finalizarMesaDialog = ref(false);
-// Función para abrir el dialogo de confirmar cierre de mesa
-const openFinalizarMesaDialog = () => {
-    finalizarMesaDialog.value = true; // Abrir el dialogo
-};
 
 // Función para finalizar la mesa
 const finalizarMesa = async () => {
@@ -846,7 +790,7 @@ const finalizarMesa = async () => {
             state: 'finalizado',
         };
 
-        const updateResponse = await axios.put(`/orders/${order.value.idOrder}`, updateOrderData);
+        await axios.put(`/orders/${order.value.idOrder}`, updateOrderData);
 
      toast.add({
                 severity: 'success',
