@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\CajaController;
 use App\Http\Controllers\Api\ReporteCajaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CrearPemController;
+use App\Http\Controllers\Api\AttendanceController;
 
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SupplierController;
@@ -78,6 +79,7 @@ use App\Http\Controllers\Web\OrdersTablesWebController;
 use App\Http\Controllers\Web\MovementInputKardexWebController;
 use App\Http\Controllers\Web\MovementInputDetailWebController;
 use App\Http\Controllers\Web\ReservationWebController;
+use App\Http\Controllers\Web\AttendancesWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -101,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/presentaciones', [PresentationWebController::class, 'index'])->name('index.view');
     Route::get('/reservaciones', [ReservationWebController::class, 'index'])->name('index.view');
     Route::get('/clientes', [CustomerWebController::class, 'index'])->name('index.view');
+    Route::get('/asistencias', [AttendancesWebController::class, 'index'])->name('index.view');
     Route::get('/empleados', [EmployeeWebController::class, 'index'])->name('index.view');
     Route::get('/tipo_clientes', [ClientTypeWebController::class, 'index'])->name('index.view');
     Route::get('/tipo_empleados', [EmployeeTypeWebController::class, 'index'])->name('index.view');
@@ -296,6 +299,14 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{category}', [CategoryController::class, 'update'])->name('Categoria.update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('Categoria.destroy');
     });
+        #ASISTENCIA -> BACKEND
+    Route::prefix('asistencia')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('asistencia.index');
+        Route::post('/', [AttendanceController::class, 'store'])->name('asistencia.store');
+        Route::get('/{asistencia}', [AttendanceController::class, 'show'])->name('asistencia.show');
+        Route::put('/{asistencia}', [AttendanceController::class, 'update'])->name('asistencia.update');
+        Route::delete('/{asistencia}', [AttendanceController::class, 'destroy'])->name('asistencia.destroy');
+    });
 
     #TIPOS DE CLIENTES -> BACKEND
     Route::prefix('tipo_cliente')->group(function () {
@@ -359,6 +370,8 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{user}', [UsuariosController::class, 'update'])->name('usuarios.update');
         Route::delete('/{user}', [UsuariosController::class, 'destroy'])->name('usuarios.destroy');
     });
+
+    
 
 
 
