@@ -107,6 +107,8 @@ const model = computed<MenuItem[]>(() => [
         hasPermission('ver tipos_empleados') && { label: 'Tipo de empleados', icon: 'pi pi-fw pi-sitemap', to: '/tipo_empleados' },
       ].filter(Boolean) as MenuItem[],
     },
+     hasPermission('ver asistencias') && { label: 'Asistencias de Empleado', icon: 'pi pi-fw pi-clock', to: '/asistencias' },
+
     hasPermission('ver presentaciones') && { label: 'Presentaciones', icon: 'pi pi-fw pi-check-square', to: '/presentaciones' },
   ].filter(Boolean) as MenuItem[],
 },
