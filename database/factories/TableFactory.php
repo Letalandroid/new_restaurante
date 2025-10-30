@@ -14,7 +14,7 @@ class TableFactory extends Factory
     {
         return [
             'name'      => 'Mesa ' . self::$counter++, // Genera Mesa 1, Mesa 2, Mesa 3, etc.
-            'tablenum'  => $this->faker->numerify('TBL-###'),
+            'tablenum' => 'TBL-' . rand(1, 999),
             'idArea'    => Areas::inRandomOrder()->first()->id,
             'idFloor'   => Floor::inRandomOrder()->first()->id,
             'capacity'  => $this->faker->numberBetween(2, 10),
