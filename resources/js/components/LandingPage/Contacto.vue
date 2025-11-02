@@ -670,7 +670,7 @@ const confirmarReserva = async () => {
       mensaje.tipo = 'error'
     } else {
       // Error general
-      mensaje.text = 'Hubo un error al realizar la reserva. Por favor intenta nuevamente.'
+      mensaje.text = 'Hubo un error al realizar la reserva. Por favor intente confirmar la reserva nuevamente.'
       mensaje.tipo = 'error'
       toast.add({
         severity: 'error',

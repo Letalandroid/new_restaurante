@@ -13,6 +13,7 @@ class StoreReservationRequest extends FormRequest{
             'number_people' => 'required|integer|min:1',
             'date' => 'required|date|after_or_equal:today',
             'hour' => 'required|date_format:H:i',
+            'state' => 'required|boolean',
         ];
     }
     public function messages(): array{
@@ -30,6 +31,9 @@ class StoreReservationRequest extends FormRequest{
 
             'hour.required' => 'La hora es obligatoria.',
             'hour.date_format' => 'El formato de la hora debe ser HH:MM.',
+
+            'state.required' => 'El estado es obligatorio.',
+            'state.boolean' => 'El estado debe ser verdadero o falso.',
         ];
     }
 }

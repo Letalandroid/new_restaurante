@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('date')->comment('Fecha de la reserva (dd-mm-yyyy)');
             $table->time('hour')->comment('Hora de la reserva');
             $table->string('reservation_code', 6)->unique()->comment('Código de reserva de 6 dígitos');
+            $table->boolean('state')->default(true);
             $table->timestamps();
         });
     }

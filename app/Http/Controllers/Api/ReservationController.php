@@ -13,6 +13,7 @@ use App\Pipelines\FilterByDate;
 use App\Pipelines\FilterByReservationCode;
 use App\Pipelines\FilterByCustomerName;
 use App\Pipelines\FilterByName;
+use App\Pipelines\FilterByState;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
@@ -34,6 +35,7 @@ class ReservationController extends Controller
                     //Y POR ESTADO
                 //new FilterByDate($date),
                 //new FilterByReservationCode($reservationCode),
+                new FilterByState($request->input('state')),
             ])
             ->thenReturn();
 
@@ -45,8 +47,8 @@ class ReservationController extends Controller
         
         $validated = $request->validated();
 
-        // Buscar o crear el cliente
-        $customer = Customer::firstOrCreate(
+        // Usar updateOrCreate para evitar el problema de secuencia
+        $customer = Customer::updateOrCreate(
             ['codigo' => $validated['codigo']],
             [
                 'name' => $validated['name'],
@@ -65,6 +67,7 @@ class ReservationController extends Controller
             'date' => $validated['date'],
             'hour' => $validated['hour'],
             'reservation_code' => $this->generateReservationCode(),
+            'state' => true, // ← AGREGAR ESTA LÍNEA
         ]);
 
         return response()->json([
@@ -105,7 +108,7 @@ class ReservationController extends Controller
         return response()->json([
             'state' => true,
             'message' => 'Reservación actualizada correctamente.',
-            'reservation' => new ReservationResource($reservation->refresh()->load('customer'))
+            'reservation' => $reservation->refresh()
         ]);
     }
 

@@ -24,6 +24,7 @@ class ReservationResource extends JsonResource
             'date' => Carbon::parse($this->date)->format('d-m-Y'),
             'hour' => Carbon::parse($this->hour)->format('H:i'),
             'reservation_code' => $this->reservation_code,
+            'state' => $this->state,
             'creacion' => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
             'actualizacion' => Carbon::parse($this->updated_at)->format('d-m-Y H:i:s A'),
         ];

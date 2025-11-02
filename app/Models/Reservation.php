@@ -21,6 +21,7 @@ class Reservation extends Model
         'date',
         'hour',
         'reservation_code',
+        'state',
     ];
 
     /**
@@ -29,6 +30,7 @@ class Reservation extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'state' => 'boolean',
         'date' => 'date',
         'hour' => 'string', // O 'time' si prefieres
         'number_people' => 'integer',
@@ -45,17 +47,4 @@ class Reservation extends Model
     /**
      * Generate a unique reservation code.
      */
-    private function generateReservationCode(): string
-    {
-        do {
-            // Generar código de 6 caracteres con letras y números
-            $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $code = '';
-            for ($i = 0; $i < 6; $i++) {
-                $code .= $characters[rand(0, strlen($characters) - 1)];
-            }
-        } while (Reservation::where('reservation_code', $code)->exists());
-
-        return $code;
-    }
 }
