@@ -9,10 +9,8 @@ use App\Http\Requests\Reservaciones\UpdateReservationRequest;
 use App\Http\Resources\ReservationResource;
 use App\Models\Customer;
 use App\Models\Reservation;
+use App\Pipelines\FilterByCodeRyName;
 use App\Pipelines\FilterByDate;
-use App\Pipelines\FilterByReservationCode;
-use App\Pipelines\FilterByCustomerName;
-use App\Pipelines\FilterByName;
 use App\Pipelines\FilterByState;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
@@ -25,16 +23,13 @@ class ReservationController extends Controller
         Gate::authorize('viewAny', Reservation::class);
         $perPage = $request->input('per_page', 15);
         $search = $request->input(key: 'search');
-        //$date = $request->input('date');
-        //$reservationCode = $request->input('reservation_code');
+        $date = $request->input('date');
 
         $query = app(Pipeline::class)
             ->send(Reservation::query()->with('customer'))
             ->through([
-                 new FilterByName($search), //AUN FALTA PIPELINES DE BUSCAR POR NOMBRE, POR FECHA, POR CODIGO DE RESERVACION
-                    //Y POR ESTADO
-                //new FilterByDate($date),
-                //new FilterByReservationCode($reservationCode),
+                new FilterByCodeRyName($search),
+                new FilterByDate($date),
                 new FilterByState($request->input('state')),
             ])
             ->thenReturn();
@@ -80,6 +75,10 @@ class ReservationController extends Controller
     {
         Gate::authorize('create', Reservation::class);
         $validated = $request->validated();
+        
+        // Generar código de reservación automáticamente
+        $validated['reservation_code'] = $this->generateReservationCode();
+        
         $reservation = Reservation::create($validated);
         return response()->json([
             'state' => true,
@@ -102,6 +101,17 @@ class ReservationController extends Controller
     {
         Gate::authorize('update', $reservation);
         $validated = $request->validated();
+        
+        // Generar nuevo código de reservación automáticamente
+        $validated['reservation_code'] = $this->generateReservationCode();
+        
+        // Si el estado cambia a false, también actualizar el estado del cliente
+        if (isset($validated['state']) && $validated['state'] === false) {
+            $customer = $reservation->customer;
+            if ($customer && $customer->state) {
+                $customer->update(['state' => false]);
+            }
+        }
         
         $reservation->update($validated);
 

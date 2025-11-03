@@ -369,7 +369,11 @@ const enviarASunat = async (idSale, prefix) => {
             <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
 
             <Column field="salesInvoice.serie" header="Nº" sortable style="min-width: 7rem" />
-            <Column field="sale.customer.name" header="Cliente" sortable style="min-width: 10rem" />
+            <Column field="sale.customer.name" header="Cliente" sortable style="min-width: 10rem">
+                <template #body="{ data }">
+                    {{ data.sale.customer.name }} {{ data.sale.customer.lastname }}
+                </template>
+            </Column>
             <Column field="order.numeroMesa" header="Nº Mesa" sortable style="min-width: 10rem" />
             <Column field="sale.documentType" header="Tipo" sortable style="min-width: 7rem" />
             <Column field="sale.paymentType" header="Metodo" sortable style="min-width: 7rem" />
@@ -414,11 +418,11 @@ const enviarASunat = async (idSale, prefix) => {
         <div v-if="selectedSale">
             <!-- Contenedor para los datos del cliente en fila horizontal -->
             <div class="flex flex-wrap gap-4">
-                <p><strong>Cliente:</strong> {{ selectedSale.sale.customer.name }}</p>
+                <p><strong>Cliente:</strong> {{ selectedSale.sale.customer.name }} {{ selectedSale.sale.customer.lastname }}</p>
                 <p><strong>Código:</strong> {{ selectedSale.sale.customer.codigo }}</p>
                 <p><strong>Comprobante:</strong> {{ selectedSale.salesInvoice.serie }}</p>
                 <p><strong>Documento:</strong> {{ selectedSale.sale.documentType }}</p>
-                <p><strong>Nº Order:</strong> {{ selectedSale.order.id }}</p>
+                <p><strong>Nº Orden:</strong> {{ selectedSale.order.id }}</p>
                 <p><strong>Mesa:</strong> {{ selectedSale.order.numeroMesa }}</p>
                 <p><strong>Estado:</strong> {{ selectedSale.order.state }}</p>
             </div>

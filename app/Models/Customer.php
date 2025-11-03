@@ -28,4 +28,12 @@ class Customer extends Model
     public function clienteType(): BelongsTo{
         return $this->belongsTo(ClientType::class,'client_type_id','id');
     }
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'customer_id');
+    }
+    public function tieneRelaciones(): bool
+    {
+        return $this->reservations()->exists();
+    }
 }

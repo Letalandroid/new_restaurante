@@ -69,7 +69,7 @@ class CategoryController extends Controller{
         $category->update($validated);
         return response()->json([
             'state' => true,
-            'message' => 'Tipo de cliente actualizado de manera correcta',
+            'message' => 'Categoria actualizado de manera correcta',
             'category' => new CategoryResource($category->refresh()),
         ]);
     }

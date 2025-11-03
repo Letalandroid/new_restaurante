@@ -319,6 +319,7 @@ Route::prefix('insumos')->group(function () {
         #RESERVACIONES -> BACKEND
     Route::prefix('reservacion')->group(function () {
         Route::get('/', [ReservationController::class, 'index'])->name('reservaciones.index');
+        Route::post('/', [ReservationController::class, 'store'])->name('reservaciones.store');
         Route::get('/{reservation}', [ReservationController::class, 'show'])->name('reservaciones.show');
         Route::put('/{reservation}', [ReservationController::class, 'update'])->name('reservaciones.update');
         Route::delete('/{reservation}', [ReservationController::class, 'destroy'])->name('reservaciones.destroy');

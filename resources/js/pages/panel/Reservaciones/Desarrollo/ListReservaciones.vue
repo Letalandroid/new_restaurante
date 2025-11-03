@@ -9,10 +9,12 @@ import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 import axios from 'axios';
 import { debounce } from 'lodash';
-//import DeleteReservation from './DeleteReservation.vue';
-//import UpdateReservation from './UpdateReservation.vue';
 import Select from 'primevue/select';
 import { useToast } from 'primevue/usetoast';
+import DeleteReservaciones from './DeleteReservaciones.vue';
+import UpdateReservaciones from './UpdateReservaciones.vue';
+// Agregar Calendar component
+import Calendar from 'primevue/calendar';
 
 interface Reservation {
     id: number;
@@ -44,6 +46,7 @@ interface Filters {
 const dt = ref();
 const reservations = ref<Reservation[]>([]);
 const selectedReservations = ref<Reservation[] | null>(null);
+const selectedDate = ref<Date | null>(null); // Cambiar a Date para usar con Calendar
 const loading = ref<boolean>(false);
 const globalFilterValue = ref<string>('');
 const deleteReservationDialog = ref<boolean>(false);
@@ -61,19 +64,29 @@ const props = defineProps<{
 watch(() => props.refresh, () => {
     loadReservation();
 });
+
 watch(() => selectedEstadoReservacion.value, () => {
     pagination.value.currentPage = 1;
     loadReservation();
 });
+
+// Agregar watch para la fecha
+watch(() => selectedDate.value, () => {
+    pagination.value.currentPage = 1;
+    loadReservation();
+});
+
 function editReservation(selected: Reservation) {
     selectedReservationId.value = selected.id;
     updateReservationDialog.value = true;
 }
+
 const estadoReservacionOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
 ]);
+
 function handleReservationUpdated() {
     loadReservation();
 }
@@ -105,6 +118,7 @@ const loadReservation = async (): Promise<void> => {
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
             state: filters.value.state,
+            date: selectedDate.value ? selectedDate.value.toISOString().slice(0, 10) : '' // Cambiar 'fecha' por 'date'
         };
 
         if (selectedEstadoReservacion.value !== null && selectedEstadoReservacion.value.value !== '') {
@@ -140,6 +154,11 @@ const onGlobalSearch = debounce(() => {
     loadReservation();
 }, 500);
 
+// Función para limpiar el filtro de fecha
+const clearDateFilter = () => {
+    selectedDate.value = null;
+};
+
 onMounted(() => {
     loadReservation();
 });
@@ -166,19 +185,50 @@ onMounted(() => {
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">RESERVACIONES</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText 
-                            v-model="globalFilterValue" 
-                            @input="onGlobalSearch" 
-                            placeholder="Buscar reservación..." 
+
+                <!-- Contenedor derecho -->
+                <div class="flex flex-col items-end gap-2 w-full md:w-auto">
+                    <!-- Agregar el filtro por fecha -->
+                    <div class="flex items-center gap-2">
+                        <Calendar 
+                            v-model="selectedDate" 
+                            dateFormat="dd/mm/yy" 
+                            placeholder="Seleccionar fecha"
+                            showIcon
+                            :showButtonBar="true"
+                            class="w-full md:w-auto"
                         />
-                    </IconField>
-                    <Select v-model="selectedEstadoReservacion" :options="estadoReservacionOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
+                        <Button 
+                            v-if="selectedDate" 
+                            icon="pi pi-times" 
+                            outlined 
+                            rounded 
+                            severity="secondary"
+                            @click="clearDateFilter" 
+                            aria-label="Limpiar fecha"
+                        />
+                    </div>
+
+                    <!-- BUSCADOR GLOBAL -->
+                    <div class="flex flex-row gap-2">
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar por código reserva o cliente..."
+                                class="w-full md:w-80" 
+                            />
+                        </IconField>
+                    <Select 
+                        v-model="selectedEstadoReservacion" 
+                        :options="estadoReservacionOptions" 
+                        optionLabel="name"
+                        placeholder="Estado" 
+                        class="w-full md:w-auto" 
+                    />
                     <Button 
                         icon="pi pi-refresh" 
                         outlined 
@@ -186,6 +236,7 @@ onMounted(() => {
                         aria-label="Refresh" 
                         @click="loadReservation" 
                     />
+                </div>
                 </div>
             </div>
         </template>
@@ -223,14 +274,14 @@ onMounted(() => {
         </Column>
     </DataTable>
 
-    <DeleteReservation 
+    <DeleteReservaciones 
         v-model:visible="deleteReservationDialog" 
-        :reservation="reservation" 
+        :reservacion="reservation" 
         @deleted="handleReservationDeleted" 
     />
-    <UpdateReservation 
+    <UpdateReservaciones
         v-model:visible="updateReservationDialog" 
-        :reservationId="selectedReservationId"
+        :reservacionId="selectedReservationId"
         @updated="handleReservationUpdated" 
     />
 </template>

@@ -66,15 +66,6 @@
                     <small v-if="serverErrors.phone" class="text-red-500">{{ serverErrors.phone[0] }}</small>
                 </div>
 
-                <div class="col-span-2">
-                    <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
-                        <Checkbox v-model="cliente.state" :binary="true" />
-                        <Tag :value="cliente.state ? 'Activo' : 'Inactivo'" :severity="cliente.state ? 'success' : 'danger'" />
-                    </div>
-                    <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
-                </div>
-
                 <div class="col-span-10">
                     <label class="block font-bold mb-2">Tipo de Cliente <span class="text-red-500">*</span></label>
                     <Dropdown
@@ -92,6 +83,15 @@
                     />
                     <small v-if="submitted && !cliente.client_type_id" class="text-red-500">Debe seleccionar un tipo.</small>
                     <small v-if="serverErrors.client_type_id" class="text-red-500">{{ serverErrors.client_type_id[0] }}</small>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
+                    <div class="flex items-center gap-3">
+                        <Checkbox v-model="cliente.state" :binary="true" />
+                        <Tag :value="cliente.state ? 'Activo' : 'Inactivo'" :severity="cliente.state ? 'success' : 'danger'" />
+                    </div>
+                    <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                 </div>
 
                 <!-- Campo de código (DNI o RUC) que solo aparece después de seleccionar el tipo de cliente -->

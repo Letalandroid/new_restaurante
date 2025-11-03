@@ -88,7 +88,7 @@ const handleSearch = async () => {
 // Función para seleccionar un cliente de la lista
 const selectCliente = (cliente) => {
     selectedCliente.value = cliente; // Asignamos el cliente seleccionado
-    searchTerm.value = cliente.codigo + ' - ' + cliente.name; // Mostramos el código y nombre en el campo de búsqueda
+    searchTerm.value = cliente.codigo + ' - ' + cliente.name +' '+cliente.lastname; // Mostramos el código y nombre en el campo de búsqueda
     clientesOptions.value = []; // Limpiamos las opciones después de la selección
     showResults.value = false; // Ocultamos los resultados
 
@@ -914,7 +914,7 @@ const finalizarMesa = async () => {
                         <label for="codigoCliente">Código de Cliente:</label>
                         <div class="relative w-full">
                             <!-- InputText para búsqueda de cliente -->
-                            <InputText v-model="searchTerm" @input="handleSearch" placeholder="Buscar cliente..." class="w-full" maxlength="11" />
+                            <InputText v-model="searchTerm" @input="handleSearch" placeholder="Buscar código de cliente..." class="w-full" maxlength="11" />
 
                             <!-- Resultados de búsqueda -->
                             <div
@@ -928,7 +928,7 @@ const finalizarMesa = async () => {
                                     class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                                 >
                                     <div class="flex flex-col">
-                                        <span class="font-semibold text-gray-800">{{ cliente.codigo }} - {{ cliente.name }}</span>
+                                        <span class="font-semibold text-gray-800">{{ cliente.codigo }} - {{ cliente.name }} {{ cliente.lastname }}</span>
                                         <span class="text-sm text-gray-600">{{ cliente.client_type_id === 1 ? 'Persona natural' : 'Persona juridica' }}</span>
                                     </div>
                                 </div>
