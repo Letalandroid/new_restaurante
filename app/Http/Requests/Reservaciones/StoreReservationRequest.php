@@ -14,9 +14,12 @@ class StoreReservationRequest extends FormRequest{
             'date' => 'required|date|after_or_equal:today',
             'hour' => 'required|date_format:H:i',
             'state' => 'required|boolean',
+            'reservation_code' => 'required|string|unique:reservations,reservation_code', // ← AGREGAR ESTA LÍNEA
         ];
     }
-    public function messages(): array{
+
+    public function messages(): array
+    {
         return [
             'customer_id.required' => 'El cliente es obligatorio.',
             'customer_id.exists' => 'El cliente seleccionado no es válido.',
@@ -34,6 +37,10 @@ class StoreReservationRequest extends FormRequest{
 
             'state.required' => 'El estado es obligatorio.',
             'state.boolean' => 'El estado debe ser verdadero o falso.',
+
+            'reservation_code.required' => 'El código de reservación es obligatorio.',
+            'reservation_code.string' => 'El código de reservación debe ser una cadena de texto.',
+            'reservation_code.unique' => 'El código de reservación ya existe, genere uno nuevo.',
         ];
     }
 }

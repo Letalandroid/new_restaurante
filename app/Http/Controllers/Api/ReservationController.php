@@ -76,8 +76,6 @@ class ReservationController extends Controller
         Gate::authorize('create', Reservation::class);
         $validated = $request->validated();
         
-        // Generar código de reservación automáticamente
-        $validated['reservation_code'] = $this->generateReservationCode();
         
         $reservation = Reservation::create($validated);
         return response()->json([
@@ -86,7 +84,6 @@ class ReservationController extends Controller
             'reservation' => $reservation
         ]);
     }
-
     public function show(Reservation $reservation)
     {
         Gate::authorize('view', $reservation);
