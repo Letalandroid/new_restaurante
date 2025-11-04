@@ -61,20 +61,30 @@ async function deleteReservacion(): Promise<void> {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '500px' }" header="Confirmar Eliminación" :modal="true"
-        @update:visible="closeDialog">
+    <Dialog 
+        v-model:visible="localVisible" 
+        :style="{ width: '500px' }" 
+        header="Confirmar Eliminación" 
+        :modal="true"
+        @update:visible="closeDialog"
+    >
         <div class="flex items-start gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl text-orange-500 mt-1" />
             <div v-if="reservacion">
-                <p class="mb-2">¿Estás seguro de eliminar la siguiente reservación?</p>
-                <div class="bg-gray-50 p-3 rounded border">
-                    <p><strong>Código:</strong> {{ reservacion.reservation_code }}</p>
-                    <p><strong>Cliente:</strong> {{ reservacion.Cliente_name || (reservacion.customer ? `${reservacion.customer.name} ${reservacion.customer.lastname}` : 'N/A') }}</p>
-                    <p><strong>Fecha:</strong> {{ reservacion.date }}</p>
-                    <p><strong>Hora:</strong> {{ reservacion.hour }}</p>
-                    <p><strong>Personas:</strong> {{ reservacion.number_people }}</p>
+                <p class="mb-2 text-color">¿Estás seguro de eliminar la siguiente reservación?</p>
+                <div 
+                    class="p-3 rounded border"
+                    :class="['surface-ground', 'border-surface-300', 'dark:border-surface-700']"
+                >
+                    <p class="text-color"><strong>Código:</strong> {{ reservacion.reservation_code }}</p>
+                    <p class="text-color"><strong>Cliente:</strong> 
+                        {{ reservacion.Cliente_name || (reservacion.customer ? `${reservacion.customer.name} ${reservacion.customer.lastname}` : 'N/A') }}
+                    </p>
+                    <p class="text-color"><strong>Fecha:</strong> {{ reservacion.date }}</p>
+                    <p class="text-color"><strong>Hora:</strong> {{ reservacion.hour }}</p>
+                    <p class="text-color"><strong>Personas:</strong> {{ reservacion.number_people }}</p>
                 </div>
-                <p class="mt-3 text-red-500 font-semibold">Esta acción no se puede deshacer.</p>
+                <p class="mt-3 font-semibold text-red-500">Esta acción no se puede deshacer.</p>
             </div>
         </div>
         <template #footer>

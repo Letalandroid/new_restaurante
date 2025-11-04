@@ -15,6 +15,7 @@ import DeleteReservaciones from './DeleteReservaciones.vue';
 import UpdateReservaciones from './UpdateReservaciones.vue';
 // Agregar Calendar component
 import Calendar from 'primevue/calendar';
+import ViewCliente from './ViewCliente.vue';
 
 interface Reservation {
     id: number;
@@ -54,6 +55,8 @@ const reservation = ref<Reservation | null>(null);
 const selectedReservationId = ref<number | null>(null);
 const selectedEstadoReservacion = ref<EstadoOption | null>(null);
 const updateReservationDialog = ref<boolean>(false);
+const viewClienteDialog = ref(false);
+const selectedCliente = ref(null);
 
 const toast = useToast();
 
@@ -69,7 +72,10 @@ watch(() => selectedEstadoReservacion.value, () => {
     pagination.value.currentPage = 1;
     loadReservation();
 });
-
+function viewCliente(reservation: any) {
+    selectedCliente.value = reservation.customer; // cliente ya viene dentro de la reservación
+    viewClienteDialog.value = true;
+}
 // Agregar watch para la fecha
 watch(() => selectedDate.value, () => {
     pagination.value.currentPage = 1;
@@ -254,8 +260,16 @@ onMounted(() => {
                 <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
         </Column>
-        <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
+        <Column header="Acciones" :exportable="false" style="min-width: 10rem">
             <template #body="slotProps">
+                <Button 
+                    icon="pi pi-user" 
+                    outlined 
+                    rounded 
+                    severity="info" 
+                    class="mr-2" 
+                    @click="viewCliente(slotProps.data)" 
+                />
                 <Button 
                     icon="pi pi-pencil" 
                     outlined 
@@ -283,5 +297,9 @@ onMounted(() => {
         v-model:visible="updateReservationDialog" 
         :reservacionId="selectedReservationId"
         @updated="handleReservationUpdated" 
+    />
+    <ViewCliente 
+        v-model:visible="viewClienteDialog" 
+        :cliente="selectedCliente" 
     />
 </template>
