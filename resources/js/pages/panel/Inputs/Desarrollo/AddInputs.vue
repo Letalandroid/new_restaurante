@@ -9,28 +9,35 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Registro de Insumos" :modal="true">
+    <Dialog 
+        v-model:visible="inputDialog" 
+        header="Registro de Insumos" 
+        :modal="true"
+        :closable="true"
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
+
                 <!-- Nombre -->
-                <div class="col-span-10">
+                <div class="col-span-8 sm:col-span-10">
                     <label class="mb-2 block font-bold">Nombre <span class="text-red-500">*</span></label>
                     <InputText v-model="input.name" required maxlength="100" fluid :class="{ 'p-invalid': serverErrors.name }" />
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
                 <!-- Estado -->
-                <div class="col-span-2">
+                <div class="col-span-4 sm:col-span-2">
                     <label class="mb-2 block font-bold">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
-                        <Checkbox v-model="input.state" :binary="true" fluid />
+                        <Checkbox v-model="input.state" :binary="true" />
                         <Tag :value="input.state ? 'Activo' : 'Inactivo'" :severity="input.state ? 'success' : 'danger'" />
                     </div>
                 </div>
-                <!-- precio -->
 
-                <div class="col-span-6">
-                    <label for="priceSale" class="mb-2 block font-bold">Precio Venta<span class="text-red-500">*</span></label>
+                <!-- Precio Venta -->
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="priceSale" class="mb-2 block font-bold">Precio Venta <span class="text-red-500">*</span></label>
                     <InputNumber
                         id="priceSale"
                         v-model="input.priceSale"
@@ -45,62 +52,59 @@
                     <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
                 </div>
 
-                <!-- Almacén (Dropdown con búsqueda) -->
-                <div class="col-span-6">
+                <!-- Almacén -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Almacen <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="input.idAlmacen"
-                        fluid
                         :options="almacens"
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Seleccione Almacen"
                         filter
-                        filterBy="label" 
-                        filterPlaceholder="Buscar almacen..." 
-                        style="width: 325px;" 
+                        filterBy="label"
+                        filterPlaceholder="Buscar almacen..."
+                        class="w-full"
                     />
                     <small v-if="submitted && !input.idAlmacen" class="text-red-500">El Almacen es obligatorio.</small>
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
+
                 <!-- Cantidad por medida -->
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="quantityUnitMeasure" class="mb-2 block font-bold">Cantidad por medida <span class="text-red-500">*</span></label>
+                    <InputNumber
+                        id="quantityUnitMeasure"
+                        v-model="input.quantityUnitMeasure"
+                        :minFractionDigits="2"
+                        :maxFractionDigits="2"
+                        class="w-full"
+                        :class="{ 'p-invalid': serverErrors.quantityUnitMeasure }"
+                    />
+                    <small v-if="serverErrors.quantityUnitMeasure" class="p-error">{{ serverErrors.quantityUnitMeasure[0] }}</small>
+                </div>
 
-              <div class="col-span-6">
-    <label for="quantityUnitMeasure" class="mb-2 block font-bold">Cantidad por medida<span class="text-red-500">*</span></label>
-    <InputNumber
-        id="quantityUnitMeasure"
-        v-model="input.quantityUnitMeasure"
-        :minFractionDigits="2"
-        :maxFractionDigits="2"
-        class="w-full"
-        :class="{ 'p-invalid': serverErrors.quantityUnitMeasure }"
-    />
-    <small v-if="serverErrors.quantityUnitMeasure" class="p-error">{{ serverErrors.quantityUnitMeasure[0] }}</small>
-</div>
-
-<!-- Unidad de Medida -->
-                <div class="col-span-6">
+                <!-- Unidad de Medida -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Unidad de Medida <span class="text-red-500">*</span></label>
                     <Select
                         v-model="input.unitMeasure"
-                        fluid
                         :options="unitMeasures"
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Seleccione Unidad de Medida"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-             
 
-                
-
-                <!-- description -->
+                <!-- Descripción -->
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Descripcion <span class="text-red-500">*</span></label>
                     <InputText v-model="input.description" required maxlength="150" fluid :class="{ 'p-invalid': serverErrors.description }" />
                     <small v-if="serverErrors.description" class="p-error">{{ serverErrors.description[0] }}</small>
                 </div>
+
             </div>
         </div>
 

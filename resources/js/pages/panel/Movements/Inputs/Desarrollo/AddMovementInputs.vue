@@ -1,20 +1,24 @@
 <template>
-    <Toolbar class="mb-6">
+    <Toolbar class="mb-6 flex flex-wrap justify-between items-center">
         <template #start>
-            <Button label="Nuevo Movimiento" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <Button label="Nuevo Movimiento" icon="pi pi-plus" severity="secondary" class="mr-2 mb-2 sm:mb-0" @click="openNew" />
         </template>
     </Toolbar>
 
-     <Dialog v-model:visible="inputDialog" :style="{ width: '700px' }" header="Movimiento de Items" :modal="true" @hide="resetForm">
+    <Dialog v-model:visible="inputDialog" :style="{ width: '90%', maxWidth: '450px' }" header="Movimiento de Items" :modal="true" @hide="resetForm">
         <div class="flex flex-col gap-6">
             <!-- Tipo de Documento -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Tipo de Documento <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.documentType" :options="documentTypes" optionLabel="label" optionValue="value" />
-               <br>
-              <small v-if="serverErrors.movement_type" class="text-red-500">{{ serverErrors.movement_type[0] }}</small>
-
+                    <SelectButton
+                        v-model="movementInput.documentType"
+                        :options="documentTypes"
+                        optionLabel="label"
+                        optionValue="value"
+                    />
+                    <br />
+                    <small v-if="serverErrors.movement_type" class="text-red-500">{{ serverErrors.movement_type[0] }}</small>
                 </div>
             </div>
 
@@ -22,24 +26,30 @@
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Código <span class="text-red-500">*</span></label>
-                    <InputText v-model="movementInput.code" required maxlength="20" fluid :class="{ 'p-invalid': serverErrors.code }" />
+                    <InputText
+                        v-model="movementInput.code"
+                        required
+                        maxlength="20"
+                        fluid
+                        class="w-full"
+                        :class="{ 'p-invalid': serverErrors.code }"
+                    />
                     <small v-if="serverErrors.code" class="text-red-500">{{ serverErrors.code[0] }}</small>
                 </div>
             </div>
 
             <!-- Fechas -->
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Fecha de Emisión <span class="text-red-500">*</span></label>
-                    <InputDate v-model="movementInput.issueDate" required class="w-full" showIcon/>
-           <small v-if="serverErrors.issue_date" class="text-red-500">{{ serverErrors.issue_date[0] }}</small>
-
+                    <InputDate v-model="movementInput.issueDate" required class="w-full" showIcon />
+                    <small v-if="serverErrors.issue_date" class="text-red-500">{{ serverErrors.issue_date[0] }}</small>
                 </div>
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Fecha de Ejecución <span class="text-red-500">*</span></label>
-                    <InputDate v-model="movementInput.executionDate" required class="w-full" showIcon/>
-           <small v-if="serverErrors.execution_date" class="text-red-500">{{ serverErrors.execution_date[0] }}</small>
 
+                <div class="col-span-12 sm:col-span-6">
+                    <label class="mb-2 block font-bold">Fecha de Ejecución <span class="text-red-500">*</span></label>
+                    <InputDate v-model="movementInput.executionDate" required class="w-full" showIcon />
+                    <small v-if="serverErrors.execution_date" class="text-red-500">{{ serverErrors.execution_date[0] }}</small>
                 </div>
             </div>
 
@@ -56,6 +66,7 @@
                         placeholder="Seleccione un Proveedor"
                         filter
                         filterPlaceholder="Buscar proveedor"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.supplier_id" class="text-red-500">{{ serverErrors.supplier_id[0] }}</small>
                 </div>
@@ -65,11 +76,14 @@
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Tipo de Pago <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.paymentType" :options="paymentTypes" optionLabel="label" optionValue="value" />
-           
-           <br>
-            <small v-if="serverErrors.payment_type" class="text-red-500">{{ serverErrors.payment_type[0] }}</small>
-
+                    <SelectButton
+                        v-model="movementInput.paymentType"
+                        :options="paymentTypes"
+                        optionLabel="label"
+                        optionValue="value"
+                    />
+                    <br />
+                    <small v-if="serverErrors.payment_type" class="text-red-500">{{ serverErrors.payment_type[0] }}</small>
                 </div>
             </div>
 
@@ -77,11 +91,14 @@
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Incluir IGV <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.igvState" :options="igvOptions" optionLabel="label" optionValue="value" />
-           
-           <br>
-            <small v-if="serverErrors.igv_state" class="text-red-500">{{ serverErrors.igv_state[0] }}</small>
-
+                    <SelectButton
+                        v-model="movementInput.igvState"
+                        :options="igvOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                    />
+                    <br />
+                    <small v-if="serverErrors.igv_state" class="text-red-500">{{ serverErrors.igv_state[0] }}</small>
                 </div>
             </div>
         </div>
@@ -92,6 +109,35 @@
         </template>
     </Dialog>
 </template>
+
+<style scoped>
+@media (max-width: 768px) {
+    .p-dialog {
+        width: 95% !important;
+    }
+
+    .p-selectbutton .p-button {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .p-dialog {
+        width: 100% !important;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .p-dialog-content {
+        padding: 1rem;
+    }
+
+    .p-dialog-header {
+        font-size: 1rem;
+    }
+}
+</style>
 
 <script setup lang="ts">
 

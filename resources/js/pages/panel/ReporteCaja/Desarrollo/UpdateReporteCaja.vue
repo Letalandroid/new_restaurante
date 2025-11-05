@@ -130,19 +130,27 @@ const updateReporte = async (): Promise<void> => {
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" header="Editar Reporte de Caja" modal :closable="true" :closeOnEscape="true" :style="{ width: '500px' }">
+  <Dialog 
+    v-model:visible="dialogVisible" 
+    header="Editar Reporte de Caja" 
+    modal 
+    :closable="true" 
+    :closeOnEscape="true" 
+    :style="{ width: '85vw', maxWidth: '500px' }" 
+    class="max-w-full"
+  >
     <div class="flex flex-col gap-6">
         <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12">
-                <label class="block font-bold mb-2">Vendedor</label>
-                <InputText v-model="reporte.vendedorNombre" readonly fluid disabled/>
+                <label class="block font-bold mb-2 text-sm sm:text-base">Vendedor</label>
+                <InputText v-model="reporte.vendedorNombre" readonly fluid disabled class="w-full"/>
             </div>
             <div class="col-span-12">
-                <label class="block font-bold mb-2">N° Caja</label>
-                <InputText v-model="reporte.numero_cajas" readonly fluid disabled/>
+                <label class="block font-bold mb-2 text-sm sm:text-base">N° Caja</label>
+                <InputText v-model="reporte.numero_cajas" readonly fluid disabled class="w-full"/>
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Efectivo</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Efectivo</label>
                 <InputNumber
                     v-model="reporte.monto_efectivo"
                     :minFractionDigits="2"
@@ -150,10 +158,11 @@ const updateReporte = async (): Promise<void> => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Tarjeta</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Tarjeta</label>
                 <InputNumber
                     v-model="reporte.monto_tarjeta"
                     :minFractionDigits="2"
@@ -161,10 +170,11 @@ const updateReporte = async (): Promise<void> => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Yape/Plin</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Yape/Plin</label>
                 <InputNumber
                     v-model="reporte.monto_yape"
                     :minFractionDigits="2"
@@ -172,10 +182,11 @@ const updateReporte = async (): Promise<void> => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Transferencia</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Transferencia</label>
                 <InputNumber
                     v-model="reporte.monto_transferencia"
                     :minFractionDigits="2"
@@ -183,7 +194,8 @@ const updateReporte = async (): Promise<void> => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
         </div>
     </div>

@@ -163,49 +163,108 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedPresentaciones" :value="presentaciones" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} presentaciones">
+    <div class="w-full overflow-x-auto">
+        <DataTable 
+            ref="dt" 
+            v-model:selection="selectedPresentaciones" 
+            :value="presentaciones" 
+            dataKey="id" 
+            :paginator="true"
+            :rows="pagination.perPage" 
+            :totalRecords="pagination.total" 
+            :loading="loading" 
+            :lazy="true" 
+            @page="onPage"
+            :rowsPerPageOptions="[15, 20, 25]" 
+            scrollable 
+            scrollHeight="574px"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} presentaciones"
+            class="min-w-full text-sm sm:text-base"
+        >
 
-        <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
-                <h4 class="m-0">PRESENTACIONES</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar presentación..." />
-                    </IconField>
-                    <Select v-model="selectedEstadoPresentacion" :options="estadoPresentacionOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadPresentacion" />
+            <!-- HEADER -->
+            <template #header>
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center justify-between w-full">
+                    <h4 class="m-0">PRESENTACIONES</h4>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                        <IconField class="w-full sm:w-auto">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar presentación..." 
+                                class="w-full sm:w-64"
+                            />
+                        </IconField>
+
+                        <Select 
+                            v-model="selectedEstadoPresentacion" 
+                            :options="estadoPresentacionOptions" 
+                            optionLabel="name"
+                            placeholder="Estado" 
+                            class="w-full sm:w-auto"
+                        />
+
+                        <Button 
+                            icon="pi pi-refresh" 
+                            outlined 
+                            rounded 
+                            aria-label="Refresh" 
+                            @click="loadPresentacion" 
+                            class="w-full sm:w-auto"
+                        />
+                    </div>
                 </div>
-            </div>
-        </template>
-
-        <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="name" header="Nombre" sortable style="min-width: 12rem" />
-        <Column field="description" header="Descripción" sortable style="min-width: 15rem" />
-        <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
-        <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem" />
-        <Column field="state" header="Estado" sortable style="min-width: 6rem">
-            <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
-        </Column>
-        <Column field="actions" header="Acciones" :exportable="false" style="min-width: 8rem">
-            <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editPresentacion(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger"
-                    @click="confirmDeletePresentacion(slotProps.data)" />
-            </template>
-        </Column>
-    </DataTable>
 
-    <DeletePresentacion v-model:visible="deletePresentacionDialog" :presentacion="presentacion" @deleted="handlePresentacionDeleted" />
-    <UpdatePresentacion v-model:visible="updatePresentacionDialog" :presentacionId="selectedPresentacionId"
-        @updated="handlePresentacionUpdated" />
+            <!-- COLUMNAS -->
+            <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
+            <Column field="name" header="Nombre" sortable style="min-width: 12rem" />
+            <Column field="description" header="Descripción" sortable style="min-width: 15rem" />
+            <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
+            <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem" />
+
+            <Column field="state" header="Estado" sortable style="min-width: 6rem">
+                <template #body="{ data }">
+                    <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                </template>
+            </Column>
+
+            <Column field="actions" header="Acciones" :exportable="false" style="min-width: 8rem">
+                <template #body="slotProps">
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <Button 
+                            icon="pi pi-pencil" 
+                            outlined 
+                            rounded 
+                            class="mr-0 sm:mr-2" 
+                            @click="editPresentacion(slotProps.data)" 
+                        />
+                        <Button 
+                            icon="pi pi-trash" 
+                            outlined 
+                            rounded 
+                            severity="danger"
+                            @click="confirmDeletePresentacion(slotProps.data)" 
+                        />
+                    </div>
+                </template>
+            </Column>
+        </DataTable>
+    </div>
+
+    <!-- MODALES -->
+    <DeletePresentacion 
+        v-model:visible="deletePresentacionDialog" 
+        :presentacion="presentacion" 
+        @deleted="handlePresentacionDeleted" 
+    />
+    <UpdatePresentacion 
+        v-model:visible="updatePresentacionDialog" 
+        :presentacionId="selectedPresentacionId"
+        @updated="handlePresentacionUpdated" 
+    />
 </template>

@@ -1,32 +1,47 @@
 <template>
-  <div class="card p-4 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">Subir certificado .pem</h2>
+  <div
+    class="card p-4 sm:p-6 md:p-8 shadow-sm max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto bg-white rounded-lg"
+  >
+    <h2
+      class="text-base sm:text-lg md:text-xl font-semibold mb-4 text-center sm:text-left"
+    >
+      Subir certificado .pem
+    </h2>
 
-    <form @submit.prevent="subirArchivo" enctype="multipart/form-data">
-      <div class="mb-3">
+    <form
+      @submit.prevent="subirArchivo"
+      enctype="multipart/form-data"
+      class="flex flex-col gap-4"
+    >
+      <div class="mb-3 w-full">
         <input
           type="file"
           accept=".pem"
           @change="handleArchivo"
-          class="form-control"
+          class="form-control w-full text-sm sm:text-base border rounded-md p-2"
           required
         />
-        <div v-if="errores.certificado" class="text-danger mt-1">
+        <div v-if="errores.certificado" class="text-red-500 mt-1 text-sm">
           {{ errores.certificado }}
         </div>
       </div>
 
       <!-- ✅ Botón PrimeVue -->
-      <Button
-        type="submit"
-        icon="pi pi-upload"
-        label="Subir Certificado"
-        class="w-full md:w-auto"
-        :loading="cargando"
-        :disabled="cargando"
-      />
+      <div class="flex justify-center sm:justify-start">
+        <Button
+          type="submit"
+          icon="pi pi-upload"
+          label="Subir Certificado"
+          class="w-full sm:w-auto"
+          :loading="cargando"
+          :disabled="cargando"
+        />
+      </div>
 
-      <div v-if="mensaje" class="alert alert-success mt-3">
+      <div
+        v-if="mensaje"
+        class="alert alert-success mt-3 text-center sm:text-left text-sm sm:text-base"
+      >
         {{ mensaje }}
       </div>
     </form>

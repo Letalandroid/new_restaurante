@@ -139,45 +139,94 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedalmacenes" :value="almacenes" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <!-- Tabla de almacenes -->
+    <DataTable 
+        ref="dt" 
+        v-model:selection="selectedalmacenes" 
+        :value="almacenes" 
+        dataKey="id" 
+        :paginator="true"
+        :rows="pagination.perPage" 
+        :totalRecords="pagination.total" 
+        :loading="loading" 
+        :lazy="true" 
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]" 
+        scrollable 
+        :scrollHeight="'50vh'"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} almacen">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} almacen"
+    >
 
+        <!-- Header con búsqueda y filtros -->
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 justify-between w-full">
                 <h4 class="m-0">ALMACEN</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <IconField class="flex-1">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar almacen..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar almacen..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoAlmacen" :options="estadoAlmacenOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadAlmacen" />
+                    <Select 
+                        v-model="selectedEstadoAlmacen" 
+                        :options="estadoAlmacenOptions" 
+                        optionLabel="name"
+                        placeholder="Estado" 
+                        class="w-full sm:w-auto"
+                    />
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadAlmacen" 
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="name" header="Nombre" sortable style="min-width: 13rem"></Column>
-        <Column field="creacion" header="Creacion" sortable style="min-width: 13rem"></Column>
-        <Column field="actualizacion" header="Actualizacion" sortable style="min-width: 13rem"></Column>
-        <Column field="state" header="Estado" sortable style="min-width: 4rem">
+        <Column field="name" header="Nombre" sortable style="min-width: 10rem"></Column>
+        <Column field="creacion" header="Creacion" sortable style="min-width: 10rem"></Column>
+        <Column field="actualizacion" header="Actualizacion" sortable style="min-width: 10rem"></Column>
+        <Column field="state" header="Estado" sortable style="min-width: 5rem">
             <template #body="{ data }">
                 <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
         </Column>
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editalmacen(slotProps.data)"/>
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeletealmacen(slotProps.data)" />
+                <div class="flex flex-wrap gap-1">
+                    <Button 
+                        icon="pi pi-pencil" 
+                        outlined 
+                        rounded 
+                        class="mr-2 mb-1 sm:mb-0" 
+                        @click="editalmacen(slotProps.data)"
+                    />
+                    <Button 
+                        icon="pi pi-trash" 
+                        outlined 
+                        rounded 
+                        severity="danger" 
+                        class="mb-1 sm:mb-0" 
+                        @click="confirmDeletealmacen(slotProps.data)" 
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
+
+    <!-- Modales de eliminación y actualización -->
     <DeleteAlmacen
         v-model:visible="deleteAlmacenDialog"
         :almacen="almacen"

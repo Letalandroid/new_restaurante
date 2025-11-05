@@ -143,51 +143,110 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedCategorias" :value="categorias" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable 
+        ref="dt" 
+        v-model:selection="selectedCategorias" 
+        :value="categorias" 
+        dataKey="id" 
+        :paginator="true"
+        :rows="pagination.perPage" 
+        :totalRecords="pagination.total" 
+        :loading="loading" 
+        :lazy="true" 
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]" 
+        scrollable 
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} categorías"
+        class="w-full overflow-x-auto"
+    >
 
+        <!-- ENCABEZADO RESPONSIVE -->
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center justify-between w-full">
                 <h4 class="m-0">CATEGORÍAS</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar categoria..." />
-                    </IconField>
-                    <Select v-model="selectedEstadoCategoria" :options="estadoCategoriaOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadCategoria" />
+
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                    <div class="flex items-center w-full sm:w-auto">
+                        <IconField class="flex-1 sm:flex-initial w-full sm:w-64">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar categoría..." 
+                                class="w-full"
+                            />
+                        </IconField>
+                    </div>
+
+                    <Select 
+                        v-model="selectedEstadoCategoria" 
+                        :options="estadoCategoriaOptions" 
+                        optionLabel="name"
+                        placeholder="Estado" 
+                        class="w-full sm:w-auto min-w-[160px]" 
+                    />
+
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadCategoria"
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- COLUMNAS -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
         <Column field="name" header="Nombre" sortable style="min-width: 13rem"></Column>
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem"></Column>
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"></Column>
+
         <Column field="state" header="Estado" sortable style="min-width: 4rem">
             <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                <Tag 
+                    :value="data.state ? 'Activo' : 'Inactivo'" 
+                    :severity="getSeverity(data.state)" 
+                    class="text-xs sm:text-sm"
+                />
             </template>
         </Column>
+
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editCategoria(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteCategoria(slotProps.data)" />
+                <div class="flex gap-2 justify-center sm:justify-start">
+                    <Button 
+                        icon="pi pi-pencil" 
+                        outlined 
+                        rounded 
+                        class="mr-0 sm:mr-2"
+                        @click="editCategoria(slotProps.data)" 
+                    />
+                    <Button 
+                        icon="pi pi-trash" 
+                        outlined 
+                        rounded 
+                        severity="danger" 
+                        @click="confirmDeleteCategoria(slotProps.data)" 
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
 
+    <!-- MODALES -->
     <DeleteCategoria
         v-model:visible="deleteCategoriaDialog"
         :categoria="categoria"
         @deleted="handleCategoriaDeleted"
     />
+
     <UpdateCategoria
         v-model:visible="updateCategoriaDialog"
         :categoriaId="selectedCategoriaId"

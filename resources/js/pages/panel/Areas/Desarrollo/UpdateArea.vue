@@ -110,10 +110,10 @@ const updateArea = async (): Promise<void> => {
 
 <template>
     <Dialog v-model:visible="dialogVisible" header="Editar Área" modal :closable="true" :closeOnEscape="true"
-        :style="{ width: '90%', maxWidth: '600px' }">
+        :style="{ width: '90%', maxWidth: '550px' }">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-9">
+                <div class="sm:col-span-10 col-span-8">
                     <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         id="name"
@@ -126,7 +126,7 @@ const updateArea = async (): Promise<void> => {
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <div class="col-span-3">
+                <div class="sm:col-span-2 col-span-4">
                     <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="area.state" :binary="true" inputId="state" />

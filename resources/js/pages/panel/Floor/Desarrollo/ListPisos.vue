@@ -151,43 +151,91 @@ onMounted(() => {
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pisos"
+        responsiveLayout="scroll"
     >
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2">
                 <h4 class="m-0">PISOS</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+                    <IconField class="w-full sm:w-48 mb-2 sm:mb-0">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por piso..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar por piso..." 
+                            class="w-full" 
+                        />
                     </IconField>
                     <Select
                         v-model="selectedEstadoPiso"
                         :options="estadoPisoOptions"
                         optionLabel="name"
                         placeholder="Estado del Piso"
-                        class="w-full md:w-auto"
+                        class="w-full sm:w-48 mb-2 sm:mb-0"
                     />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadPisos" />
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        class="w-full sm:w-auto"
+                        @click="loadPisos" 
+                    />
                 </div>
             </div>
         </template>
 
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="name" header="Nombre" sortable style="min-width: 13rem"></Column>
-        <Column field="description" header="Descripción" sortable style="min-width: 13rem"></Column>
-        <Column field="creacion" header="Creación" sortable style="min-width: 13rem"></Column>
-        <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"></Column>
-        <Column field="state" header="Estado" sortable style="min-width: 4rem">
+        <Column field="name" header="Nombre" sortable style="min-width: 100px; max-width: 150px">
             <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                <span class="text-xs sm:text-sm">{{ data.name }}</span>
             </template>
         </Column>
-        <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
+        <Column field="description" header="Descripción" sortable style="min-width: 120px; max-width: 180px">
+            <template #body="{ data }">
+                <span class="text-xs sm:text-sm">{{ data.description }}</span>
+            </template>
+        </Column>
+        <Column field="creacion" header="Creación" sortable style="min-width: 100px; max-width: 150px">
+            <template #body="{ data }">
+                <span class="text-xs sm:text-sm">{{ data.creacion }}</span>
+            </template>
+        </Column>
+        <Column field="actualizacion" header="Actualización" sortable style="min-width: 100px; max-width: 150px">
+            <template #body="{ data }">
+                <span class="text-xs sm:text-sm">{{ data.actualizacion }}</span>
+            </template>
+        </Column>
+        <Column field="state" header="Estado" sortable style="min-width: 80px; max-width: 120px">
+            <template #body="{ data }">
+                <Tag 
+                    :value="data.state ? 'Activo' : 'Inactivo'" 
+                    :severity="getSeverity(data.state)" 
+                    class="text-xs sm:text-sm" 
+                />
+            </template>
+        </Column>
+        <Column field="accions" header="Acciones" :exportable="false" style="min-width: 100px; max-width: 130px">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarPiso(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarEliminarPiso(slotProps.data)" />
+                <div class="flex gap-1 sm:gap-2">
+                    <Button 
+                        icon="pi pi-pencil" 
+                        outlined 
+                        rounded 
+                        class="w-8 h-8 sm:w-10 sm:h-10" 
+                        @click="editarPiso(slotProps.data)" 
+                    />
+                    <Button 
+                        icon="pi pi-trash" 
+                        outlined 
+                        rounded 
+                        severity="danger" 
+                        class="w-8 h-8 sm:w-10 sm:h-10"
+                        @click="confirmarEliminarPiso(slotProps.data)" 
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
@@ -203,3 +251,23 @@ onMounted(() => {
         @updated="handlePisoActualizado"
     />
 </template>
+
+<style scoped>
+@media (max-width: 640px) {
+    .responsive-table {
+        font-size: 0.875rem;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .responsive-table {
+        font-size: 0.9rem;
+    }
+}
+
+@media (min-width: 1025px) {
+    .responsive-table {
+        font-size: 1rem;
+    }
+}
+</style>

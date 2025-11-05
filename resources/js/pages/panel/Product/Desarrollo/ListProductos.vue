@@ -217,124 +217,153 @@ const getStockLabel = (stock: number) => {
 </script>
 
 <template>
-    <DataTable
-        ref="dt"
-        v-model:selection="selectedProductos"
-        :value="productos"
-        :paginator="true"
-        :rows="pagination.perPage"
-        :totalRecords="pagination.total"
-        :loading="loading"
-        :lazy="true"
-        @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]"
-        dataKey="id"
-        scrollable scrollHeight="574px"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
-        class="w-full"
-    >
-        <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
-                <h4 class="m-0">PRODUCTOS</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar producto..." />
-                    </IconField>
-                    <MultiSelect v-model="selectedColumns" :options="optionalColumns" optionLabel="header"
-                        display="chip" placeholder="Seleccionar" />
-                    <Select v-model="selectedEstadoProducto" :options="estadoProductoOptions" optionLabel="name" placeholder="Estado" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadProductos" />
-                </div>
-            </div>
-        </template>
+    <div class="w-full overflow-x-auto">
+        <DataTable
+            ref="dt"
+            v-model:selection="selectedProductos"
+            :value="productos"
+            :paginator="true"
+            :rows="pagination.perPage"
+            :totalRecords="pagination.total"
+            :loading="loading"
+            :lazy="true"
+            @page="onPage"
+            :rowsPerPageOptions="[15, 20, 25]"
+            dataKey="id"
+            scrollable scrollHeight="574px"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+            class="w-full text-sm sm:text-base"
+        >
+            <template #header>
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-2 items-start sm:items-center justify-between w-full">
+                    <h4 class="m-0">PRODUCTOS</h4>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-2 w-full sm:w-auto">
+                        <IconField class="w-full sm:w-auto">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar producto..." 
+                                class="w-full sm:w-64"
+                            />
+                        </IconField>
 
-        <Column selectionMode="multiple" style="width: 1rem" />
-        <Column field="name" header="Nombre" sortable style="min-width: 20rem" />
-        
-        <!-- Columna de Stock (opcional) -->
-        <Column v-if="isColumnSelected('stock_quantity')" field="stock_quantity" header="Stock" sortable style="min-width: 10rem">
-            <template #body="{ data }">
-                <div class="flex items-center gap-2">
-                    <span v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
-                          class="font-semibold text-blue-600">
-                        {{ formatStock(data.stock_quantity) }}
-                    </span>
-                    <span v-else class="text-gray-400">-</span>
-                    
-                    <!-- Indicador visual del nivel de stock -->
-                    <Tag v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
-                         :severity="getStockSeverity(data.stock_quantity)"
-                         :value="getStockLabel(data.stock_quantity)"
-                         class="text-xs" />
-                </div>
-            </template>
-        </Column>
-        
-        <Column v-if="isColumnSelected('details')" field="details" header="Detalles" sortable
-            style="min-width: 41rem">
-        </Column>
-        <Column field="Categoria_name" header="Categoría" sortable style="min-width: 15rem" />
-        <Column field="Almacen_name" header="Almacén" sortable style="min-width: 15rem"/>
-        
-        <!-- Campos adicionales -->
-        <Column field="priceSale" header="Precio Venta" sortable style="min-width: 12rem">
-            <template #body="{ data }">
-                <span v-if="data.priceSale">{{ formatCurrency(data.priceSale) }}</span>
-                <span v-else class="text-gray-400">-</span>
-            </template>
-        </Column>
-
-        <Column field="quantityUnitMeasure" header="Cantidad Medida" sortable style="min-width: 12rem">
-            <template #body="{ data }">
-                <span v-if="data.quantityUnitMeasure">{{ formatQuantity(data.quantityUnitMeasure) }}</span>
-                <span v-else class="text-gray-400">-</span>
-            </template>
-        </Column>
-
-        <Column field="unitMeasure" header="Unidad Medida" sortable style="min-width: 12rem">
-            <template #body="{ data }">
-                <span v-if="data.unitMeasure">{{ getUnitMeasureLabel(data.unitMeasure) }}</span>
-                <span v-else class="text-gray-400">-</span>
-            </template>
-        </Column>
-                
-        <Column v-if="isColumnSelected('foto')" field="foto" header="Foto" style="min-width: 8rem">
-            <template #body="{ data }">
-                <div class="flex justify-center items-center">
-                    <template v-if="data.foto && data.foto !== 'sin imagen'">
-                        <img 
-                            :src="getFotoUrl(data.foto)" 
-                            :alt="data.name"
-                            class="w-12 h-12 object-cover rounded-full border cursor-pointer hover:scale-110 transition-transform"
-                            @click="openImageDialog(data.foto)"
-                            @error="(e: any) => e.target.src = '/images/placeholder-product.png'"
+                        <MultiSelect 
+                            v-model="selectedColumns" 
+                            :options="optionalColumns" 
+                            optionLabel="header"
+                            display="chip" 
+                            placeholder="Seleccionar" 
+                            class="w-full sm:w-56"
                         />
-                    </template>
-                    <template v-else>
-                        <span class="text-gray-400 text-sm italic">Sin imagen</span>
-                    </template>
+
+                        <Select 
+                            v-model="selectedEstadoProducto" 
+                            :options="estadoProductoOptions" 
+                            optionLabel="name" 
+                            placeholder="Estado"
+                            class="w-full sm:w-48"
+                        />
+
+                        <Button 
+                            icon="pi pi-refresh" 
+                            outlined 
+                            rounded 
+                            aria-label="Refresh" 
+                            @click="loadProductos"
+                            class="w-full sm:w-auto"
+                        />
+                    </div>
                 </div>
             </template>
-        </Column>
 
-        <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
-        <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"/>
-        <Column field="state" header="Estado" sortable>
-            <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
-            </template>
-        </Column>
-        <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
-            <template #body="{ data }">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarProducto(data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteProducto(data)" />
-            </template>
-        </Column>
-    </DataTable>
+            <Column selectionMode="multiple" style="width: 1rem" />
+            <Column field="name" header="Nombre" sortable style="min-width: 20rem" />
+            
+            <!-- Columna de Stock (opcional) -->
+            <Column v-if="isColumnSelected('stock_quantity')" field="stock_quantity" header="Stock" sortable style="min-width: 10rem">
+                <template #body="{ data }">
+                    <div class="flex items-center gap-2">
+                        <span v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
+                              class="font-semibold text-blue-600">
+                            {{ formatStock(data.stock_quantity) }}
+                        </span>
+                        <span v-else class="text-gray-400">-</span>
+                        
+                        <!-- Indicador visual del nivel de stock -->
+                        <Tag v-if="data.stock_quantity !== undefined && data.stock_quantity !== null" 
+                             :severity="getStockSeverity(data.stock_quantity)"
+                             :value="getStockLabel(data.stock_quantity)"
+                             class="text-xs" />
+                    </div>
+                </template>
+            </Column>
+            
+            <Column v-if="isColumnSelected('details')" field="details" header="Detalles" sortable
+                style="min-width: 41rem">
+            </Column>
+            <Column field="Categoria_name" header="Categoría" sortable style="min-width: 15rem" />
+            <Column field="Almacen_name" header="Almacén" sortable style="min-width: 15rem"/>
+            
+            <!-- Campos adicionales -->
+            <Column field="priceSale" header="Precio Venta" sortable style="min-width: 12rem">
+                <template #body="{ data }">
+                    <span v-if="data.priceSale">{{ formatCurrency(data.priceSale) }}</span>
+                    <span v-else class="text-gray-400">-</span>
+                </template>
+            </Column>
+
+            <Column field="quantityUnitMeasure" header="Cantidad Medida" sortable style="min-width: 12rem">
+                <template #body="{ data }">
+                    <span v-if="data.quantityUnitMeasure">{{ formatQuantity(data.quantityUnitMeasure) }}</span>
+                    <span v-else class="text-gray-400">-</span>
+                </template>
+            </Column>
+
+            <Column field="unitMeasure" header="Unidad Medida" sortable style="min-width: 12rem">
+                <template #body="{ data }">
+                    <span v-if="data.unitMeasure">{{ getUnitMeasureLabel(data.unitMeasure) }}</span>
+                    <span v-else class="text-gray-400">-</span>
+                </template>
+            </Column>
+                    
+            <Column v-if="isColumnSelected('foto')" field="foto" header="Foto" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <div class="flex justify-center items-center">
+                        <template v-if="data.foto && data.foto !== 'sin imagen'">
+                            <img 
+                                :src="getFotoUrl(data.foto)" 
+                                :alt="data.name"
+                                class="w-12 h-12 object-cover rounded-full border cursor-pointer hover:scale-110 transition-transform"
+                                @click="openImageDialog(data.foto)"
+                                @error="(e: any) => e.target.src = '/images/placeholder-product.png'"
+                            />
+                        </template>
+                        <template v-else>
+                            <span class="text-gray-400 text-sm italic">Sin imagen</span>
+                        </template>
+                    </div>
+                </template>
+            </Column>
+
+            <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
+            <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"/>
+            <Column field="state" header="Estado" sortable>
+                <template #body="{ data }">
+                    <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                </template>
+            </Column>
+            <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarProducto(data)" />
+                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteProducto(data)" />
+                </template>
+            </Column>
+        </DataTable>
+    </div>
 
     <DeleteProducto
         v-model:visible="deleteProductoDialog"
@@ -364,7 +393,7 @@ const getStockLabel = (stock: number) => {
                 label="Cerrar" 
                 icon="pi pi-times" 
                 severity="secondary" 
-                class="mt-4"
+                class="mt-4 w-full sm:w-auto"
                 @click="imageDialogVisible = false" 
             />
         </div>

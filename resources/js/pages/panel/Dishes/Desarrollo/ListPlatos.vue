@@ -165,24 +165,47 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedPlatos" :value="platos" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable 
+        ref="dt" 
+        v-model:selection="selectedPlatos" 
+        :value="platos" 
+        dataKey="id" 
+        :paginator="true"
+        :rows="pagination.perPage" 
+        :totalRecords="pagination.total" 
+        :loading="loading" 
+        :lazy="true" 
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]" 
+        scrollable 
+        scrollHeight="auto"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} platos">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} platos"
+        class="w-full"
+    >
 
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-wrap gap-2 items-center justify-between w-full">
                 <h4 class="m-0">Platos</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <IconField class="flex-1 sm:flex-none">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar plato..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar plato..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoPlato" :options="estadoPlatoOptions" optionLabel="name"
-                        placeholder="Estado del Plato" class="w-full md:w-auto" />
+                    <Select 
+                        v-model="selectedEstadoPlato" 
+                        :options="estadoPlatoOptions" 
+                        optionLabel="name"
+                        placeholder="Estado del Plato" 
+                        class="w-full sm:w-auto"
+                    />
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadPlatos" />
                 </div>
             </div>
@@ -206,7 +229,7 @@ onMounted(() => {
         </Column>
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editPlato(slotProps.data)" />
+                <Button icon="pi pi-pencil" outlined rounded class="mr-2 mb-2 sm:mb-0" @click="editPlato(slotProps.data)" />
                 <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeletePlato(slotProps.data)" />
             </template>
         </Column>

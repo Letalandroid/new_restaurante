@@ -164,32 +164,51 @@ onMounted(() => {
         @page="onPage"
         :rowsPerPageOptions="[15, 20, 25]"
         scrollable
-        scrollHeight="574px"
+        :scrollHeight="'auto'"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
     >
+        <!-- Header con búsqueda y filtros -->
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">PROVEEDORES</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <!-- Búsqueda global -->
+                    <IconField class="flex-1 sm:flex-auto">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar proveedor..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar proveedor..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
+
+                    <!-- Filtro por estado -->
                     <Select
                         v-model="selectedEstadoProveedor"
                         :options="estadoProveedorOptions"
                         optionLabel="name"
                         placeholder="Estado"
-                        class="w-full md:w-auto"
+                        class="w-full sm:w-auto"
                     />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadProveedor" />
+
+                    <!-- Botón refrescar -->
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadProveedor" 
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
         <Column field="name" header="Nombre" sortable style="min-width: 12rem" />
         <Column field="ruc" header="RUC" sortable style="min-width: 10rem" />
@@ -204,12 +223,13 @@ onMounted(() => {
         </Column>
         <Column field="actions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editProveedor(slotProps.data)" />
+                <Button icon="pi pi-pencil" outlined rounded class="mr-2 mb-2 sm:mb-0" @click="editProveedor(slotProps.data)" />
                 <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteProveedor(slotProps.data)" />
             </template>
         </Column>
     </DataTable>
 
+    <!-- Modales -->
     <DeleteProveedor v-model:visible="deleteProveedorDialog" :proveedor="proveedor" @deleted="handleProveedorDeleted" />
     <UpdateProveedor v-model:visible="updateProveedorDialog" :proveedorId="selectedProveedorId" @updated="handleProveedorUpdated" />
 </template>

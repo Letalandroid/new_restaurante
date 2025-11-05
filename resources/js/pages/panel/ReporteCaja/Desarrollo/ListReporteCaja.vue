@@ -121,17 +121,30 @@ onMounted(loadReportes);
         scrollable scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reportes"
-        class="w-full"
+        class="w-full overflow-x-auto text-sm sm:text-base"
     >
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-2 items-start sm:items-center justify-between">
                 <h2 class="m-0">REPORTE DE CAJAS</h2>
-                <div class="flex flex-wrap gap-2">
-                    <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por vendedor o N° de caja..." class="w-96"/>
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadReportes" />
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                    <InputText 
+                        v-model="globalFilterValue" 
+                        @input="onGlobalSearch" 
+                        placeholder="Buscar por vendedor o N° de caja..." 
+                        class="w-full sm:w-80 md:w-96"
+                    />
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadReportes" 
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
+
         <Column field="numero_cajas" header="N° Caja" sortable />
         <Column field="vendedorNombre" header="Vendedor" sortable />
         <!--Columnas puestas al prefijo de S/.-->
@@ -164,7 +177,7 @@ onMounted(loadReportes);
         </Column>
         <Column field="acciones" header="Acción" :exportable="false">
             <template #body="{ data }">
-                <Button icon="pi pi-pencil" outlined rounded @click="editarReporte(data)" />
+                <Button icon="pi pi-pencil" outlined rounded @click="editarReporte(data)" class="w-8 h-8 sm:w-10 sm:h-10" />
             </template>
         </Column>
     </DataTable>

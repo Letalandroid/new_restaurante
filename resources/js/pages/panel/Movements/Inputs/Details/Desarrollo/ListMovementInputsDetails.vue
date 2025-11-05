@@ -256,7 +256,7 @@ function getItemType(data: MovementInput) {
     >
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h4 class="m-0">Movimientos de Items</h4>
+                <h4 class="m-0">MOVIMIENTO DE COMPRA DE ITEMS</h4>
                 <div class="flex flex-wrap gap-2">
                     <IconField>
                         <InputIcon>

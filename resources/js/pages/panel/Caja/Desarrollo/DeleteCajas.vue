@@ -62,7 +62,7 @@ async function deleteCaja(): Promise<void> {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '380px' }" header="Confirmar" :modal="true"
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '350px' }" header="Confirmar" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-5">
             <i class="pi pi-exclamation-triangle !text-7xl" />

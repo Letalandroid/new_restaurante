@@ -1,12 +1,12 @@
 <template>
-    <Toolbar class="mb-6">
+    <Toolbar class="mb-6 flex flex-wrap justify-between gap-2">
         <template #start>
             <Button label="Nuevo Item" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
             <Button label="Volver" icon="pi pi-arrow-left" severity="secondary" class="mr-2" @click="goBack" />
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="inputDialog" :style="{ width: '500px' }" header="NUEVO SERVICIO" :modal="true" @hide="onDialogHide">
+    <Dialog v-model:visible="inputDialog" :style="{ width: '85%', maxWidth: '450px' }" header="NUEVO SERVICIO" :modal="true" @hide="onDialogHide">
         <div class="flex flex-col gap-6">
             <!-- Selector de Tipo -->
             <div class="grid grid-cols-12 gap-4">
@@ -59,8 +59,8 @@
                         class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                     >
                         <div class="flex flex-col">
-                            <span class="font-semibold text-gray-800">{{ item.id }} - {{ item.name }}</span>
-                            <span class="text-sm text-gray-600">
+                            <span class="font-semibold text-gray-800 text-sm sm:text-base">{{ item.id }} - {{ item.name }}</span>
+                            <span class="text-xs sm:text-sm text-gray-600">
                                 {{ item.quantityUnitMeasure }} {{ item.unitMeasure }}
                             </span>
                         </div>
@@ -70,32 +70,33 @@
                 <!-- Mensaje de no encontrados -->
                 <div
                     v-if="showResults && searchTerm && itemsOptions.length === 0"
-                    class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg"
+                    class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg text-sm sm:text-base"
                 >
                     No se encontraron resultados
                 </div>
             </div>
 
             <!-- Item seleccionado -->
-            <div v-if="selectedItem" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
-                <span class="font-medium text-primary-800">
+            <div v-if="selectedItem" class="mt-4 flex flex-col sm:flex-row items-center justify-between rounded-lg bg-primary-50 p-3 gap-2">
+                <span class="font-medium text-primary-800 text-center sm:text-left text-sm sm:text-base">
                     {{ selectedItem.id }} - {{ selectedItem.name }} - {{ selectedItem.quantityUnitMeasure }} {{ selectedItem.unitMeasure }}
                 </span>
-                <Button icon="pi pi-times" @click="clearSelection" />
+                <Button icon="pi pi-times" class="w-full sm:w-auto" @click="clearSelection" />
             </div>
+
             <!-- Número de Lote -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
-                    <label class="mb-2 block font-bold">Número de Lote <span class="text-red-500">*</span></label>
-                    <InputText v-model="movementInput.batch" required maxlength="20" fluid :class="{ 'p-invalid': serverErrors.batch }" />
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Número de Lote <span class="text-red-500">*</span></label>
+                    <InputText v-model="movementInput.batch" required maxlength="20" fluid :class="{ 'p-invalid': serverErrors.batch }" class="w-full" />
                     <small v-if="serverErrors.batch" class="text-red-500">{{ serverErrors.batch[0] }}</small>
                 </div>
             </div>
 
             <!-- Fecha de Vencimiento -->
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Fecha de Vencimiento <span class="text-red-500">*</span></label>
+                <div class="col-span-12 sm:col-span-6">
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Fecha de Vencimiento <span class="text-red-500">*</span></label>
                     <InputDate v-model="movementInput.expirationDate" required class="w-full" dateFormat="dd/mm/yy" showIcon/>
                     <small v-if="serverErrors.expirationDate" class="text-red-500">{{ serverErrors.expirationDate[0] }}</small>
                 </div>
@@ -104,7 +105,7 @@
             <!-- Cantidad -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
-                    <label class="mb-2 block font-bold">Cantidad <span class="text-red-500">*</span></label>
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Cantidad <span class="text-red-500">*</span></label>
                     <InputNumber v-model="movementInput.quantity" required :min="1" class="w-full" :class="{ 'p-invalid': serverErrors.quantity }" />
                     <small v-if="serverErrors.quantity" class="text-red-500">{{ serverErrors.quantity[0] }}</small>
                 </div>
@@ -113,7 +114,7 @@
             <!-- Precio Total -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
-                    <label class="mb-2 block font-bold">Precio Total <span class="text-red-500">*</span></label>
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Precio Total <span class="text-red-500">*</span></label>
                     <InputNumber
                         v-model="movementInput.totalPrice"
                         required
@@ -130,8 +131,8 @@
             <!-- Precio Unitario (Deshabilitado) -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
-                    <label class="mb-2 block font-bold">Precio Unitario</label>
-                    <InputText v-model="movementInput.unitPrice" disabled fluid />
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Precio Unitario</label>
+                    <InputText v-model="movementInput.unitPrice" disabled fluid class="w-full" />
                 </div>
             </div>
         </div>

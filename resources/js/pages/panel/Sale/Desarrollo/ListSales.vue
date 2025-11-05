@@ -15,12 +15,7 @@ const inputs = ref([]);
 const loading = ref(false);
 const globalFilterValue = ref('');
 const deleteInputDialog = ref(false);
-const updateInputDialog = ref(false);
-const selectedInputId = ref(null);
-const input = ref({});
 const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedAlmacen = ref(null);
 const selectedEstadoInput = ref(null);
 const selectedSale = ref(null); // Variable para almacenar la venta seleccionada
 const detailsDialog = ref(false); // Controlar la visibilidad del modal
@@ -42,20 +37,7 @@ const verDetalle = async (data) => {
         console.error('Error al obtener detalles de la venta:', error);
     }
 };
-const estadoInputOptions = ref([
-    { name: 'TODOS', value: '' },
-    { name: 'ACTIVOS', value: 1 },
-    { name: 'INACTIVOS', value: 0 },
-]);
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some((col) => col.field === fieldName);
-};
-
-const optionalColumns = ref([
-    { field: 'tablenum', header: 'Numero' },
-    { field: 'capacity', header: 'Capacidad' },
-]);
 
 const dateRange = ref(null); // Variable para almacenar el rango de fechas
 // Variables para almacenar los montos
@@ -142,27 +124,6 @@ const onGlobalSearch = debounce(() => {
     loadInputs();
 }, 500);
 
-const getSeverity = (value) => {
-    return value ? 'success' : 'danger';
-};
-
-const editarInput = (prod) => {
-    selectedInputId.value = prod.id;
-    updateInputDialog.value = true;
-};
-
-const confirmarDeleteInput = (prod) => {
-    input.value = prod;
-    deleteInputDialog.value = true;
-};
-
-function handleInputUpdated() {
-    loadInputs();
-}
-
-function handleInputDeleted() {
-    loadInputs();
-}
 
 onMounted(loadInputs);
 
@@ -339,6 +300,7 @@ const enviarASunat = async (idSale, prefix) => {
             scrollHeight="574px"
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Ventas"
+            class="text-sm sm:text-base"
         >
             <template #header>
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -354,14 +316,22 @@ const enviarASunat = async (idSale, prefix) => {
                                 @change="onDateRangeChange"
                             />
                         </div>
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por DNI o RUC" />
-                        </IconField>
 
-                        <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadInputs" />
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <IconField class="w-full sm:w-auto">
+                                <InputIcon>
+                                    <i class="pi pi-search" />
+                                </InputIcon>
+                                <InputText
+                                    v-model="globalFilterValue"
+                                    @input="onGlobalSearch"
+                                    placeholder="Buscar por DNI o RUC"
+                                    class="w-full sm:w-64"
+                                />
+                            </IconField>
+                        </div>
+
+                        <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadInputs" class="w-full sm:w-auto" />
                     </div>
                 </div>
             </template>
@@ -378,34 +348,34 @@ const enviarASunat = async (idSale, prefix) => {
             <Column field="sale.documentType" header="Tipo" sortable style="min-width: 7rem" />
             <Column field="sale.paymentType" header="Metodo" sortable style="min-width: 7rem" />
             <Column field="subtotal" header="Total" sortable style="min-width: 7rem" />
-<Column field="sale.stateSunat" header="Sunat" sortable style="min-width: 7rem">
-    <template #body="{ data }">
-        <!-- Si está aprobado, muestra en badge verde -->
-        <span
-            v-if="data.sale.stateSunat === 'aprobado'"
-            class="sunat-badge"
-        >
-            {{ data.sale.stateSunat }}
-        </span>
-        <!-- Si tiene otro texto distinto a 'no enviado', muéstralo normal -->
-        <span
-            v-else-if="data.sale.stateSunat && data.sale.stateSunat !== 'no enviado'"
-        >
-            {{ data.sale.stateSunat }}
-        </span>
-        <!-- Solo mostrar el botón si está vacío, nulo o 'no enviado' -->
-        <Button
-            v-if="!data.sale.stateSunat || data.sale.stateSunat === 'no enviado'"
-            label="Enviar"
-            icon="pi pi-send"
-            @click="enviarASunat(data.sale.id,data.sale.documentType)"
-            class="p-button-text p-button-sm"
-        />
-    </template>
-</Column>
 
+            <Column field="sale.stateSunat" header="Sunat" sortable style="min-width: 7rem">
+                <template #body="{ data }">
+                    <!-- Si está aprobado, muestra en badge verde -->
+                    <span
+                        v-if="data.sale.stateSunat === 'aprobado'"
+                        class="sunat-badge"
+                    >
+                        {{ data.sale.stateSunat }}
+                    </span>
+                    <!-- Si tiene otro texto distinto a 'no enviado', muéstralo normal -->
+                    <span
+                        v-else-if="data.sale.stateSunat && data.sale.stateSunat !== 'no enviado'"
+                    >
+                        {{ data.sale.stateSunat }}
+                    </span>
+                    <!-- Solo mostrar el botón si está vacío, nulo o 'no enviado' -->
+                    <Button
+                        v-if="!data.sale.stateSunat || data.sale.stateSunat === 'no enviado'"
+                        label="Enviar"
+                        icon="pi pi-send"
+                        @click="enviarASunat(data.sale.id,data.sale.documentType)"
+                        class="p-button-text p-button-sm"
+                    />
+                </template>
+            </Column>
 
-           <Column field="sale.created_at" header="Creación" sortable style="min-width: 13rem" />
+            <Column field="sale.created_at" header="Creación" sortable style="min-width: 13rem" />
             <Column field="sale.updated_at" header="Actualización" sortable style="min-width: 13rem" />
             <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
                 <template #body="{ data }">
@@ -414,37 +384,39 @@ const enviarASunat = async (idSale, prefix) => {
             </Column>
         </DataTable>
     </div>
-    <Dialog v-model:visible="detailsDialog" header="Detalles de Venta" :closable="false">
-        <div v-if="selectedSale">
+<Dialog v-model:visible="detailsDialog" header="Detalles de Venta" :closable="false" class="w-full max-w-4xl">
+        <div v-if="selectedSale" class="w-full">
             <!-- Contenedor para los datos del cliente en fila horizontal -->
-            <div class="flex flex-wrap gap-4">
-                <p><strong>Cliente:</strong> {{ selectedSale.sale.customer.name }} {{ selectedSale.sale.customer.lastname }}</p>
-                <p><strong>Código:</strong> {{ selectedSale.sale.customer.codigo }}</p>
-                <p><strong>Comprobante:</strong> {{ selectedSale.salesInvoice.serie }}</p>
-                <p><strong>Documento:</strong> {{ selectedSale.sale.documentType }}</p>
-                <p><strong>Nº Orden:</strong> {{ selectedSale.order.id }}</p>
-                <p><strong>Mesa:</strong> {{ selectedSale.order.numeroMesa }}</p>
-                <p><strong>Estado:</strong> {{ selectedSale.order.state }}</p>
+            <div class="flex flex-col sm:flex-wrap sm:flex-row gap-2 sm:gap-4 mb-4 text-sm sm:text-base">
+                <p class="w-full sm:w-auto"><strong>Cliente:</strong> {{ selectedSale.sale.customer.name }} {{ selectedSale.sale.customer.lastname }}</p>
+                <p class="w-full sm:w-auto"><strong>Código:</strong> {{ selectedSale.sale.customer.codigo }}</p>
+                <p class="w-full sm:w-auto"><strong>Comprobante:</strong> {{ selectedSale.salesInvoice.serie }}</p>
+                <p class="w-full sm:w-auto"><strong>Documento:</strong> {{ selectedSale.sale.documentType }}</p>
+                <p class="w-full sm:w-auto"><strong>Nº Orden:</strong> {{ selectedSale.order.id }}</p>
+                <p class="w-full sm:w-auto"><strong>Mesa:</strong> {{ selectedSale.order.numeroMesa }}</p>
+                <p class="w-full sm:w-auto"><strong>Estado:</strong> {{ selectedSale.order.state }}</p>
             </div>
 
             <!-- DataTable para mostrar los platos -->
-            <DataTable :value="selectedSale.order.orderDishes" :responsive="true">
-                <Column field="name" header="Plato" />
-                <Column field="quantity" header="Cantidad" />
-                <Column field="price" header="Precio" />
-                <Column field="subtotal" header="Subtotal" />
-                <Column field="state" header="Estado" />
-                <Column field="creacion" header="Fecha" />
-            </DataTable>
+            <div class="overflow-x-auto">
+                <DataTable :value="selectedSale.order.orderDishes" :responsive="true" class="min-w-full text-sm sm:text-base">
+                    <Column field="name" header="Plato" />
+                    <Column field="quantity" header="Cantidad" />
+                    <Column field="price" header="Precio" />
+                    <Column field="subtotal" header="Subtotal" />
+                    <Column field="state" header="Estado" />
+                    <Column field="creacion" header="Fecha" />
+                </DataTable>
+            </div>
 
             <!-- Total alineado a la derecha -->
             <br />
-            <p style="text-align: right; font-weight: bold"><strong>Total:</strong> {{ selectedSale.subtotal }}</p>
+            <p class="text-right font-bold text-sm sm:text-base"><strong>Total:</strong> {{ selectedSale.subtotal }}</p>
 
             <!-- Botones para Ver Recibo o Cerrar -->
-            <div class="mt-4 flex justify-end gap-3">
-                <Button label="Ver Recibo" icon="pi pi-file-pdf" @click="verRecibo" />
-                <Button label="Cerrar" icon="pi pi-times" @click="detailsDialog = false" class="p-button-text" />
+            <div class="mt-4 flex flex-col sm:flex-row justify-end gap-3">
+                <Button label="Ver Recibo" icon="pi pi-file-pdf" @click="verRecibo" class="w-full sm:w-auto" />
+                <Button label="Cerrar" icon="pi pi-times" @click="detailsDialog = false" class="p-button-text w-full sm:w-auto" />
             </div>
         </div>
     </Dialog>

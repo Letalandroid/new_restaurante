@@ -9,34 +9,51 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="presentacionDialog" :style="{ width: '600px' }" header="Registro de presentación" :modal="true">
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+    <Dialog 
+        v-model:visible="presentacionDialog" 
+        :style="{ width: '85%', maxWidth: '600px' }" 
+        header="Registro de presentación" 
+        :modal="true"
+    >
+        <div class="flex flex-col gap-6 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div class="col-span-8 sm:col-span-10">
                     <label class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="presentacion.name"
                         required
                         maxlength="150"
                         fluid
+                        class="w-full"
                     />
                     <small v-if="submitted && !presentacion.name" class="text-red-500">El nombre es obligatorio.</small>
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                <div class="col-span-2">
+
+                <div class="col-span-4 sm:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="presentacion.state" :binary="true" />
-                        <Tag :value="presentacion.state ? 'Activo' : 'Inactivo'" :severity="presentacion.state ? 'success' : 'danger'" />
+                        <Tag 
+                            :value="presentacion.state ? 'Activo' : 'Inactivo'" 
+                            :severity="presentacion.state ? 'success' : 'danger'" 
+                        />
                     </div>
                     <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                 </div>
+
                 <div class="col-span-12">
                     <label class="block font-bold mb-3">Descripción</label>
-                    <Textarea fluid v-model="presentacion.description" maxlength="255" rows="4" autoResize
-                        :class="{ 'p-invalid': serverErrors.description }" />
-                    <small v-if="serverErrors.description" class="text-red-500">{{ serverErrors.description[0]
-                        }}</small>
+                    <Textarea 
+                        fluid 
+                        v-model="presentacion.description" 
+                        maxlength="255" 
+                        rows="4" 
+                        autoResize
+                        class="w-full"
+                        :class="{ 'p-invalid': serverErrors.description }" 
+                    />
+                    <small v-if="serverErrors.description" class="text-red-500">{{ serverErrors.description[0] }}</small>
                 </div>
             </div>
         </div>
@@ -47,6 +64,7 @@
         </template>
     </Dialog>
 </template>
+
 
 <script setup lang="ts">
 import { ref } from 'vue';

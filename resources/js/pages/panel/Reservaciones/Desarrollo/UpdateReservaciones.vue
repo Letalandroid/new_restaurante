@@ -206,7 +206,13 @@ function formatTimeForBackend(time: Date | null): string {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Reservación" modal :closable="true" :style="{ width: '700px' }">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Reservación" 
+        modal 
+        :closable="true" 
+        :style="{ width: '85%', maxWidth: '700px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
                 <!-- Campo de Cliente (deshabilitado) -->
@@ -233,7 +239,7 @@ function formatTimeForBackend(time: Date | null): string {
                 </div>
 
                 <!-- Campo de Número de personas -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Número de personas <span class="text-red-500">*</span></label>
                     <InputNumber
                         v-model="reservacion.number_people"
@@ -243,12 +249,13 @@ function formatTimeForBackend(time: Date | null): string {
                         :max="50"
                         fluid
                         :class="{ 'p-invalid': serverErrors.number_people }"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.number_people" class="text-red-500">{{ serverErrors.number_people[0] }}</small>
                 </div>
 
                 <!-- Campo de Fecha -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Fecha <span class="text-red-500">*</span></label>
                     <Calendar
                         v-model="reservacion.date"
@@ -258,12 +265,13 @@ function formatTimeForBackend(time: Date | null): string {
                         :minDate="minDate"
                         fluid
                         :class="{ 'p-invalid': serverErrors.date }"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.date" class="text-red-500">{{ serverErrors.date[0] }}</small>
                 </div>
 
                 <!-- Campo de Hora -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Hora <span class="text-red-500">*</span></label>
                     <Calendar
                         v-model="reservacion.hour"
@@ -273,14 +281,15 @@ function formatTimeForBackend(time: Date | null): string {
                         hourFormat="24"
                         fluid
                         :class="{ 'p-invalid': serverErrors.hour }"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.hour" class="text-red-500">{{ serverErrors.hour[0] }}</small>
                 </div>
 
                 <!-- Campo de Estado -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
                         <Checkbox v-model="reservacion.state" :binary="true" />
                         <Tag :value="reservacion.state ? 'Activo' : 'Inactivo'" :severity="reservacion.state ? 'success' : 'danger'" />
                     </div>
@@ -297,12 +306,14 @@ function formatTimeForBackend(time: Date | null): string {
                         v-model="reservacion.reservation_code"
                         readonly
                         fluid
-                        class="bg-gray-100"
+                        class="bg-gray-100 w-full"
+                        disabled
                     />
                     <small class="text-gray-500">Código único de la reservación (no modificable)</small>
                 </div>
             </div>
         </div>
+
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
             <Button label="Guardar" icon="pi pi-check" @click="updateReservacion" :loading="loading" />

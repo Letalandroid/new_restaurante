@@ -324,36 +324,51 @@ const maximized = ref<boolean>(false);
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedMovementInputs" :value="movementInputs" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedMovementInputs"
+        :value="movementInputs"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Movimientos de Items">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Movimientos de Items"
+        class="w-full overflow-x-auto"
+    >
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-wrap gap-2 items-center justify-between w-full">
                 <h4 class="m-0">Movimientos de Items</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <IconField class="w-full sm:w-auto">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por codigo..." />
+                        <InputText
+                            v-model="globalFilterValue"
+                            @input="onGlobalSearch"
+                            placeholder="Buscar por código..."
+                            class="w-full sm:w-64"
+                        />
                     </IconField>
-                    
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadMovementInputs" />
                 </div>
             </div>
         </template>
-        <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
 
+        <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
         <Column field="code" header="Código" sortable style="min-width: 7rem" />
         <Column field="movement_type" header="Tipo" sortable style="min-width: 5rem">
-  <template #body="{ data }">
-    <span>
-      {{ getMovementTypeLabel(data.movement_type) }}
-    </span>
-  </template>
-</Column>
+            <template #body="{ data }">
+                <span>{{ getMovementTypeLabel(data.movement_type) }}</span>
+            </template>
+        </Column>
         <Column field="supplier_name" header="Proveedor" sortable style="min-width: 14rem" />
         <Column field="payment_type" header="Pago" sortable style="min-width: 6rem" />
         <Column field="issue_date" header="Emisión" sortable style="min-width: 8rem" />
@@ -361,15 +376,15 @@ const maximized = ref<boolean>(false);
         <Column field="sub" header="Sub" sortable style="min-width: 5rem" />
         <Column field="igv" header="IGV" sortable style="min-width: 5rem" />
         <Column field="total" header="Total" sortable style="min-width: 5rem" />
-
-       
         <Column field="created_at" header="Creación" sortable style="min-width: 13rem" />
-        <Column field="updated_at" header="Actualización" sortable style="min-width: 13rem"/>
+        <Column field="updated_at" header="Actualización" sortable style="min-width: 13rem" />
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 12rem">
             <template #body="{ data }">
-                <Button icon="pi pi-eye" outlined rounded class="mr-2" @click="viewMovementDetails(data.id)" />
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarMovementInput(data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteMovementInput(data)" />
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <Button icon="pi pi-eye" outlined rounded @click="viewMovementDetails(data.id)" />
+                    <Button icon="pi pi-pencil" outlined rounded @click="editarMovementInput(data)" />
+                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteMovementInput(data)" />
+                </div>
             </template>
         </Column>
     </DataTable>
@@ -384,85 +399,82 @@ const maximized = ref<boolean>(false);
         :movementInputId="selectedMovementInputId"
         @updated="handleMovementInputUpdated"
     />
-<!-- Modal de detalle -->
-  <Dialog
-    v-model:visible="detailModalVisible"
-    header="Detalle del Movimiento"
-    :modal="true"
-    :closable="true"
-    :style="maximized ? { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' } : { width: '50vw' }"
+
+    <!-- Modal de detalle -->
+    <Dialog
+        v-model:visible="detailModalVisible"
+        header="Detalle del Movimiento"
+        :modal="true"
+        :closable="true"
+        :style="maximized ? { width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh' } : { width: '90vw', maxWidth: '900px' }"
     >
-    <!-- CAMBIO: Slot de header personalizado para agregar el botón de ampliar -->
-    <template #header>
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <h4>Detalle del Movimiento</h4>
-        <div style="display: flex; gap: 8px;">
-          <Button icon="pi pi-window-maximize" class="ml-2" @click="maximized = !maximized" />
-        </div>
-      </div>
-    </template>
-    <!-- /CAMBIO header -->
+        <!-- CAMBIO: Slot de header personalizado para agregar el botón de ampliar -->
+        <template #header>
+            <div class="flex justify-between items-center w-full">
+                <h4 class="text-lg font-semibold">Detalle del Movimiento</h4>
+                <div class="flex gap-2">
+                    <Button icon="pi pi-window-maximize" class="ml-2" @click="maximized = !maximized" />
+                </div>
+            </div>
+        </template>
+        <!-- /CAMBIO header -->
 
-    <div>
-      <!-- Detalles del movimiento ...igual... -->
-
-      <div class="p-grid p-fluid">
-        <div class="p-col-12 p-md-6 detail-item">
-          <div><strong>Código:</strong> {{ movementDetails.code }}</div>
-          <div><strong>Fecha de Emisión:</strong> {{ movementDetails.issue_date }}</div>
-          <div><strong>Fecha de Ejecución:</strong> {{ movementDetails.execution_date }}</div>
+        <div class="overflow-x-auto">
+            <!-- Detalles del movimiento ...igual... -->
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-12 md:col-span-6 detail-item">
+                    <div><strong>Código:</strong> {{ movementDetails.code }}</div>
+                    <div><strong>Fecha de Emisión:</strong> {{ movementDetails.issue_date }}</div>
+                    <div><strong>Fecha de Ejecución:</strong> {{ movementDetails.execution_date }}</div>
+                </div>
+                <div class="col-span-12 md:col-span-6 detail-item">
+                    <div><strong>Proveedor:</strong> {{ movementDetails.supplier_name }}</div>
+                    <div><strong>Tipo de Movimiento:</strong> {{ getMovementTypeLabel(movementDetails.movement_type) }}</div>
+                    <div><strong>Tipo de Pago:</strong> {{ movementDetails.payment_type }}</div>
+                </div>
+            </div>
+            <hr />
+            <DataTable :value="movementDetailsDetails" :paginator="true" :rows="10" scrollable scrollHeight="400px">
+                <Column field="quantity" header="Cantidad" sortable />
+                <!-- Muestra nombre dinámico: input o product -->
+                <Column header="Nombre" sortable>
+                    <template #body="{ data }">
+                        {{ data.input?.name || data.product?.name || '-' }}
+                    </template>
+                </Column>
+                <!-- Muestra unidad dinámica -->
+                <Column header="Unidad" sortable>
+                    <template #body="{ data }">
+                        {{ data.input?.unitMeasure || data.product?.unitMeasure || '-' }}
+                    </template>
+                </Column>
+                <Column field="priceUnit" header="Precio Unitario" sortable />
+                <Column field="batch" header="Lote" sortable />
+                <Column field="totalPrice" header="Total" sortable />
+            </DataTable>
+            <hr />
+            <div class="totals flex flex-col sm:flex-row justify-between gap-2 text-sm sm:text-base">
+                <span><strong>Subtotal:</strong> {{ formatCurrency(subtotal) }}</span>
+                <span><strong>IGV:</strong> {{ formatCurrency(igv) }}</span>
+                <span><strong>Total:</strong> {{ formatCurrency(total) }}</span>
+            </div>
+            <hr />
+            <!-- CAMBIO: Botones juntos -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                <span class="text-center sm:text-left">Mostrando 1 a {{ movementDetailsDetails.length }} de {{ movementDetailsDetails.length }} Items comprados</span>
+                <div class="action-buttons flex flex-wrap justify-center sm:justify-end gap-3">
+                    <Button label="Imprimir" icon="pi pi-file-pdf" @click="generatePDF" />
+                              <Button label="Volver" icon="pi pi-arrow-left" @click="closeDetailModal" />
+                </div>
+            </div>
+            <!-- /CAMBIO -->
         </div>
-        <div class="p-col-12 p-md-6 detail-item">
-          <div><strong>Proveedor:</strong> {{ movementDetails.supplier_name }}</div>
-          <div><strong>Tipo de Movimiento:</strong> {{ getMovementTypeLabel(movementDetails.movement_type) }}</div>
-          <div><strong>Tipo de Pago:</strong> {{ movementDetails.payment_type }}</div>
-        </div>
-      </div>
-      <hr />
-      <DataTable :value="movementDetailsDetails" :paginator="true" :rows="10" :scrollable="true">
-        <Column field="quantity" header="Cantidad" sortable />
-        
-        <!-- Muestra nombre dinámico: input o product -->
-        <Column header="Nombre" sortable>
-          <template #body="{ data }">
-            {{ data.input?.name || data.product?.name || '-' }}
-          </template>
-        </Column>
-
-        <!-- Muestra unidad dinámica -->
-        <Column header="Unidad" sortable>
-          <template #body="{ data }">
-            {{ data.input?.unitMeasure || data.product?.unitMeasure || '-' }}
-          </template>
-        </Column>
-
-        <Column field="priceUnit" header="Precio Unitario" sortable />
-        <Column field="batch" header="Lote" sortable />
-        <Column field="totalPrice" header="Total" sortable />
-      </DataTable>
-      <hr />
-      <div class="totals">
-        <span><strong>Subtotal:</strong> {{ formatCurrency(subtotal) }}</span>
-        <span><strong>IGV:</strong> {{ formatCurrency(igv) }}</span>
-        <span><strong>Total:</strong> {{ formatCurrency(total) }}</span>
-      </div>
-      <hr />
-      <!-- CAMBIO: Botones juntos -->
-      <div class="p-d-flex p-jc-between">
-        <span>Mostrando 1 a {{ movementDetailsDetails.length }} de {{ movementDetailsDetails.length }} Items comprados</span>
-        <div class="action-buttons">
-          <Button label="Imprimir" icon="pi pi-file-pdf" @click="generatePDF" />
-          <Button label="Volver" icon="pi pi-arrow-left" @click="closeDetailModal" />
-        </div>
-      </div>
-      <!-- /CAMBIO -->
-    </div>
-  </Dialog>
+    </Dialog>
 
   <!-- Modal de vista previa PDF -->
-  <Dialog v-model:visible="showPdfDialog" header="Vista previa de impresión" :modal="true" :style="{ width: '800px' }" @hide="closePdfDialog">
+  <Dialog v-model:visible="showPdfDialog" header="Vista previa de impresión" :modal="true" :style="{ width: '95vw', maxWidth: '800px' }" @hide="closePdfDialog">
     <template #default>
-      <iframe v-if="pdfUrl" :src="pdfUrl" width="100%" height="700px" style="border: none;"></iframe>
+      <iframe v-if="pdfUrl" :src="pdfUrl" width="100%" height="550px" style="border: none;"></iframe>
       <div class="flex justify-end mt-2">
         <Button label="Descargar PDF" icon="pi pi-download" @click="downloadPDF" />
       </div>
@@ -481,24 +493,19 @@ const maximized = ref<boolean>(false);
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .p-col-12 {
     margin-bottom: 15px;
 }
 
-.p-col-12.p-md-6 {
-    margin-bottom: 15px;
-}
-
 .detail-item {
-    margin-bottom: 50px;
+    margin-bottom: 40px;
 }
 
 .totals {
     margin-top: 20px;
-    display: flex;
-    justify-content: space-between;
     font-weight: bold;
     font-size: 1.1rem;
 }
@@ -515,9 +522,22 @@ const maximized = ref<boolean>(false);
     justify-content: space-between;
     align-items: center;
 }
+
 /* Si quieres que el dialogo no tenga márgenes internos cuando está maximizado */
 .p-dialog[style*="100vw"] .p-dialog-content {
-  height: calc(100vh - 4rem); /* Ajusta según el header/footer del modal */
-  overflow: auto;
+    height: calc(100vh - 4rem);
+    overflow: auto;
+}
+
+/* Responsive específicos */
+@media (max-width: 768px) {
+    .totals {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .p-dialog .p-dialog-header {
+        font-size: 1.1rem;
+    }
 }
 </style>

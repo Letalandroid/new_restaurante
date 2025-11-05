@@ -63,7 +63,7 @@ async function deleteTable(): Promise<void> {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span v-if="table">¿Estás seguro de eliminar la mesa <b>{{ table.tablenum }}</b>?</span>

@@ -134,42 +134,120 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedAreas" :value="areas" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedAreas"
+        :value="areas"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} áreas">
-
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} áreas"
+        class="w-full overflow-x-auto"
+    >
+        <!-- Header -->
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-2 items-start sm:items-center justify-between w-full">
                 <h4 class="m-0">Áreas</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                    <IconField class="w-full sm:w-64">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por área..." />
+                        <InputText
+                            v-model="globalFilterValue"
+                            @input="onGlobalSearch"
+                            placeholder="Buscar por área..."
+                            class="w-full"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoArea" :options="estadoAreaOptions" optionLabel="name"
-                        placeholder="Estado del Área" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadAreas" />
+
+                    <Select
+                        v-model="selectedEstadoArea"
+                        :options="estadoAreaOptions"
+                        optionLabel="name"
+                        placeholder="Estado del Área"
+                        class="w-full sm:w-48 md:w-56"
+                    />
+
+                    <Button
+                        icon="pi pi-refresh"
+                        outlined
+                        rounded
+                        aria-label="Refresh"
+                        class="w-full sm:w-auto"
+                        @click="loadAreas"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="name" header="Nombre" sortable style="min-width: 13rem"></Column>
-        <Column field="creacion" header="Creación" sortable style="min-width: 13rem"></Column>
-        <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"></Column>
-        <Column field="state" header="Estado" sortable style="min-width: 4rem">
+
+        <Column
+            field="name"
+            header="Nombre"
+            sortable
+            style="min-width: 13rem"
+        ></Column>
+
+        <Column
+            field="creacion"
+            header="Creación"
+            sortable
+            style="min-width: 13rem"
+        ></Column>
+
+        <Column
+            field="actualizacion"
+            header="Actualización"
+            sortable
+            style="min-width: 13rem"
+        ></Column>
+
+        <Column
+            field="state"
+            header="Estado"
+            sortable
+            style="min-width: 4rem"
+        >
             <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                <Tag
+                    :value="data.state ? 'Activo' : 'Inactivo'"
+                    :severity="getSeverity(data.state)"
+                    class="text-xs sm:text-sm md:text-base"
+                />
             </template>
         </Column>
-        <Column :exportable="false" style="min-width: 8rem">
+
+        <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editArea(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteArea(slotProps.data)" />
+                <div class="flex flex-wrap justify-center sm:justify-start gap-2">
+                    <Button
+                        icon="pi pi-pencil"
+                        outlined
+                        rounded
+                        class="mr-0 sm:mr-2 w-10 h-10 sm:w-auto sm:h-auto"
+                        @click="editArea(slotProps.data)"
+                    />
+                    <Button
+                        icon="pi pi-trash"
+                        outlined
+                        rounded
+                        severity="danger"
+                        class="w-10 h-10 sm:w-auto sm:h-auto"
+                        @click="confirmDeleteArea(slotProps.data)"
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>

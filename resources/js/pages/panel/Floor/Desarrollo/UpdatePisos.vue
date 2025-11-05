@@ -127,11 +127,12 @@ const updatePiso = async (): Promise<void> => {
         modal
         :closable="true"
         :closeOnEscape="true"
-        :style="{ width: '600px' }"
+        :style="{ width: '90%', maxWidth: '550px' }"
+        class="max-w-full sm:max-w-lg"
     >
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+        <div class="flex flex-col gap-6 p-2 sm:p-4 overflow-y-auto max-h-[80vh]">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div class="sm:col-span-10 col-span-8">
                     <label for="name" class="block font-bold mb-3">
                         Nombre <span class="text-red-500">*</span>
                     </label>
@@ -140,16 +141,17 @@ const updatePiso = async (): Promise<void> => {
                         required
                         maxlength="150"
                         fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.name }"
                     />
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <div class="col-span-2">
+                <div class="sm:col-span-2 col-span-4">
                     <label for="state" class="block font-bold mb-2">
                         Estado <span class="text-red-500">*</span>
                     </label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
                         <Checkbox v-model="piso.state" fluid :binary="true" inputId="state" />
                         <Tag
                             :value="piso.state ? 'Activo' : 'Inactivo'"
@@ -157,6 +159,7 @@ const updatePiso = async (): Promise<void> => {
                         />
                     </div>
                 </div>
+
                 <div class="col-span-12">
                     <label for="description" class="block font-bold mb-3">Descripción</label>
                     <Textarea
@@ -165,9 +168,12 @@ const updatePiso = async (): Promise<void> => {
                         rows="4"
                         autoResize
                         fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.description }"
                     />
-                    <small v-if="serverErrors.description" class="p-error">{{ serverErrors.description[0] }}</small>
+                    <small v-if="serverErrors.description" class="text-red-500">
+                        {{ serverErrors.description[0] }}
+                    </small>
                 </div>
             </div>
         </div>

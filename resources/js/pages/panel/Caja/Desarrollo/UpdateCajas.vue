@@ -140,24 +140,47 @@ const updateCaja = async () => {
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" header="Editar Caja" modal :closable="true" :closeOnEscape="true" :style="{ width: '500px' }">
+  <Dialog 
+    v-model:visible="dialogVisible" 
+    header="Editar Caja" 
+    modal 
+    :closable="true" 
+    :closeOnEscape="true"
+    :style="{ width: '90%', maxWidth: '450px' }"
+  >
     <div class="flex flex-col gap-6">
         <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-9">
-                <label class="block font-bold mb-2">Número de caja</label>
-                <InputText v-model="caja.numero_cajas" readonly fluid />
+            <!-- Número de caja -->
+            <div class="col-span-7 sm:col-span-9">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Número de caja</label>
+                <InputText 
+                  v-model="caja.numero_cajas" 
+                  readonly 
+                  fluid 
+                  class="w-full"
+                  disabled
+                />
             </div>
 
-            <div class="col-span-2">
-                <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                <div class="flex items-center gap-3">
+            <!-- Estado -->
+            <div class="col-span-5 sm:col-span-3">
+                <label class="block font-bold mb-2 text-sm sm:text-base">
+                  Estado <span class="text-red-500">*</span>
+                </label>
+                <div class="flex items-center gap-3 flex-wrap">
                     <Checkbox v-model="caja.state" :binary="true" fluid />
-                    <Tag :value="caja.state ? 'Sin ocupar' : 'Ocupada'" :severity="caja.state ? 'success' : 'danger'" />
+                    <Tag 
+                      :value="caja.state ? 'Sin ocupar' : 'Ocupada'" 
+                      :severity="caja.state ? 'success' : 'danger'" 
+                    />
                 </div>
             </div>
 
+            <!-- Vendedor -->
             <div class="col-span-12">
-                <label class="block font-bold mb-2">Vendedor <span class="text-red-500">*</span></label>
+                <label class="block font-bold mb-2 text-sm sm:text-base">
+                  Vendedor <span class="text-red-500">*</span>
+                </label>
                 <Dropdown 
                     v-model="caja.idVendedor"
                     :options="vendedores"
@@ -167,9 +190,12 @@ const updateCaja = async () => {
                     filter
                     filterBy="label"
                     fluid
+                    class="w-full"
                     :class="{ 'p-invalid': serverErrors.idVendedor }" 
                 />
-                <small v-if="serverErrors.idVendedor" class="p-error">{{ serverErrors.idVendedor[0] }}</small>
+                <small v-if="serverErrors.idVendedor" class="p-error text-xs sm:text-sm">
+                  {{ serverErrors.idVendedor[0] }}
+                </small>
             </div>
         </div>
     </div>
@@ -178,5 +204,5 @@ const updateCaja = async () => {
         <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
         <Button label="Guardar" icon="pi pi-check" @click="updateCaja" :loading="loading" />
     </template>
-</Dialog>
+  </Dialog>
 </template>

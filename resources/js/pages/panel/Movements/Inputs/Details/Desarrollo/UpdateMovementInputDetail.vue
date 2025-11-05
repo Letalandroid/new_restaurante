@@ -382,7 +382,7 @@ const updateKardex = async () => {
         modal
         :closable="true"
         :closeOnEscape="true"
-        :style="{ width: '500px' }"
+        :style="{ width: '85%', maxWidth: '450px' }"
         @hide="hideDialog"
     >
         <div class="flex flex-col gap-6">
@@ -439,8 +439,8 @@ const updateKardex = async () => {
                         class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                     >
                         <div class="flex flex-col">
-                            <span class="font-semibold text-gray-800">{{ item.id }} - {{ item.name }}</span>
-                            <span class="text-sm text-gray-600">
+                            <span class="font-semibold text-gray-800 text-sm sm:text-base">{{ item.id }} - {{ item.name }}</span>
+                            <span class="text-xs sm:text-sm text-gray-600">
                                 {{ item.quantityUnitMeasure }} {{ item.unitMeasure }}
                             </span>
                         </div>
@@ -450,15 +450,15 @@ const updateKardex = async () => {
                 <!-- Mensaje de no encontrados -->
                 <div
                     v-if="showResults && searchTerm && itemsOptions.length === 0"
-                    class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg"
+                    class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg text-sm sm:text-base"
                 >
                     No se encontraron resultados
                 </div>
             </div>
 
             <!-- Item seleccionado -->
-            <div v-if="selectedItem" class="mt-4 flex items-center justify-between rounded-lg bg-primary-50 p-3">
-                <span class="font-medium text-primary-800">
+            <div v-if="selectedItem" class="mt-4 flex flex-col sm:flex-row items-center justify-between rounded-lg bg-primary-50 p-3 gap-2">
+                <span class="font-medium text-primary-800 text-sm sm:text-base text-center sm:text-left">
                     {{ selectedItem.id }} - {{ selectedItem.name }} - {{ selectedItem.quantityUnitMeasure }} {{ selectedItem.unitMeasure }}
                 </span>
             </div>
@@ -474,8 +474,8 @@ const updateKardex = async () => {
 
             <!-- Fecha de Vencimiento -->
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Fecha de Vencimiento <span class="text-red-500">*</span></label>
+                <div class="col-span-12 sm:col-span-6">
+                    <label class="mb-2 block font-bold text-sm sm:text-base">Fecha de Vencimiento <span class="text-red-500">*</span></label>
                     <InputDate v-model="movementInput.expirationDate" required class="w-full" dateFormat="dd/mm/yy" showIcon/>
                     <small v-if="serverErrors.expirationDate" class="text-red-500">{{ serverErrors.expirationDate[0] }}</small>
                 </div>
@@ -512,7 +512,7 @@ const updateKardex = async () => {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Precio Unitario</label>
-                    <InputText v-model="movementInput.unitPrice" disabled fluid />
+                    <InputText v-model="movementInput.unitPrice" disabled fluid class="w-full" />
                 </div>
             </div>
         </div>

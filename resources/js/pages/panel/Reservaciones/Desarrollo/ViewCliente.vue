@@ -28,9 +28,9 @@ const props = defineProps<{
 
 const emits = defineEmits(['update:visible']);
 
-const loading = ref(false); // ✅ Estado de carga
+const loading = ref(false); //Estado de carga
 
-// 🔹 Muestra loading cada vez que se abre el modal
+//Muestra loading cada vez que se abre el modal
 watch(
     () => props.visible,
     (val) => {
@@ -38,7 +38,7 @@ watch(
             loading.value = true;
             setTimeout(() => {
                 loading.value = false;
-            }, 1000); // ⏳ tiempo simulado de carga
+            }, 1000); //tiempo simulado de carga
         }
     }
 );
@@ -92,11 +92,12 @@ const estadoCliente = computed(() => {
             <div class="client-header text-center mb-4">
                 <Avatar 
                     :label="getInitials(props.cliente.name, props.cliente.lastname)" 
-                    class="client-avatar"
+                    class="client-avatar shadow-2"
                     size="xlarge"
                     :style="{
                         backgroundColor: props.cliente.state ? 'var(--green-500)' : 'var(--red-500)',
-                        color: 'white'
+                        color: 'var(--surface-0)',
+                        border: '2px solid var(--surface-border)'
                     }"
                 />
                 <div>
@@ -217,6 +218,10 @@ const estadoCliente = computed(() => {
     font-size: 1.5rem;
     font-weight: bold;
     margin-bottom: 1rem;
+    transition: transform 0.2s ease-in-out;
+}
+.client-avatar:hover {
+    transform: scale(1.05);
 }
 
 .client-name {

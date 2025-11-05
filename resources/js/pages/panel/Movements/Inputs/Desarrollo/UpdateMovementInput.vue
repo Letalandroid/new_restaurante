@@ -225,14 +225,15 @@ function getIgvStateValueNum(igvState: string): number | null {
         modal
         :closable="true"
         :closeOnEscape="true"
-        :style="{ width: '700px' }"
+        :style="{ width: '90%', maxWidth: '450px' }"
+        class="max-w-full"
     >
         <div class="flex flex-col gap-6">
             <!-- Tipo de Documento -->
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Tipo de Documento <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.documentType" :options="documentTypes" optionLabel="label" optionValue="value" />
+                    <SelectButton v-model="movementInput.documentType" :options="documentTypes" optionLabel="label" optionValue="value" class="w-full" />
                     <br />
                     <small v-if="serverErrors.movement_type" class="text-red-500">{{ serverErrors.movement_type[0] }}</small>
                 </div>
@@ -242,21 +243,21 @@ function getIgvStateValueNum(igvState: string): number | null {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Código <span class="text-red-500">*</span></label>
-                    <InputText v-model="movementInput.code" required maxlength="20" fluid :class="{ 'p-invalid': serverErrors.code }" />
+                    <InputText v-model="movementInput.code" required maxlength="20" fluid class="w-full" :class="{ 'p-invalid': serverErrors.code }" />
                     <small v-if="serverErrors.code" class="text-red-500">{{ serverErrors.code[0] }}</small>
                 </div>
             </div>
 
             <!-- Fechas -->
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Fecha de Emisión <span class="text-red-500">*</span></label>
-                    <InputDate v-model="movementInput.issueDate" required class="w-full" showIcon/>
+                    <InputDate v-model="movementInput.issueDate" required class="w-full" showIcon />
                     <small v-if="serverErrors.issue_date" class="text-red-500">{{ serverErrors.issue_date[0] }}</small>
                 </div>
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Fecha de Ejecución <span class="text-red-500">*</span></label>
-                    <InputDate v-model="movementInput.executionDate" required class="w-full" showIcon/>
+                    <InputDate v-model="movementInput.executionDate" required class="w-full" showIcon />
                     <small v-if="serverErrors.execution_date" class="text-red-500">{{ serverErrors.execution_date[0] }}</small>
                 </div>
             </div>
@@ -274,6 +275,7 @@ function getIgvStateValueNum(igvState: string): number | null {
                         placeholder="Seleccione un Proveedor"
                         filter
                         filterPlaceholder="Buscar proveedor"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.supplier_id" class="text-red-500">{{ serverErrors.supplier_id[0] }}</small>
                 </div>
@@ -283,8 +285,7 @@ function getIgvStateValueNum(igvState: string): number | null {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Tipo de Pago <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.paymentType" :options="paymentTypes" optionLabel="label" optionValue="value" />
-
+                    <SelectButton v-model="movementInput.paymentType" :options="paymentTypes" optionLabel="label" optionValue="value" class="w-full" />
                     <br />
                     <small v-if="serverErrors.payment_type" class="text-red-500">{{ serverErrors.payment_type[0] }}</small>
                 </div>
@@ -294,7 +295,7 @@ function getIgvStateValueNum(igvState: string): number | null {
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Incluir IGV <span class="text-red-500">*</span></label>
-                    <SelectButton v-model="movementInput.igvState" :options="igvOptions" optionLabel="label" optionValue="value" />
+                    <SelectButton v-model="movementInput.igvState" :options="igvOptions" optionLabel="label" optionValue="value" class="w-full" />
                     <br />
                     <small v-if="serverErrors.igv_state" class="text-red-500">{{ serverErrors.igv_state[0] }}</small>
                 </div>

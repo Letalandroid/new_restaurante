@@ -1,44 +1,83 @@
 <template>
     <Toolbar class="mb-6">
         <template #start>
-            <Button label="Nueva categoria" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <Button 
+                label="Nueva categoría" 
+                icon="pi pi-plus" 
+                severity="secondary" 
+                class="w-full sm:w-auto" 
+                @click="openNew" 
+            />
         </template>
+
         <template #end>
             <!-- ToolsCategory para los botones de exportar e importar -->
-            <ToolsCategory @import-success="loadCategoria"/>       
+            <div class="w-full sm:w-auto">
+                <ToolsCategory @import-success="loadCategoria"/> 
+            </div>      
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="categoriaDialog" :style="{ width: '600px' }" header="Registro de Categoría" :modal="true">
+    <!-- Dialog de registro -->
+    <Dialog 
+        v-model:visible="categoriaDialog" 
+        :style="{ width: '90vw', maxWidth: '600px' }" 
+        header="Registro de Categoría" 
+        :modal="true"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-9">
+                <!-- Nombre -->
+                <div class="col-span-8 sm:col-span-9">
                     <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
-                    <InputText id="name" v-model.trim="categoria.name" required maxlength="100" fluid />
-                    <small v-if="submitted && !categoria.name" class="text-red-500">El nombre es obligatorio.</small>
+                    <InputText 
+                        id="name" 
+                        v-model.trim="categoria.name" 
+                        required 
+                        maxlength="100" 
+                        fluid 
+                        class="w-full"
+                    />
+                    <small v-if="submitted && !categoria.name" class="text-red-500">
+                        El nombre es obligatorio.
+                    </small>
                     <small v-else-if="submitted && categoria.name && categoria.name.length < 2" class="text-red-500">
                         El nombre debe tener al menos 2 caracteres.
                     </small>
-                    <small v-else-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
+                    <small v-else-if="serverErrors.name" class="text-red-500">
+                        {{ serverErrors.name[0] }}
+                    </small>
                 </div>
-                <div class="col-span-3">
+
+                <!-- Estado -->
+                <div class="col-span-4 sm:col-span-3">
                     <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                         <Checkbox v-model="categoria.state" :binary="true" inputId="state" />
-                        <Tag :value="categoria.state ? 'Activo' : 'Inactivo'" :severity="categoria.state ? 'success' : 'danger'" />
-                        <small v-if="submitted && categoria.state === null" class="text-red-500">El estado es obligatorio.</small>
-                        <small v-else-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
+                        <Tag 
+                            :value="categoria.state ? 'Activo' : 'Inactivo'" 
+                            :severity="categoria.state ? 'success' : 'danger'" 
+                            class="text-xs sm:text-sm"
+                        />
                     </div>
+                    <small v-if="submitted && categoria.state === null" class="text-red-500">
+                        El estado es obligatorio.
+                    </small>
+                    <small v-else-if="serverErrors.state" class="text-red-500">
+                        {{ serverErrors.state[0] }}
+                    </small>
                 </div>
             </div>
         </div>
 
+        <!-- Footer del diálogo -->
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
             <Button label="Guardar" icon="pi pi-check" @click="guardarCategoria" />
         </template>
     </Dialog>
 </template>
+
 
 <script setup lang="ts">
 import { ref } from 'vue';

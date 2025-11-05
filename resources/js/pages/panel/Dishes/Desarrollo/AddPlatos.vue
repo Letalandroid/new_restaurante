@@ -9,34 +9,42 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="platoDialog" :style="{ width: '600px' }" header="Registro de Platos" :modal="true">
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
-                    <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
-                    <InputText id="name" v-model.trim="plato.name" required maxlength="100" fluid />
+    <Dialog 
+        v-model:visible="platoDialog" 
+        header="Registro de Platos" 
+        :modal="true" 
+        :closable="true"
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
+        <div class="flex flex-col gap-6 w-full">
+            <div class="grid grid-cols-12 gap-4 w-full">
+                <div class="col-span-8 sm:col-span-10">
+                    <label for="name" class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
+                    <InputText id="name" v-model.trim="plato.name" required maxlength="100" fluid class="w-full" />
                     <small v-if="submitted && !plato.name" class="text-red-500">El nombre es obligatorio.</small>
                     <small v-else-if="submitted && plato.name.length < 2" class="text-red-500">El nombre debe tener al menos 2 caracteres.</small>
                     <small v-else-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                <div class="col-span-2">
-                    <label for="state" class="block font-bold mb-3">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+
+                <div class="col-span-4 sm:col-span-2">
+                    <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                         <Checkbox v-model="plato.state" :binary="true" inputId="state" />
                         <Tag :value="plato.state ? 'Activo' : 'Inactivo'" :severity="plato.state ? 'success' : 'danger'" />
-                        <small v-if="submitted && plato.state === null" class="text-red-500">El estado es obligatorio.</small>
+                        <small v-if="submitted && plato.state === null" class="text-red-500 w-full sm:w-auto">El estado es obligatorio.</small>
                         <small v-else-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                     </div>
                 </div>
-                <div class="col-span-6">
-                    <label for="price" class="block font-bold mb-3">Precio <span class="text-red-500">*</span></label>
+
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="price" class="block font-bold mb-2">Precio <span class="text-red-500">*</span></label>
                     <InputNumber id="price" v-model="plato.price" mode="currency" currency="PEN" locale="es-PE" class="w-full" />
                     <small v-if="submitted && (!plato.price || plato.price <= 0)" class="text-red-500">El precio debe ser mayor que 0.</small>
                     <small v-else-if="serverErrors.price" class="text-red-500">{{ serverErrors.price[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
-                    <label for="quantity" class="block font-bold mb-3">Cantidad <span class="text-red-500">*</span></label>
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="quantity" class="block font-bold mb-2">Cantidad <span class="text-red-500">*</span></label>
                     <InputNumber id="quantity" v-model="plato.quantity" :min="0" class="w-full" />
                     <small v-if="submitted && plato.quantity < 0" class="text-red-500">La cantidad no puede ser negativa.</small>
                     <small v-else-if="serverErrors.quantity" class="text-red-500">{{ serverErrors.quantity[0] }}</small>
@@ -44,18 +52,17 @@
 
                 <!-- Categoría (Dropdown con búsqueda) -->
                 <div class="col-span-12">
-                    <label for="category" class="block font-bold mb-3">Categoría <span class="text-red-500">*</span></label>
+                    <label for="category" class="block font-bold mb-2">Categoría <span class="text-red-500">*</span></label>
                     <Dropdown
                         id="category"
                         v-model="plato.idCategory"
                         :options="categories"
                         optionLabel="label"
                         optionValue="value"
-                        fluid
                         placeholder="Seleccionar categoría"
                         filter
                         filterBy="label"
-                        filterPlaceholder="Buscar categoria..."
+                        filterPlaceholder="Buscar categoría..."
                         class="w-full"
                         :loading="loadingCategories"
                     />
@@ -65,18 +72,18 @@
 
                 <!-- Campo para seleccionar insumos CON BÚSQUEDA -->
                 <div class="col-span-12">
-                    <label for="insumos" class="block font-bold mb-3">Insumos</label>
+                    <label for="insumos" class="block font-bold mb-2">Insumos</label>
                     <MultiSelect 
                         v-model="plato.insumos" 
                         :options="insumos" 
                         optionLabel="name" 
                         optionValue="id" 
                         placeholder="Seleccionar insumos" 
-                        :loading="loadingInsumos" 
                         display="chip" 
-                        class="w-full"
                         filter
                         filterPlaceholder="Buscar insumos..."
+                        class="w-full"
+                        :loading="loadingInsumos" 
                     />
                     <small v-if="submitted && plato.insumos.length === 0" class="text-red-500">Debe seleccionar al menos un insumo.</small>
                     <small v-else-if="serverErrors.insumos" class="text-red-500">{{ serverErrors.insumos[0] }}</small>

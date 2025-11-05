@@ -1,11 +1,12 @@
 <template>
     <Button label="Registrar cliente" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
 
-    <Dialog v-model:visible="clienteDialog" :style="{ width: '700px' }" header="Registro de cliente" :modal="true">
+<Dialog v-model:visible="clienteDialog" :style="{ width: '85vw', maxWidth: '600px' }" header="Registro de cliente" :modal="true">
         <div class="flex flex-col gap-6">
+            <!-- Contenedor principal adaptado para todas las pantallas -->
             <div class="grid grid-cols-12 gap-4">
                 <!-- Campos de nombre y apellido -->
-                <div class="col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.name"
@@ -18,7 +19,7 @@
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label class="block font-bold mb-2">Apellido <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.lastname"
@@ -32,7 +33,7 @@
                 </div>
 
                 <!-- Campos de email y teléfono -->
-                <div class="col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label class="block font-bold mb-2">Email <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.email"
@@ -45,7 +46,7 @@
                     <small v-if="serverErrors.email" class="text-red-500">{{ serverErrors.email[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label class="block font-bold mb-2">Teléfono <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.phone"
@@ -58,7 +59,7 @@
                     <small v-if="serverErrors.phone" class="text-red-500">{{ serverErrors.phone[0] }}</small>
                 </div>
 
-                <div class="col-span-10">
+                <div class="col-span-12 md:col-span-12">
                     <label class="block font-bold mb-2">Tipo de Cliente <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="cliente.client_type_id"
@@ -77,17 +78,8 @@
                     <small v-if="serverErrors.client_type_id" class="text-red-500">{{ serverErrors.client_type_id[0] }}</small>
                 </div>
 
-                <div class="col-span-2">
-                    <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
-                        <Checkbox v-model="cliente.state" :binary="true" />
-                        <Tag :value="cliente.state ? 'Activo' : 'Inactivo'" :severity="cliente.state ? 'success' : 'danger'" />
-                    </div>
-                    <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
-                </div>
-
                 <!-- Campo de código (DNI o RUC) que solo aparece después de seleccionar el tipo de cliente -->
-                <div v-if="cliente.client_type_id" class="col-span-12">
+                <div v-if="cliente.client_type_id" class="col-span-12 md:col-span-10">
                     <label class="block font-bold mb-2">Código <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="cliente.codigo"
@@ -99,6 +91,16 @@
                     <small v-if="submitted && !cliente.codigo" class="text-red-500">El código es obligatorio.</small>
                     <small v-if="serverErrors.codigo" class="text-red-500">{{ serverErrors.codigo[0] }}</small>
                 </div>
+
+                <div class="col-span-12 md:col-span-2 flex flex-col justify-end">
+                    <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
+                    <div class="flex items-center gap-3">
+                        <Checkbox v-model="cliente.state" :binary="true" />
+                        <Tag :value="cliente.state ? 'Activo' : 'Inactivo'" :severity="cliente.state ? 'success' : 'danger'" />
+                    </div>
+                    <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
+                </div>
+
             </div>
         </div>
 

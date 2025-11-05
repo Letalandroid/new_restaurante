@@ -212,16 +212,20 @@ onMounted(() => {
       <Message severity="info">{{ motivationalMessage }}</Message>
     </div>
 
-    <div class="grid grid-cols-4 gap-8">
+    <div class="flex flex-col sm:flex-row sm:justify-end sm:items-center gap-4 w-full">
       <Calendar
         v-model="dateRange"
         selectionMode="range"
         placeholder="Rango de fechas"
-        class="w-full"
+        class="w-full sm:w-auto flex-1 sm:flex-none"
         dateFormat="yy-mm-dd"
         @change="onDateRangeChange"
       />
-      <Button label="Filtrar" @click="onUpdateDataClick" class="p-button p-component" />
+      <Button
+        label="Filtrar"
+        @click="onUpdateDataClick"
+        class="p-button p-component w-full sm:w-auto"
+      />
     </div>
 
     <br />

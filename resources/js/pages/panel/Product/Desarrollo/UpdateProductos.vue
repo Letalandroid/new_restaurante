@@ -234,38 +234,58 @@ const updateProducto = async (): Promise<void> => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Producto" modal :closable="true" :closeOnEscape="true"
-        :style="{ width: '700px' }">
-        <div class="flex flex-col gap-6">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Producto" 
+        modal 
+        :closable="true" 
+        :closeOnEscape="true"
+        :style="{ width: '95vw', maxWidth: '700px' }"
+        class="max-h-[90vh] overflow-y-auto"
+    >
+        <div class="flex flex-col gap-6 p-2 sm:p-4">
             <div class="grid grid-cols-12 gap-4">
                 <!-- Nombre -->
-                <div class="col-span-10">
+                <div class="col-span-9 sm:col-span-10">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
-                    <InputText v-model="producto.name" required maxlength="100" fluid
-                        :class="{ 'p-invalid': serverErrors.name }" />
+                    <InputText 
+                        v-model="producto.name" 
+                        required 
+                        maxlength="100" 
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.name }" 
+                    />
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
                 <!-- Estado -->
-                <div class="col-span-2">
+                <div class="col-span-3 sm:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="producto.state" :binary="true" fluid />
-                        <Tag :value="producto.state ? 'Activo' : 'Inactivo'"
-                            :severity="producto.state ? 'success' : 'danger'" />
+                        <Tag 
+                            :value="producto.state ? 'Activo' : 'Inactivo'"
+                            :severity="producto.state ? 'success' : 'danger'" 
+                        />
                     </div>
                 </div>
 
                 <!-- Detalle -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Detalle</label>
-                    <Textarea v-model="producto.details" autoResize maxlength="500" rows="3" fluid
-                        :class="{ 'p-invalid': serverErrors.details }" />
+                    <Textarea 
+                        v-model="producto.details" 
+                        autoResize 
+                        maxlength="500" 
+                        rows="3" 
+                        fluid
+                        :class="{ 'p-invalid': serverErrors.details }" 
+                    />
                     <small v-if="serverErrors.details" class="p-error">{{ serverErrors.details[0] }}</small>
                 </div>
 
                 <!-- Categoría -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Categoría <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="producto.idCategory"
@@ -277,14 +297,14 @@ const updateProducto = async (): Promise<void> => {
                         filter
                         filterBy="label"
                         filterPlaceholder="Buscar categoria..."
-                        style="width: 325px;"
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.idCategory }"
                     />
                     <small v-if="serverErrors.idCategory" class="p-error">{{ serverErrors.idCategory[0] }}</small>
                 </div>
 
                 <!-- Almacén (Dropdown con búsqueda) -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Almacén <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="producto.idAlmacen"
@@ -296,14 +316,14 @@ const updateProducto = async (): Promise<void> => {
                         filter
                         filterBy="label"
                         filterPlaceholder="Buscar almacen..."
-                        style="width: 325px;"
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.idAlmacen }"
                     />
                     <small v-if="serverErrors.idAlmacen" class="p-error">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
                 <!-- Cantidad de Medida -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
                     <InputNumber 
                         v-model="producto.quantityUnitMeasure" 
@@ -316,7 +336,7 @@ const updateProducto = async (): Promise<void> => {
                 </div>
 
                 <!-- Unidad de Medida -->
-                <div class="col-span-4">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Unidad de Medida <span class="text-red-500">*</span></label>
                     <Dropdown 
                         v-model="producto.unitMeasure" 
@@ -325,13 +345,14 @@ const updateProducto = async (): Promise<void> => {
                         optionValue="value" 
                         fluid
                         placeholder="Seleccione unidad" 
-                        style="width: 325px"
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.unitMeasure }"
                     />
                     <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-                                <!-- Precio de Venta -->
-                <div class="col-span-6">
+
+                <!-- Precio de Venta -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
                     <InputNumber 
                         v-model="producto.priceSale" 
@@ -344,8 +365,9 @@ const updateProducto = async (): Promise<void> => {
                     />
                     <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
                 </div>
+
                 <!-- Foto -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Foto</label>
                     <div class="flex flex-col gap-3">
                         <input 
@@ -363,19 +385,18 @@ const updateProducto = async (): Promise<void> => {
                                 <img 
                                     :src="imagePreview" 
                                     alt="Vista previa de la foto" 
-                                    class="max-h-[70vh] object-contain rounded"
+                                    class="max-h-[60vh] w-auto object-contain rounded"
                                 />
-                            
-                            <Button 
-                                label="Quitar foto" 
-                                icon="pi pi-times" 
-                                severity="danger" 
-                                text 
-                                size="small" 
-                                @click="removeFoto"
-                                class="mt-4"
-                            />
-                        </div>
+                                <Button 
+                                    label="Quitar foto" 
+                                    icon="pi pi-times" 
+                                    severity="danger" 
+                                    text 
+                                    size="small" 
+                                    @click="removeFoto"
+                                    class="mt-4"
+                                />
+                            </div>
                         </div>
                         <small class="text-gray-500">Formatos: JPG, JPEG, PNG (Máx. 5MB)</small>
                         <small v-if="serverErrors.foto" class="p-error">{{ serverErrors.foto[0] }}</small>
@@ -385,8 +406,10 @@ const updateProducto = async (): Promise<void> => {
         </div>
 
         <template #footer>
-            <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
-            <Button label="Guardar" icon="pi pi-check" @click="updateProducto" :loading="loading" />
+            <div class="flex flex-col sm:flex-row justify-end gap-3">
+                <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
+                <Button label="Guardar" icon="pi pi-check" @click="updateProducto" :loading="loading" />
+            </div>
         </template>
     </Dialog>
 </template>

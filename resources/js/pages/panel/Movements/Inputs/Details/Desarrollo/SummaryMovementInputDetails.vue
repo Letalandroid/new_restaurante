@@ -1,46 +1,43 @@
 <template>
-
-
- <Panel header="DETALLE DE MOVIMIENTO" class="p-mt-3">
-    <div class="p-grid p-fluid">
-        <!-- Código y Fecha de Emisión -->
-        <div class="p-col-12 p-md-2 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Código:</strong></label>
-                {{ movement.code }}
+    <Panel header="DETALLE DE MOVIMIENTO" class="p-mt-3 w-full">
+        <div class="grid grid-cols-12 gap-4">
+            <!-- Código y Fecha de Emisión -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Código:</strong></label>
+                    <span class="break-words">{{ movement.code }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Fecha de Emisión:</strong></label>
+                    <span class="break-words">{{ movement.issue_date }}</span>
+                </div>
             </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Fecha de Emisión:</strong></label>
-                {{ movement.issue_date }}
+
+            <!-- Proveedor y Fecha de Ejecución -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Proveedor:</strong></label>
+                    <span class="break-words">{{ movement.supplier_name }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Fecha de Ejecución:</strong></label>
+                    <span class="break-words">{{ movement.execution_date }}</span>
+                </div>
+            </div>
+
+            <!-- Tipo de Movimiento y Tipo de Pago -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Tipo de Movimiento:</strong></label>
+                    <span class="break-words">{{ getMovementType(movement.movement_type) }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Tipo de Pago:</strong></label>
+                    <span class="break-words">{{ movement.payment_type }}</span>
+                </div>
             </div>
         </div>
-
-        <!-- Proveedor y Fecha de Ejecución -->
-        <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Proveedor:</strong></label>
-                {{ movement.supplier_name }}
-            </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Fecha de Ejecución:</strong></label>
-                {{ movement.execution_date }}
-            </div>
-        </div>
-
-        <!-- Tipo de Movimiento y Tipo de Pago -->
-        <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Tipo de Movimiento:</strong></label>
-                {{ getMovementType(movement.movement_type) }}
-            </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Tipo de Pago:</strong></label>
-                {{ movement.payment_type }}
-            </div>
-        </div>
-    </div>
-</Panel>
-
+    </Panel>
 </template>
 
 <script setup lang="ts">

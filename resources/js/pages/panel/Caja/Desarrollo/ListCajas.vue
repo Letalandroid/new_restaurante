@@ -134,20 +134,43 @@ onMounted(loadCajas);
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cajas"
-        class="w-full"
+        class="w-full overflow-x-auto"
     >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">CAJAS</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por n° caja..." />
-                    </IconField>
-                    <Select v-model="selectedEstadoCaja" :options="estadoCajaOptions" optionLabel="name" placeholder="Estado" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadCajas" />
+
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-end">
+                    <div class="flex items-center w-full sm:w-auto">
+                        <IconField class="w-full sm:w-64">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar por n° caja..." 
+                                class="w-full"
+                            />
+                        </IconField>
+                    </div>
+
+                    <Select 
+                        v-model="selectedEstadoCaja" 
+                        :options="estadoCajaOptions" 
+                        optionLabel="name" 
+                        placeholder="Estado" 
+                        class="w-full sm:w-40"
+                    />
+
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        class="w-full sm:w-auto"
+                        @click="loadCajas" 
+                    />
                 </div>
             </div>
         </template>
@@ -162,8 +185,10 @@ onMounted(loadCajas);
         <Column field="vendedorNombre" header="Vendedor" sortable style="min-width: 20rem" />
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="{ data }">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarCaja(data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteCaja(data)" />
+                <div class="flex justify-center sm:justify-start gap-2">
+                    <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarCaja(data)" />
+                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteCaja(data)" />
+                </div>
             </template>
         </Column>
     </DataTable>

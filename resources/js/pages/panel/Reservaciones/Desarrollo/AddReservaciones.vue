@@ -5,7 +5,7 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="reservaDialog" :style="{ width: '700px' }" header="Registro de reservación" :modal="true">
+    <Dialog v-model:visible="reservaDialog" :style="{ width: '85%', maxWidth: '700px' }" header="Registro de reservación" :modal="true">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
                 <!-- Campo de Cliente -->
@@ -41,7 +41,7 @@
                 </div>
 
                 <!-- Campo de Número de personas -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Número de personas <span class="text-red-500">*</span></label>
                     <InputNumber
                         v-model="reserva.number_people"
@@ -50,13 +50,14 @@
                         :min="1"
                         :max="50"
                         fluid
+                        class="w-full"
                     />
                     <small v-if="submitted && !reserva.number_people" class="text-red-500">El número de personas es obligatorio.</small>
                     <small v-if="serverErrors.number_people" class="text-red-500">{{ serverErrors.number_people[0] }}</small>
                 </div>
 
                 <!-- Campo de Fecha -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Fecha <span class="text-red-500">*</span></label>
                     <Calendar
                         v-model="reserva.date"
@@ -65,13 +66,14 @@
                         dateFormat="dd-mm-yy"
                         :minDate="minDate"
                         fluid
+                        class="w-full"
                     />
                     <small v-if="submitted && !reserva.date" class="text-red-500">La fecha es obligatoria.</small>
                     <small v-if="serverErrors.date" class="text-red-500">{{ serverErrors.date[0] }}</small>
                 </div>
 
                 <!-- Campo de Hora -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Hora <span class="text-red-500">*</span></label>
                     <Calendar
                         v-model="reserva.hour"
@@ -80,15 +82,16 @@
                         timeOnly
                         hourFormat="24"
                         fluid
+                        class="w-full"
                     />
                     <small v-if="submitted && !reserva.hour" class="text-red-500">La hora es obligatoria.</small>
                     <small v-if="serverErrors.hour" class="text-red-500">{{ serverErrors.hour[0] }}</small>
                 </div>
 
                 <!-- Campo de Estado -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
                         <Checkbox v-model="reserva.state" :binary="true" />
                         <Tag :value="reserva.state ? 'Activo' : 'Inactivo'" :severity="reserva.state ? 'success' : 'danger'" />
                     </div>
@@ -98,20 +101,22 @@
                 <!-- Código de reservación (generado automáticamente, solo lectura) -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Código de reservación</label>
-                    <div class="flex gap-2">
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <InputText
                             v-model="reserva.reservation_code"
                             readonly
                             fluid
                             placeholder="Haga clic en generar código"
-                            class="bg-gray-100"
+                            class="bg-gray-100 w-full"
+                            disabled
                         />
                         <Button 
-                            label="Generar" 
+                            label="Generar código" 
                             icon="pi pi-refresh" 
                             severity="secondary" 
                             @click="generarCodigoReserva" 
                             :disabled="!reserva.customer_id || !reserva.date || !reserva.hour"
+                            class="w-full sm:w-auto"
                         />
                     </div>
                     <div class="mt-1 space-y-1">

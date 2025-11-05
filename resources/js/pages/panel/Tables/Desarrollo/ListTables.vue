@@ -144,49 +144,107 @@ onMounted(loadTables);
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedTables" :value="tables" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedTables"
+        :value="tables"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Mesas">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Mesas"
+        class="w-full overflow-x-auto"
+    >
+        <!-- Header -->
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-2 items-start sm:items-center justify-between w-full">
                 <h4 class="m-0">Mesas</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                    <IconField class="w-full sm:w-64">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por N° mesa..." />
+                        <InputText
+                            v-model="globalFilterValue"
+                            @input="onGlobalSearch"
+                            placeholder="Buscar por N° mesa..."
+                            class="w-full"
+                        />
                     </IconField>
-                    
-                    <Select v-model="selectedEstadoTable" :options="estadoTableOptions" optionLabel="name" placeholder="Estado" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadTables" />
+
+                    <Select
+                        v-model="selectedEstadoTable"
+                        :options="estadoTableOptions"
+                        optionLabel="name"
+                        placeholder="Estado"
+                        class="w-full sm:w-48 md:w-56"
+                    />
+
+                    <Button
+                        icon="pi pi-refresh"
+                        outlined
+                        rounded
+                        aria-label="Refresh"
+                        class="w-full sm:w-auto"
+                        @click="loadTables"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" />
-        <Column field="name" header="Nombre" sortable style="min-width: 20rem" />
-        <Column field="tablenum" header="Numero" sortable style="min-width: 20rem" />
-        <Column field="capacity" header="Capacidad" sortable style="min-width: 20rem" />
-        <Column field="area_name" header="Area" sortable style="min-width: 15rem" />
-        <Column field="floor_name" header="Piso" sortable style="min-width: 15rem"/>
-        <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
-        <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem"/>
-        <Column field="state" header="Estado" sortable>
+
+        <Column field="name" header="Nombre" sortable style="min-width: 15rem" />
+        <Column field="tablenum" header="Número" sortable style="min-width: 10rem" />
+        <Column field="capacity" header="Capacidad" sortable style="min-width: 10rem" />
+        <Column field="area_name" header="Área" sortable style="min-width: 10rem" />
+        <Column field="floor_name" header="Piso" sortable style="min-width: 10rem" />
+        <Column field="creacion" header="Creación" sortable style="min-width: 12rem" />
+        <Column field="actualizacion" header="Actualización" sortable style="min-width: 12rem" />
+
+        <Column field="state" header="Estado" sortable style="min-width: 6rem">
             <template #body="{ data }">
-                <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
+                <Tag
+                    :value="data.state ? 'Activo' : 'Inactivo'"
+                    :severity="getSeverity(data.state)"
+                    class="text-xs sm:text-sm md:text-base"
+                />
             </template>
         </Column>
+
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="{ data }">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarTable(data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteTable(data)" />
+                <div class="flex flex-wrap justify-center sm:justify-start gap-2">
+                    <Button
+                        icon="pi pi-pencil"
+                        outlined
+                        rounded
+                        class="mr-0 sm:mr-2 w-10 h-10 sm:w-auto sm:h-auto"
+                        @click="editarTable(data)"
+                    />
+                    <Button
+                        icon="pi pi-trash"
+                        outlined
+                        rounded
+                        severity="danger"
+                        class="w-10 h-10 sm:w-auto sm:h-auto"
+                        @click="confirmarDeleteTable(data)"
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
 
+    <!-- Diálogos -->
     <DeleteTable
         v-model:visible="deleteTableDialog"
         :table="table"

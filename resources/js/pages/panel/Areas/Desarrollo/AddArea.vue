@@ -9,17 +9,17 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="areaDialog" :style="{ width: '600px' }" header="Registro de áreas" :modal="true">
+    <Dialog v-model:visible="areaDialog" :style="{ width: '90%', maxWidth: '550px' }" header="Registro de áreas" :modal="true">
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-9">
+                <div class="sm:col-span-10 col-span-8">
                     <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
                     <InputText id="name" v-model.trim="area.name" required maxlength="100" fluid />
                     <small v-if="submitted && !area.name" class="text-red-500">El nombre es obligatorio.</small>
                     <small v-else-if="submitted && area.name.length < 2" class="text-red-500">El nombre debe tener al menos 2 caracteres.</small>
                     <small v-else-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                <div class="col-span-3">
+                <div class="sm:col-span-2 col-span-4">
                     <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="area.state" :binary="true" inputId="state" />

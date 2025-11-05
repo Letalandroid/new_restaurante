@@ -9,39 +9,73 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="tableDialog" :style="{ width: '700px' }" header="Registro de Mesas" :modal="true">
+    <Dialog
+        v-model:visible="tableDialog"
+        :style="{ width: '90%', maxWidth: '550px' }"
+        header="Registro de Mesas"
+        :modal="true"
+        class="p-2 sm:p-4"
+    >
         <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
                 <!-- Nombre -->
-                <div class="col-span-10">
-                    <label class="mb-2 block font-bold">Nombre <span class="text-red-500">*</span></label>
-                    <InputText v-model.trim="table.name" fluid maxlength="100" />
-                    <small v-if="submitted && !table.name" class="text-red-500">El nombre es obligatorio.</small>
-                    <small v-else-if="submitted && table.name.length < 2" class="text-red-500">El nombre debe tener al menos 2 caracteres.</small>
-                    <small v-else-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
+                <div class="sm:col-span-9">
+                    <label class="mb-2 block font-bold">
+                        Nombre <span class="text-red-500">*</span>
+                    </label>
+                    <InputText v-model.trim="table.name" fluid maxlength="100" class="w-full" />
+                    <small v-if="submitted && !table.name" class="text-red-500 text-xs sm:text-sm">
+                        El nombre es obligatorio.
+                    </small>
+                    <small v-else-if="submitted && table.name.length < 2" class="text-red-500 text-xs sm:text-sm">
+                        El nombre debe tener al menos 2 caracteres.
+                    </small>
+                    <small v-else-if="serverErrors.name" class="text-red-500 text-xs sm:text-sm">
+                        {{ serverErrors.name[0] }}
+                    </small>
                 </div>
 
                 <!-- Estado -->
-                <div class="col-span-2">
-                    <label class="mb-2 block font-bold">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                <div class="sm:col-span-3">
+                    <label class="mb-2 block font-bold">
+                        Estado <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                         <Checkbox v-model="table.state" :binary="true" />
-                        <Tag :value="table.state ? 'Activo' : 'Inactivo'" fluid :severity="table.state ? 'success' : 'danger'" />
-                        <small v-if="submitted && table.state === null" class="text-red-500">El estado es obligatorio.</small>
-                        <small v-else-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
+                        <Tag
+                            :value="table.state ? 'Activo' : 'Inactivo'"
+                            fluid
+                            :severity="table.state ? 'success' : 'danger'"
+                            class="text-xs sm:text-sm"
+                        />
+                        <small v-if="submitted && table.state === null" class="text-red-500 text-xs sm:text-sm">
+                            El estado es obligatorio.
+                        </small>
+                        <small v-else-if="serverErrors.state" class="text-red-500 text-xs sm:text-sm">
+                            {{ serverErrors.state[0] }}
+                        </small>
                     </div>
                 </div>
 
                 <!-- Número -->
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Número <span class="text-red-500">*</span></label>
-                    <InputText v-model.trim="table.tablenum" fluid maxlength="50" />
-                    <small v-if="submitted && !table.tablenum" class="text-red-500">El número es obligatorio.</small>
-                    <small v-else-if="serverErrors.tablenum" class="text-red-500">{{ serverErrors.tablenum[0] }}</small>
+                <div class="sm:col-span-6">
+                    <label class="mb-2 block font-bold">
+                        Número <span class="text-red-500">*</span>
+                    </label>
+                    <InputText v-model.trim="table.tablenum" fluid maxlength="50" class="w-full" />
+                    <small v-if="submitted && !table.tablenum" class="text-red-500 text-xs sm:text-sm">
+                        El número es obligatorio.
+                    </small>
+                    <small v-else-if="serverErrors.tablenum" class="text-red-500 text-xs sm:text-sm">
+                        {{ serverErrors.tablenum[0] }}
+                    </small>
                 </div>
+
                 <!-- Capacidad -->
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Capacidad <span class="text-red-500">*</span></label>
+                <div class="sm:col-span-6">
+                    <label class="mb-2 block font-bold">
+                        Capacidad <span class="text-red-500">*</span>
+                    </label>
                     <InputText
                         v-model="capacityInput"
                         fluid
@@ -50,15 +84,24 @@
                         maxlength="6"
                         @keydown="filterInteger"
                         @input="syncCapacity"
+                        class="w-full"
                     />
-                    <small v-if="submitted && !capacityInput" class="text-red-500">La capacidad es obligatoria.</small>
-                    <small v-else-if="Number(capacityInput) < 1" class="text-red-500">Debe ser al menos 1 persona.</small>
-                    <small v-else-if="serverErrors.capacity" class="text-red-500">{{ serverErrors.capacity[0] }}</small>
+                    <small v-if="submitted && !capacityInput" class="text-red-500 text-xs sm:text-sm">
+                        La capacidad es obligatoria.
+                    </small>
+                    <small v-else-if="Number(capacityInput) < 1" class="text-red-500 text-xs sm:text-sm">
+                        Debe ser al menos 1 persona.
+                    </small>
+                    <small v-else-if="serverErrors.capacity" class="text-red-500 text-xs sm:text-sm">
+                        {{ serverErrors.capacity[0] }}
+                    </small>
                 </div>
 
                 <!-- Area -->
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Área <span class="text-red-500">*</span></label>
+                <div class="sm:col-span-6">
+                    <label class="mb-2 block font-bold">
+                        Área <span class="text-red-500">*</span>
+                    </label>
                     <Dropdown
                         v-model="table.idArea"
                         fluid
@@ -68,14 +111,21 @@
                         placeholder="Seleccione el área"
                         filter
                         filterPlaceholder="Buscar área"
+                        class="w-full"
                     />
-                    <small v-if="submitted && !table.idArea" class="text-red-500">El área es obligatoria.</small>
-                    <small v-else-if="serverErrors.idArea" class="text-red-500">{{ serverErrors.idArea[0] }}</small>
+                    <small v-if="submitted && !table.idArea" class="text-red-500 text-xs sm:text-sm">
+                        El área es obligatoria.
+                    </small>
+                    <small v-else-if="serverErrors.idArea" class="text-red-500 text-xs sm:text-sm">
+                        {{ serverErrors.idArea[0] }}
+                    </small>
                 </div>
 
                 <!-- Piso -->
-                <div class="col-span-6">
-                    <label class="mb-2 block font-bold">Piso <span class="text-red-500">*</span></label>
+                <div class="sm:col-span-6">
+                    <label class="mb-2 block font-bold">
+                        Piso <span class="text-red-500">*</span>
+                    </label>
                     <Dropdown
                         v-model="table.idFloor"
                         :options="pisos"
@@ -85,9 +135,14 @@
                         placeholder="Seleccione el piso"
                         filter
                         filterPlaceholder="Buscar piso"
+                        class="w-full"
                     />
-                    <small v-if="submitted && !table.idFloor" class="text-red-500">El piso es obligatorio.</small>
-                    <small v-else-if="serverErrors.idFloor" class="text-red-500">{{ serverErrors.idFloor[0] }}</small>
+                    <small v-if="submitted && !table.idFloor" class="text-red-500 text-xs sm:text-sm">
+                        El piso es obligatorio.
+                    </small>
+                    <small v-else-if="serverErrors.idFloor" class="text-red-500 text-xs sm:text-sm">
+                        {{ serverErrors.idFloor[0] }}
+                    </small>
                 </div>
             </div>
         </div>

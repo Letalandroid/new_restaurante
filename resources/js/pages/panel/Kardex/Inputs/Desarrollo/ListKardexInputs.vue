@@ -314,7 +314,7 @@ const downloadPDF = () => {
             </template>
         </Column>
     </DataTable>
-<Dialog v-model:visible="showPdfDialog" header="Vista previa del comprobante" :style="{ width: '800px' }" modal :closable="true" @hide="closePdfDialog">
+<Dialog v-model:visible="showPdfDialog" header="Vista previa del comprobante" :style="{ width: '95vw', maxWidth: '800px' }" modal :closable="true" @hide="closePdfDialog">
     <template #default>
         <iframe
             v-if="pdfUrl"

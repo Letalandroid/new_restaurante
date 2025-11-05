@@ -1,5 +1,5 @@
 <template>
-    <Toolbar class="mb-6">
+    <Toolbar class="mb-6 flex flex-wrap justify-between gap-4">
         <template #start>
             <Button label="Nuevo producto" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
         </template>
@@ -9,11 +9,12 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="productoDialog" :style="{ width: '700px' }" header="Registro de productos" :modal="true">
+    <Dialog v-model:visible="productoDialog" :style="{ width: '90vw', maxWidth: '700px' }" header="Registro de productos" :modal="true">
         <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
+            <!-- Contenedor adaptable -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
                 <!-- Nombre -->
-                <div class="col-span-10">
+                <div class="col-span-10 lg:col-span-12">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
                     <InputText v-model.trim="producto.name" fluid maxlength="100" />
                     <small v-if="submitted && !producto.name" class="text-red-500">El nombre es obligatorio.</small>
@@ -22,9 +23,9 @@
                 </div>
 
                 <!-- Estado -->
-                <div class="col-span-2">
+                <div class="col-span-2 sm:col-span-2 lg:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         <Checkbox v-model="producto.state" :binary="true" />
                         <Tag :value="producto.state ? 'Activo' : 'Inactivo'" fluid :severity="producto.state ? 'success' : 'danger'" />
                         <small v-if="submitted && producto.state === null" class="text-red-500">El estado es obligatorio.</small>
@@ -40,7 +41,7 @@
                 </div>
 
                 <!-- Categoría -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Categoría <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="producto.idCategory" 
@@ -52,14 +53,14 @@
                         filter
                         filterBy="label"
                         filterPlaceholder="Buscar categoria..."  
-                        style="width: 325px;"
+                        class="w-full"
                     />
                     <small v-if="submitted && !producto.idCategory" class="text-red-500">La categoría es obligatoria.</small>
                     <small v-else-if="serverErrors.idCategory" class="text-red-500">{{ serverErrors.idCategory[0] }}</small>
                 </div>
 
                 <!-- Almacén con Dropdown con búsqueda -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Almacén <span class="text-red-500">*</span></label>
                     <Dropdown 
                         v-model="producto.idAlmacen" 
@@ -71,27 +72,28 @@
                         filter
                         filterBy="label"
                         filterPlaceholder="Buscar almacen..." 
-                        style="width: 325px;"
+                        class="w-full"
                     />
                     <small v-if="submitted && !producto.idAlmacen" class="text-red-500">El almacén es obligatorio.</small>
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
                 <!-- Cantidad de Medida -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Cantidad de Medida <span class="text-red-500">*</span></label>
                     <InputNumber 
                         v-model="producto.quantityUnitMeasure" 
                         fluid
                         :min="0"
                         :fractionDigits="2"
+                        class="w-full"
                     />
                     <small v-if="submitted && producto.quantityUnitMeasure === null" class="text-red-500">La cantidad de medida es obligatoria.</small>
                     <small v-else-if="serverErrors.quantityUnitMeasure" class="text-red-500">{{ serverErrors.quantityUnitMeasure[0] }}</small>
                 </div>
 
                 <!-- Unidad de Medida -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Unidad de Medida <span class="text-red-500">*</span></label>
                     <Dropdown 
                         v-model="producto.unitMeasure" 
@@ -100,13 +102,14 @@
                         optionValue="value" 
                         fluid
                         placeholder="Seleccione unidad" 
-                        style="width: 325px;"
+                        class="w-full"
                     />
                     <small v-if="submitted && !producto.unitMeasure" class="text-red-500">La unidad de medida es obligatoria.</small>
                     <small v-else-if="serverErrors.unitMeasure" class="text-red-500">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
-                                <!-- Precio de Venta -->
-                <div class="col-span-6">
+
+                <!-- Precio de Venta -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
                     <InputNumber 
                         v-model="producto.priceSale" 
@@ -115,13 +118,14 @@
                         locale="es-PE" 
                         fluid
                         :min="0"
+                        class="w-full"
                     />
                     <small v-if="submitted && producto.priceSale === null" class="text-red-500">El precio de venta es obligatorio.</small>
                     <small v-else-if="serverErrors.priceSale" class="text-red-500">{{ serverErrors.priceSale[0] }}</small>
                 </div>
                 
                 <!-- Foto -->
-                <div class="col-span-6">
+                <div class="col-span-12 sm:col-span-6">
                     <label class="block font-bold mb-2">Foto</label>
                     <div class="flex flex-col gap-3">
                         <input 
@@ -136,21 +140,21 @@
                         <div v-if="imagePreview" class="mt-2">
                             <label class="block font-medium mb-2">Vista previa:</label>
                             <div class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center">
-                            <img
-                            :src="imagePreview"
-                            alt="Vista previa de la foto"
-                            class="max-h-[70vh] object-contain rounded"
-                            />
-                            <Button
-                            label="Quitar foto"
-                            icon="pi pi-times"
-                            severity="danger"
-                            text
-                            size="small"
-                            @click="removeFoto"
-                            class="mt-4"
-                            />
-                        </div>
+                                <img
+                                    :src="imagePreview"
+                                    alt="Vista previa de la foto"
+                                    class="max-h-[50vh] object-contain rounded"
+                                />
+                                <Button
+                                    label="Quitar foto"
+                                    icon="pi pi-times"
+                                    severity="danger"
+                                    text
+                                    size="small"
+                                    @click="removeFoto"
+                                    class="mt-4"
+                                />
+                            </div>
                         </div>
                         
                         <small class="text-gray-500">Formatos: JPG, JPEG, PNG (Máx. 5MB)</small>
@@ -162,8 +166,10 @@
         </div>
 
         <template #footer>
-            <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-            <Button label="Guardar" icon="pi pi-check" @click="guardarProducto" />
+            <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
+                <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" class="w-full sm:w-auto" />
+                <Button label="Guardar" icon="pi pi-check" @click="guardarProducto" class="w-full sm:w-auto" />
+            </div>
         </template>
     </Dialog>
 </template>

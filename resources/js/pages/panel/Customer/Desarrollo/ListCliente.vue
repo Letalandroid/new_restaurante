@@ -151,25 +151,57 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedClientes" :value="clientes" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedClientes"
+        :value="clientes"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} clientes"
+        class="w-full overflow-x-auto"
+    >
 
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center justify-between w-full">
                 <h4 class="m-0">CLIENTES</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto items-stretch sm:items-center justify-start sm:justify-end">
+                    <IconField class="w-full sm:w-auto">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar cliente..." />
+                        <InputText
+                            v-model="globalFilterValue"
+                            @input="onGlobalSearch"
+                            placeholder="Buscar cliente..."
+                            class="w-full sm:w-60"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoCliente" :options="estadoClienteOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadCliente" />
+
+                    <Select
+                        v-model="selectedEstadoCliente"
+                        :options="estadoClienteOptions"
+                        optionLabel="name"
+                        placeholder="Estado"
+                        class="w-full sm:w-40"
+                    />
+
+                    <Button
+                        icon="pi pi-refresh"
+                        outlined
+                        rounded
+                        aria-label="Refresh"
+                        @click="loadCliente"
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
@@ -183,21 +215,43 @@ onMounted(() => {
         <Column field="Cliente_Tipo" header="Tipo de Cliente" sortable style="min-width: 12rem" />
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem" />
+
         <Column field="state" header="Estado" sortable style="min-width: 6rem">
             <template #body="{ data }">
                 <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
         </Column>
+
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editCliente(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger"
-                    @click="confirmDeleteCliente(slotProps.data)" />
+                <div class="flex justify-center sm:justify-start gap-2">
+                    <Button
+                        icon="pi pi-pencil"
+                        outlined
+                        rounded
+                        class="mr-0 sm:mr-2"
+                        @click="editCliente(slotProps.data)"
+                    />
+                    <Button
+                        icon="pi pi-trash"
+                        outlined
+                        rounded
+                        severity="danger"
+                        @click="confirmDeleteCliente(slotProps.data)"
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
 
-    <DeleteCliente v-model:visible="deleteClienteDialog" :cliente="cliente" @deleted="handleClienteDeleted" />
-    <UpdateCliente v-model:visible="updateClienteDialog" :clienteId="selectedClienteId"
-        @updated="handleClienteUpdated" />
+    <DeleteCliente
+        v-model:visible="deleteClienteDialog"
+        :cliente="cliente"
+        @deleted="handleClienteDeleted"
+    />
+    <UpdateCliente
+        v-model:visible="updateClienteDialog"
+        :clienteId="selectedClienteId"
+        @updated="handleClienteUpdated"
+    />
 </template>

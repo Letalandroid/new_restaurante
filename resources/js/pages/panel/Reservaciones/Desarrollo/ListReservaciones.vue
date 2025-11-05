@@ -186,23 +186,26 @@ onMounted(() => {
         scrollable 
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reservaciones">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} reservaciones"
+        class="w-full overflow-x-auto text-sm sm:text-base"
+    >
 
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-2 items-start md:items-center justify-between w-full">
                 <h4 class="m-0">RESERVACIONES</h4>
 
                 <!-- Contenedor derecho -->
-                <div class="flex flex-col items-end gap-2 w-full md:w-auto">
+                <div class="flex flex-col md:flex-row items-start md:items-end gap-3 w-full md:w-auto">
+                    
                     <!-- Agregar el filtro por fecha -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full md:w-auto">
                         <Calendar 
                             v-model="selectedDate" 
                             dateFormat="dd/mm/yy" 
                             placeholder="Seleccionar fecha"
                             showIcon
                             :showButtonBar="true"
-                            class="w-full md:w-auto"
+                            class="w-full sm:w-auto"
                         />
                         <Button 
                             v-if="selectedDate" 
@@ -212,12 +215,13 @@ onMounted(() => {
                             severity="secondary"
                             @click="clearDateFilter" 
                             aria-label="Limpiar fecha"
+                            class="w-full sm:w-auto"
                         />
                     </div>
 
                     <!-- BUSCADOR GLOBAL -->
-                    <div class="flex flex-row gap-2">
-                        <IconField>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full md:w-auto">
+                        <IconField class="w-full sm:w-80">
                             <InputIcon>
                                 <i class="pi pi-search" />
                             </InputIcon>
@@ -225,24 +229,27 @@ onMounted(() => {
                                 v-model="globalFilterValue" 
                                 @input="onGlobalSearch" 
                                 placeholder="Buscar por código reserva o cliente..."
-                                class="w-full md:w-80" 
+                                class="w-full"
                             />
                         </IconField>
-                    <Select 
-                        v-model="selectedEstadoReservacion" 
-                        :options="estadoReservacionOptions" 
-                        optionLabel="name"
-                        placeholder="Estado" 
-                        class="w-full md:w-auto" 
-                    />
-                    <Button 
-                        icon="pi pi-refresh" 
-                        outlined 
-                        rounded 
-                        aria-label="Refresh" 
-                        @click="loadReservation" 
-                    />
-                </div>
+
+                        <Select 
+                            v-model="selectedEstadoReservacion" 
+                            :options="estadoReservacionOptions" 
+                            optionLabel="name"
+                            placeholder="Estado" 
+                            class="w-full sm:w-auto"
+                        />
+
+                        <Button 
+                            icon="pi pi-refresh" 
+                            outlined 
+                            rounded 
+                            aria-label="Refresh" 
+                            @click="loadReservation" 
+                            class="w-full sm:w-auto"
+                        />
+                    </div>
                 </div>
             </div>
         </template>
@@ -262,28 +269,31 @@ onMounted(() => {
         </Column>
         <Column header="Acciones" :exportable="false" style="min-width: 10rem">
             <template #body="slotProps">
-                <Button 
-                    icon="pi pi-user" 
-                    outlined 
-                    rounded 
-                    severity="info" 
-                    class="mr-2" 
-                    @click="viewCliente(slotProps.data)" 
-                />
-                <Button 
-                    icon="pi pi-pencil" 
-                    outlined 
-                    rounded 
-                    class="mr-2" 
-                    @click="editReservation(slotProps.data)" 
-                />
-                <Button 
-                    icon="pi pi-trash" 
-                    outlined 
-                    rounded 
-                    severity="danger"
-                    @click="confirmDeleteReservation(slotProps.data)" 
-                />
+                <div class="flex justify-center sm:justify-start gap-2 flex-wrap">
+                    <Button 
+                        icon="pi pi-user" 
+                        outlined 
+                        rounded 
+                        severity="info" 
+                        class="w-9 h-9 sm:w-10 sm:h-10" 
+                        @click="viewCliente(slotProps.data)" 
+                    />
+                    <Button 
+                        icon="pi pi-pencil" 
+                        outlined 
+                        rounded 
+                        class="w-9 h-9 sm:w-10 sm:h-10" 
+                        @click="editReservation(slotProps.data)" 
+                    />
+                    <Button 
+                        icon="pi pi-trash" 
+                        outlined 
+                        rounded 
+                        severity="danger"
+                        class="w-9 h-9 sm:w-10 sm:h-10"
+                        @click="confirmDeleteReservation(slotProps.data)" 
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>

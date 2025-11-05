@@ -141,7 +141,7 @@ async function deleteInputKardex(): Promise<void> {
 
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span v-if="movementInput">

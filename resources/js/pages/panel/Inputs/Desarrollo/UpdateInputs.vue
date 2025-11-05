@@ -174,24 +174,41 @@ const updateInput = async (): Promise<void> => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Insumo" modal :closable="true" :closeOnEscape="true" :style="{ width: '700px' }">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Insumo" 
+        modal 
+        :closable="true" 
+        :closeOnEscape="true" 
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+
+                <!-- Nombre -->
+                <div class="col-span-8 sm:col-span-10">
                     <label class="mb-2 block font-bold">Nombre <span class="text-red-500">*</span></label>
-                    <InputText v-model="input.name" required maxlength="100" fluid :class="{ 'p-invalid': serverErrors.name }" />
+                    <InputText 
+                        v-model="input.name" 
+                        required 
+                        maxlength="100" 
+                        fluid 
+                        :class="{ 'p-invalid': serverErrors.name }" 
+                    />
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <div class="col-span-2">
+                <!-- Estado -->
+                <div class="col-span-4 sm:col-span-2">
                     <label class="mb-2 block font-bold">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
-                        <Checkbox v-model="input.state" :binary="true" fluid />
+                        <Checkbox v-model="input.state" :binary="true" />
                         <Tag :value="input.state ? 'Activo' : 'Inactivo'" :severity="input.state ? 'success' : 'danger'" />
                     </div>
                 </div>
 
-                <div class="col-span-6">
+                <!-- Precio Venta -->
+                <div class="col-span-12 sm:col-span-6">
                     <label for="priceSale" class="block font-bold mb-2">Precio de Venta <span class="text-red-500">*</span></label>
                     <InputNumber
                         id="priceSale"
@@ -207,40 +224,39 @@ const updateInput = async (): Promise<void> => {
                     <small v-if="serverErrors.priceSale" class="p-error">{{ serverErrors.priceSale[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
-                    <label for="quantityUnitMeasure" class="mb-2 block font-bold">Cantidad por medida<span class="text-red-500">*</span></label>
+                <!-- Cantidad por medida -->
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="quantityUnitMeasure" class="block font-bold mb-2">Cantidad por medida <span class="text-red-500">*</span></label>
                     <InputNumber
                         id="quantityUnitMeasure"
                         v-model="input.quantityUnitMeasure"
                         :minFractionDigits="2"
                         :maxFractionDigits="2"
-                        mode="currency"
-                        currency="PEN"
-                        locale="es-PE"
                         class="w-full"
                         :class="{ 'p-invalid': serverErrors.quantityUnitMeasure }"
                     />
                     <small v-if="serverErrors.quantityUnitMeasure" class="p-error">{{ serverErrors.quantityUnitMeasure[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
+                <!-- Unidad de Medida -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Unidad de Medida <span class="text-red-500">*</span></label>
                     <Select
                         v-model="input.unitMeasure"
-                        fluid
                         :options="unitMeasures"
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Seleccione Unidad de Medida"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.unitMeasure" class="p-error">{{ serverErrors.unitMeasure[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
+                <!-- Almacén -->
+                <div class="col-span-12 sm:col-span-6">
                     <label class="mb-2 block font-bold">Almacen <span class="text-red-500">*</span></label>
                     <Dropdown
                         v-model="input.idAlmacen"
-                        fluid
                         :options="almacens"
                         optionLabel="label"
                         optionValue="value"
@@ -248,17 +264,25 @@ const updateInput = async (): Promise<void> => {
                         filter
                         filterBy="label"
                         filterPlaceholder="Buscar almacen..."
-                        style="width: 325px;"
+                        class="w-full"
                     />
                     <small v-if="submitted && !input.idAlmacen" class="text-red-500">El Almacen es obligatorio.</small>
                     <small v-else-if="serverErrors.idAlmacen" class="text-red-500">{{ serverErrors.idAlmacen[0] }}</small>
                 </div>
 
+                <!-- Descripción -->
                 <div class="col-span-12">
                     <label class="mb-2 block font-bold">Descripcion <span class="text-red-500">*</span></label>
-                    <InputText v-model="input.description" required maxlength="150" fluid :class="{ 'p-invalid': serverErrors.description }" />
+                    <InputText 
+                        v-model="input.description" 
+                        required 
+                        maxlength="150" 
+                        fluid 
+                        :class="{ 'p-invalid': serverErrors.description }" 
+                    />
                     <small v-if="serverErrors.description" class="p-error">{{ serverErrors.description[0] }}</small>
                 </div>
+
             </div>
         </div>
 

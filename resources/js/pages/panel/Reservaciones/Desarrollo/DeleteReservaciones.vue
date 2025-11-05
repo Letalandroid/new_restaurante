@@ -63,7 +63,7 @@ async function deleteReservacion(): Promise<void> {
 <template>
     <Dialog 
         v-model:visible="localVisible" 
-        :style="{ width: '500px' }" 
+        :style="{ width: '90vw', maxWidth: '450px' }" 
         header="Confirmar Eliminación" 
         :modal="true"
         @update:visible="closeDialog"

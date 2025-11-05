@@ -65,7 +65,7 @@ async function deletePiso(): Promise<void> {
 <template>
     <Dialog
         v-model:visible="localVisible"
-        :style="{ width: '450px' }"
+        :style="{ width: '90vw', maxWidth: '450px' }"
         header="Confirmar"
         :modal="true"
         @update:visible="closeDialog"

@@ -42,338 +42,340 @@
       </div>
     </div>
 
-    <!-- Botón que abre el modal -->
-    <Dialog :open="reservaDialog" @update:open="onDialogOpen">
-      <DialogTrigger as-child>
-        <button 
-          class="mt-8 sm:mt-12 bg-yellow-600 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg hover:bg-yellow-700 shadow text-sm sm:text-base">
-          Hacer Reservación
-        </button>
-      </DialogTrigger>
+<!-- Botón que abre el modal -->
+<Dialog :open="reservaDialog" @update:open="onDialogOpen">
+  <DialogTrigger as-child>
+    <button 
+      class="mt-8 sm:mt-12 bg-yellow-600 text-white px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg hover:bg-yellow-700 shadow text-sm sm:text-base">
+      Hacer Reservación
+    </button>
+  </DialogTrigger>
 
-      <DialogContent
-        class="max-w-[95vw] sm:max-w-4xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
-               rounded-xl sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mx-2"
-      >
-        <DialogHeader>
-          <DialogTitle class="text-lg sm:text-xl">Realizar Reservación</DialogTitle>
-          <DialogDescription class="text-sm sm:text-base">
-            Completa los siguientes pasos para realizar tu reserva.
-          </DialogDescription>
-        </DialogHeader>
+  <DialogContent
+    class="max-w-[95vw] sm:max-w-4xl max-h-[90vh] sm:max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
+           rounded-xl sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mx-2"
+  >
+    <DialogHeader>
+      <DialogTitle class="text-lg sm:text-xl lg:text-2xl">Realizar Reservación</DialogTitle>
+      <DialogDescription class="text-sm sm:text-base">
+        Completa los siguientes pasos para realizar tu reserva.
+      </DialogDescription>
+    </DialogHeader>
 
-        <!-- Stepper -->
-        <div class="mt-4 sm:mt-6">
-          <Stepper v-model:value="activeStep" linear>
-            <!-- Lista de pasos (barra superior) - Mejorado para móviles -->
-            <StepList class="flex overflow-x-auto pb-2 -mx-1 px-1">
-              <Step :value="1" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1">Personas</Step>
-              <Step :value="2" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1">Fecha</Step>
-              <Step :value="3" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1">Hora</Step>
-              <Step :value="4" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1">Datos</Step>
-            </StepList>
+    <!-- Stepper -->
+    <div class="mt-4 sm:mt-6">
+      <Stepper v-model:value="activeStep" linear>
+        <!-- Lista de pasos (barra superior) - Mejorado para móviles -->
+        <StepList class="flex overflow-x-auto pb-2 -mx-1 px-1">
+          <Step :value="1" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1 px-1">Personas</Step>
+          <Step :value="2" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1 px-1">Fecha</Step>
+          <Step :value="3" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1 px-1">Hora</Step>
+          <Step :value="4" class="text-xs sm:text-sm whitespace-nowrap min-w-0 flex-1 px-1">Datos</Step>
+        </StepList>
 
-            <!-- Panels -->
-            <StepPanels>
-              <!-- Panel: Personas -->
-              <StepPanel :value="1">
-                <div class="flex flex-col items-center">
-                  <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Elige la cantidad de personas</h3>
+        <!-- Panels -->
+        <StepPanels>
+          <!-- Panel: Personas -->
+          <StepPanel :value="1">
+            <div class="flex flex-col items-center">
+              <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Elige la cantidad de personas</h3>
 
-                  <!-- Cantidad seleccionada -->
-                  <div v-if="reserva.number_people" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                    <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
-                      {{ numeroALetras(reserva.number_people) }} personas
-                    </span>
-                  </div>
+              <!-- Cantidad seleccionada -->
+              <div v-if="reserva.number_people" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
+                  {{ numeroALetras(reserva.number_people) }} personas
+                </span>
+              </div>
 
-                  <!-- Botones de cantidad -->
-                  <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 w-full max-w-xs">
-                    <button
-                      v-for="num in mostrarNumeros"
-                      :key="num"
-                      @click="seleccionarPersonas(num)"
-                      :class="[
-                        'p-3 sm:p-4 rounded-lg border-2 text-sm sm:text-lg font-semibold transition-all',
-                        reserva.number_people === num
-                          ? 'bg-yellow-600 text-white border-yellow-600'
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-yellow-500'
-                      ]"
-                    >
-                      {{ num }}
-                    </button>
-                  </div>
+              <!-- Botones de cantidad -->
+              <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 w-full max-w-xs">
+                <button
+                  v-for="num in mostrarNumeros"
+                  :key="num"
+                  @click="seleccionarPersonas(num)"
+                  :class="[
+                    'p-3 sm:p-4 rounded-lg border-2 text-sm sm:text-lg font-semibold transition-all',
+                    reserva.number_people === num
+                      ? 'bg-yellow-600 text-white border-yellow-600'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-yellow-500'
+                  ]"
+                >
+                  {{ num }}
+                </button>
+              </div>
 
-                  <!-- Botón para mostrar más números -->
-                  <button
-                    v-if="!mostrarTodos"
-                    @click="mostrarTodos = true"
-                    class="text-yellow-600 dark:text-yellow-400 hover:underline mb-3 sm:mb-4 text-sm"
-                  >
-                    + Ver más opciones
-                  </button>
+              <!-- Botón para mostrar más números -->
+              <button
+                v-if="!mostrarTodos"
+                @click="mostrarTodos = true"
+                class="text-yellow-600 dark:text-yellow-400 hover:underline mb-3 sm:mb-4 text-sm"
+              >
+                + Ver más opciones
+              </button>
 
-                  <div class="flex justify-end w-full mt-4 sm:mt-6">
-                    <Button
-                      label="Siguiente"
-                      @click="activeStep = 2"
-                      :disabled="!reserva.number_people"
-                      icon="pi pi-arrow-right"
-                      class="text-sm sm:text-base"
+              <div class="flex justify-end w-full mt-4 sm:mt-6">
+                <Button
+                  label="Siguiente"
+                  @click="activeStep = 2"
+                  :disabled="!reserva.number_people"
+                  icon="pi pi-arrow-right"
+                  class="text-sm sm:text-base"
+                />
+              </div>
+            </div>
+          </StepPanel>
+
+          <!-- Panel: Fecha -->
+          <StepPanel :value="2">
+            <div class="flex flex-col items-center">
+              <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Selecciona una fecha</h3>
+
+              <!-- Fecha seleccionada -->
+              <div v-if="reserva.date" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
+                  {{ formatearFecha(reserva.date) }}
+                </span>
+              </div>
+
+              <!-- Calendario sin columna de semana - Mejorado para móviles -->
+              <div class="w-full max-w-xs sm:max-w-none overflow-x-auto">
+                <Calendar
+                  v-model="reserva.date"
+                  :minDate="minDate"
+                  inline
+                  :showWeek="false"
+                  class="w-full calendar-sin-semana min-w-[280px]"
+                  dateFormat="dd/mm/yy"
+                />
+              </div>
+
+              <div class="flex justify-between w-full mt-4 sm:mt-6">
+                <Button
+                  label="Regresar"
+                  @click="activeStep = 1"
+                  icon="pi pi-arrow-left"
+                  text
+                  class="text-sm sm:text-base"
+                />
+                <Button
+                  label="Siguiente"
+                  @click="activeStep = 3"
+                  :disabled="!reserva.date"
+                  icon="pi pi-arrow-right"
+                  class="text-sm sm:text-base"
+                />
+              </div>
+            </div>
+          </StepPanel>
+
+          <!-- Panel: Hora -->
+          <StepPanel :value="3">
+            <div class="flex flex-col items-center">
+              <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Selecciona una hora</h3>
+
+              <!-- Hora seleccionada -->
+              <div v-if="reserva.hour" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
+                  {{ formatearHoraConPM(reserva.hour) }}
+                </span>
+              </div>
+
+              <!-- Botones de hora con formato PM - Mejorado para móviles -->
+              <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-xs sm:max-w-none">
+                <button
+                  v-for="hora in horasDisponiblesFiltradas"
+                  :key="hora"
+                  @click="reserva.hour = hora"
+                  :class="[
+                    'p-2 sm:p-3 rounded-lg border-2 text-xs sm:text-sm font-semibold transition-all',
+                    reserva.hour === hora
+                      ? 'bg-yellow-600 text-white border-yellow-600'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-yellow-500'
+                  ]"
+                >
+                  {{ formatearHoraConPM(hora) }}
+                </button>
+              </div>
+
+              <div class="flex justify-between w-full mt-4 sm:mt-6">
+                <Button
+                  label="Regresar"
+                  @click="activeStep = 2"
+                  icon="pi pi-arrow-left"
+                  text
+                  class="text-sm sm:text-base"
+                />
+                <Button
+                  label="Siguiente"
+                  @click="activeStep = 4"
+                  :disabled="!reserva.hour"
+                  icon="pi pi-arrow-right"
+                  class="text-sm sm:text-base"
+                />
+              </div>
+            </div>
+          </StepPanel>
+
+          <!-- Panel: Datos -->
+          <StepPanel :value="4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <!-- Formulario de datos -->
+              <div class="lg:col-span-2">
+                <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Ya casi terminas</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Nombre *</label>
+                    <InputText
+                      v-model="reserva.name"
+                      placeholder="Ingresa tu nombre"
+                      class="w-full text-sm sm:text-base"
+                      :class="{ 'p-invalid': serverErrors.name }"
                     />
+                    <small v-if="serverErrors.name" class="text-red-500 text-xs">{{ serverErrors.name[0] }}</small>
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Apellido *</label>
+                    <InputText
+                      v-model="reserva.lastname"
+                      placeholder="Ingresa tu apellido"
+                      class="w-full text-sm sm:text-base"
+                      :class="{ 'p-invalid': serverErrors.lastname }"
+                    />
+                    <small v-if="serverErrors.lastname" class="text-red-500 text-xs">{{ serverErrors.lastname[0] }}</small>
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Email *</label>
+                    <InputText
+                      v-model="reserva.email"
+                      type="email"
+                      placeholder="correo@ejemplo.com"
+                      class="w-full text-sm sm:text-base"
+                      :class="{ 'p-invalid': serverErrors.email }"
+                    />
+                    <small v-if="serverErrors.email" class="text-red-500 text-xs">{{ serverErrors.email[0] }}</small>
+                  </div>
+
+                  <div>
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Teléfono *</label>
+                    <InputText
+                      v-model="reserva.phone"
+                      maxlength="9"
+                      placeholder="999999999"
+                      class="w-full text-sm sm:text-base"
+                      :class="{ 'p-invalid': serverErrors.phone }"
+                    />
+                    <small v-if="serverErrors.phone" class="text-red-500 text-xs">{{ serverErrors.phone[0] }}</small>
+                  </div>
+
+                  <div class="md:col-span-2">
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Tipo de Comprobante *</label>
+                    <!-- Select nativo -->
+                    <select 
+                      v-model="reserva.client_type_id"
+                      @change="onTipoClienteChange"
+                      class="w-full p-2 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm sm:text-base"
+                      :class="{ 'border-red-500': serverErrors.client_type_id }"
+                    >
+                      <option value="" disabled selected>Seleccione tipo de comprobante</option>
+                      <option 
+                        v-for="tipo in tiposCliente" 
+                        :key="tipo.id" 
+                        :value="tipo.id"
+                      >
+                        {{ getNombreComprobante(tipo.name) }}
+                      </option>
+                    </select>
+                    <small v-if="serverErrors.client_type_id" class="text-red-500 text-xs">{{ serverErrors.client_type_id[0] }}</small>
+                  </div>
+
+                  <!-- Campo de código (oculto inicialmente) -->
+                  <div v-if="reserva.client_type_id" class="md:col-span-2">
+                    <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">
+                      {{ reserva.client_type_id === 1 ? 'DNI (8 dígitos)' : 'RUC (11 dígitos)' }} *
+                    </label>
+                    <InputText
+                      v-model="reserva.codigo"
+                      :maxlength="reserva.client_type_id === 1 ? 8 : 11"
+                      :placeholder="reserva.client_type_id === 1 ? 'Ingresa tu DNI' : 'Ingresa tu RUC'"
+                      class="w-full text-sm sm:text-base"
+                      :class="{ 'p-invalid': serverErrors.codigo }"
+                    />
+                    <small v-if="serverErrors.codigo" class="text-red-500 text-xs">{{ serverErrors.codigo[0] }}</small>
                   </div>
                 </div>
-              </StepPanel>
+              </div>
 
-              <!-- Panel: Fecha -->
-              <StepPanel :value="2">
-                <div class="flex flex-col items-center">
-                  <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Selecciona una fecha</h3>
+              <!-- Resumen de la reserva -->
+              <div class="lg:col-span-1">
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <h4 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Resumen de tu reserva</h4>
 
-                  <!-- Fecha seleccionada -->
-                  <div v-if="reserva.date" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                    <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
-                      {{ formatearFecha(reserva.date) }}
-                    </span>
+                  <div class="space-y-2 sm:space-y-3">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Personas:</span>
+                      <span class="font-semibold text-sm sm:text-base">{{ reserva.number_people }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Fecha:</span>
+                      <span class="font-semibold text-sm sm:text-base">{{ formatearFecha(reserva.date) }}</span>
+                    </div>
+
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Hora:</span>
+                      <span class="font-semibold text-sm sm:text-base">{{ formatearHoraConPM(reserva.hour) }}</span>
+                    </div>
+
+                    <hr class="my-2 sm:my-3 border-gray-300 dark:border-gray-600">
+
+                    <div class="flex justify-between text-base sm:text-lg">
+                      <span class="font-semibold">Total:</span>
+                      <span class="font-bold text-yellow-600">Gratis</span>
+                    </div>
                   </div>
 
-                  <!-- Calendario sin columna de semana -->
-                  <Calendar
-                    v-model="reserva.date"
-                    :minDate="minDate"
-                    inline
-                    :showWeek="false"
-                    class="w-full calendar-sin-semana max-w-xs sm:max-w-none"
-                    dateFormat="dd/mm/yy"
-                  />
-
-                  <div class="flex justify-between w-full mt-4 sm:mt-6">
+                  <div class="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
                     <Button
-                      label="Regresar"
+                      label="Confirmar Reservación"
+                      @click="confirmarReserva"
+                      icon="pi pi-check"
+                      class="w-full text-sm sm:text-base"
+                      severity="success"
+                      :loading="loading"
+                      :disabled="!reserva.client_type_id || !reserva.codigo"
+                    />
+                    <Button
+                      label="Regresar al Inicio"
                       @click="activeStep = 1"
                       icon="pi pi-arrow-left"
+                      class="w-full text-sm sm:text-base"
                       text
-                      class="text-sm sm:text-base"
-                    />
-                    <Button
-                      label="Siguiente"
-                      @click="activeStep = 3"
-                      :disabled="!reserva.date"
-                      icon="pi pi-arrow-right"
-                      class="text-sm sm:text-base"
                     />
                   </div>
                 </div>
-              </StepPanel>
+              </div>
+            </div>
+          </StepPanel>
+        </StepPanels>
+      </Stepper>
+    </div>
 
-              <!-- Panel: Hora -->
-              <StepPanel :value="3">
-                <div class="flex flex-col items-center">
-                  <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-center">Selecciona una hora</h3>
-
-                  <!-- Hora seleccionada -->
-                  <div v-if="reserva.hour" class="mb-4 sm:mb-6 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                    <span class="text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
-                      {{ formatearHoraConPM(reserva.hour) }}
-                    </span>
-                  </div>
-
-                  <!-- Botones de hora con formato PM - Mejorado para móviles -->
-                  <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 w-full max-w-xs sm:max-w-none">
-                    <button
-                      v-for="hora in horasDisponiblesFiltradas"
-                      :key="hora"
-                      @click="reserva.hour = hora"
-                      :class="[
-                        'p-2 sm:p-3 rounded-lg border-2 text-xs sm:text-sm font-semibold transition-all',
-                        reserva.hour === hora
-                          ? 'bg-yellow-600 text-white border-yellow-600'
-                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-yellow-500'
-                      ]"
-                    >
-                      {{ formatearHoraConPM(hora) }}
-                    </button>
-                  </div>
-
-                  <div class="flex justify-between w-full mt-4 sm:mt-6">
-                    <Button
-                      label="Regresar"
-                      @click="activeStep = 2"
-                      icon="pi pi-arrow-left"
-                      text
-                      class="text-sm sm:text-base"
-                    />
-                    <Button
-                      label="Siguiente"
-                      @click="activeStep = 4"
-                      :disabled="!reserva.hour"
-                      icon="pi pi-arrow-right"
-                      class="text-sm sm:text-base"
-                    />
-                  </div>
-                </div>
-              </StepPanel>
-
-              <!-- Panel: Datos -->
-              <StepPanel :value="4">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                  <!-- Formulario de datos -->
-                  <div class="lg:col-span-2">
-                    <h3 class="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Ya casi terminas</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                      <div>
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Nombre *</label>
-                        <InputText
-                          v-model="reserva.name"
-                          placeholder="Ingresa tu nombre"
-                          class="w-full text-sm sm:text-base"
-                          :class="{ 'p-invalid': serverErrors.name }"
-                        />
-                        <small v-if="serverErrors.name" class="text-red-500 text-xs">{{ serverErrors.name[0] }}</small>
-                      </div>
-
-                      <div>
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Apellido *</label>
-                        <InputText
-                          v-model="reserva.lastname"
-                          placeholder="Ingresa tu apellido"
-                          class="w-full text-sm sm:text-base"
-                          :class="{ 'p-invalid': serverErrors.lastname }"
-                        />
-                        <small v-if="serverErrors.lastname" class="text-red-500 text-xs">{{ serverErrors.lastname[0] }}</small>
-                      </div>
-
-                      <div>
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Email *</label>
-                        <InputText
-                          v-model="reserva.email"
-                          type="email"
-                          placeholder="correo@ejemplo.com"
-                          class="w-full text-sm sm:text-base"
-                          :class="{ 'p-invalid': serverErrors.email }"
-                        />
-                        <small v-if="serverErrors.email" class="text-red-500 text-xs">{{ serverErrors.email[0] }}</small>
-                      </div>
-
-                      <div>
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Teléfono *</label>
-                        <InputText
-                          v-model="reserva.phone"
-                          maxlength="9"
-                          placeholder="999999999"
-                          class="w-full text-sm sm:text-base"
-                          :class="{ 'p-invalid': serverErrors.phone }"
-                        />
-                        <small v-if="serverErrors.phone" class="text-red-500 text-xs">{{ serverErrors.phone[0] }}</small>
-                      </div>
-
-                      <div class="md:col-span-2">
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">Tipo de Comprobante *</label>
-                        <!-- Select nativo -->
-                        <select 
-                          v-model="reserva.client_type_id"
-                          @change="onTipoClienteChange"
-                          class="w-full p-2 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm sm:text-base"
-                          :class="{ 'border-red-500': serverErrors.client_type_id }"
-                        >
-                          <option value="" disabled selected>Seleccione tipo de comprobante</option>
-                          <option 
-                            v-for="tipo in tiposCliente" 
-                            :key="tipo.id" 
-                            :value="tipo.id"
-                          >
-                            {{ getNombreComprobante(tipo.name) }}
-                          </option>
-                        </select>
-                        <small v-if="serverErrors.client_type_id" class="text-red-500 text-xs">{{ serverErrors.client_type_id[0] }}</small>
-                      </div>
-
-                      <!-- Campo de código (oculto inicialmente) -->
-                      <div v-if="reserva.client_type_id" class="md:col-span-2">
-                        <label class="block text-gray-700 dark:text-gray-200 font-medium mb-1 sm:mb-2 text-sm sm:text-base">
-                          {{ reserva.client_type_id === 1 ? 'DNI (8 dígitos)' : 'RUC (11 dígitos)' }} *
-                        </label>
-                        <InputText
-                          v-model="reserva.codigo"
-                          :maxlength="reserva.client_type_id === 1 ? 8 : 11"
-                          :placeholder="reserva.client_type_id === 1 ? 'Ingresa tu DNI' : 'Ingresa tu RUC'"
-                          class="w-full text-sm sm:text-base"
-                          :class="{ 'p-invalid': serverErrors.codigo }"
-                        />
-                        <small v-if="serverErrors.codigo" class="text-red-500 text-xs">{{ serverErrors.codigo[0] }}</small>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Resumen de la reserva -->
-                  <div class="lg:col-span-1">
-                    <div class="bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <h4 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Resumen de tu reserva</h4>
-
-                      <div class="space-y-2 sm:space-y-3">
-                        <div class="flex justify-between">
-                          <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Personas:</span>
-                          <span class="font-semibold text-sm sm:text-base">{{ reserva.number_people }}</span>
-                        </div>
-
-                        <div class="flex justify-between">
-                          <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Fecha:</span>
-                          <span class="font-semibold text-sm sm:text-base">{{ formatearFecha(reserva.date) }}</span>
-                        </div>
-
-                        <div class="flex justify-between">
-                          <span class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Hora:</span>
-                          <span class="font-semibold text-sm sm:text-base">{{ formatearHoraConPM(reserva.hour) }}</span>
-                        </div>
-
-                        <hr class="my-2 sm:my-3 border-gray-300 dark:border-gray-600">
-
-                        <div class="flex justify-between text-base sm:text-lg">
-                          <span class="font-semibold">Total:</span>
-                          <span class="font-bold text-yellow-600">Gratis</span>
-                        </div>
-                      </div>
-
-                      <div class="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-                        <Button
-                          label="Confirmar Reservación"
-                          @click="confirmarReserva"
-                          icon="pi pi-check"
-                          class="w-full text-sm sm:text-base"
-                          severity="success"
-                          :loading="loading"
-                          :disabled="!reserva.client_type_id || !reserva.codigo"
-                        />
-                        <Button
-                          label="Regresar al Inicio"
-                          @click="activeStep = 1"
-                          icon="pi pi-arrow-left"
-                          class="w-full text-sm sm:text-base"
-                          text
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </StepPanel>
-            </StepPanels>
-          </Stepper>
-        </div>
-
-        <!-- Mensaje de éxito/error -->
-        <div v-if="mensaje.text" class="mt-3 sm:mt-4">
-          <Message 
-            :severity="mensaje.tipo" 
-            :closable="false"
-            :class="mensaje.tipo === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'"
-            class="text-sm"
-          >
-            {{ mensaje.text }}
-          </Message>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <!-- Mensaje de éxito/error -->
+    <div v-if="mensaje.text" class="mt-3 sm:mt-4">
+      <Message 
+        :severity="mensaje.tipo" 
+        :closable="false"
+        :class="mensaje.tipo === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'"
+        class="text-sm"
+      >
+        {{ mensaje.text }}
+      </Message>
+    </div>
+  </DialogContent>
+</Dialog>
   </section>
 </template>
 

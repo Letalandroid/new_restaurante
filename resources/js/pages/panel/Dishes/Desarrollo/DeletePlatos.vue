@@ -67,7 +67,7 @@ const deletePlato = async (): Promise<void> => {
 <template>
  
 
-  <Dialog v-model:visible="dialogVisible" :style="{ width: '450px' }" header="Confirmar Eliminacion" :modal="true"
+  <Dialog v-model:visible="dialogVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar Eliminacion" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />

@@ -67,7 +67,7 @@ async function deleteInput(): Promise<void> {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span v-if="movementInput">¿Estás seguro de eliminar el movimiento de compra de items con codigo: <b>{{ movementInput.code }}</b>?</span>

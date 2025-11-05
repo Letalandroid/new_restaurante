@@ -844,7 +844,7 @@ const finalizarMesa = async () => {
             </template>
 
             <template #end>
-                <div class="ml-auto flex space-x-4">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto mt-4 sm:mt-0">
                     <!-- Dropdown for Floor -->
                     <Dropdown
                         v-model="selectedFloor"
@@ -854,7 +854,7 @@ const finalizarMesa = async () => {
                         placeholder="Selecciona un Piso"
                         filter
                         filterBy="label"
-                        class="w-1/1"
+                        class="w-full sm:w-60 lg:w-68"
                     />
 
                     <!-- Dropdown for Area -->
@@ -866,11 +866,16 @@ const finalizarMesa = async () => {
                         placeholder="Selecciona una Area"
                         filter
                         filterBy="label"
-                        class="w-1/1"
+                        class="w-full sm:w-60 lg:w-68"
                     />
 
                     <!-- Search Input -->
-                    <InputText v-model="searchQuery" debounce="300" placeholder="Buscar por numero" class="w-1/3" />
+                    <InputText 
+                        v-model="searchQuery" 
+                        debounce="300" 
+                        placeholder="Buscar por numero" 
+                        class="w-full sm:w-48 lg:w-56" 
+                    />
                 </div>
             </template>
         </Toolbar>
@@ -906,15 +911,21 @@ const finalizarMesa = async () => {
         </div>
 
         <div>
-            <div v-if="showReciboForm" class="card mb-4">
-                <h3 class="mb-4">Generar Recibo</h3>
-                <div class="grid grid-cols-2 gap-4">
+            <div v-if="showReciboForm" class="card mb-4 p-3 sm:p-4">
+                <h3 class="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold">Generar Recibo</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <!-- Código de Cliente con búsqueda personalizada -->
-                    <div class="col-span-2">
-                        <label for="codigoCliente">Código de Cliente:</label>
+                    <div class="col-span-1 sm:col-span-2">
+                        <label for="codigoCliente" class="block mb-2 text-sm sm:text-base">Código de Cliente:</label>
                         <div class="relative w-full">
                             <!-- InputText para búsqueda de cliente -->
-                            <InputText v-model="searchTerm" @input="handleSearch" placeholder="Buscar código de cliente..." class="w-full" maxlength="11" />
+                            <InputText 
+                                v-model="searchTerm" 
+                                @input="handleSearch" 
+                                placeholder="Buscar código de cliente..." 
+                                class="w-full" 
+                                maxlength="11" 
+                            />
 
                             <!-- Resultados de búsqueda -->
                             <div
@@ -928,8 +939,8 @@ const finalizarMesa = async () => {
                                     class="cursor-pointer rounded p-2 hover:bg-primary-100 hover:text-primary-800"
                                 >
                                     <div class="flex flex-col">
-                                        <span class="font-semibold text-gray-800">{{ cliente.codigo }} - {{ cliente.name }} {{ cliente.lastname }}</span>
-                                        <span class="text-sm text-gray-600">{{ cliente.client_type_id === 1 ? 'Persona natural' : 'Persona juridica' }}</span>
+                                        <span class="font-semibold text-gray-800 text-sm sm:text-base">{{ cliente.codigo }} - {{ cliente.name }} {{ cliente.lastname }}</span>
+                                        <span class="text-xs sm:text-sm text-gray-600">{{ cliente.client_type_id === 1 ? 'Persona natural' : 'Persona juridica' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -939,15 +950,15 @@ const finalizarMesa = async () => {
                                 v-if="showResults && searchTerm && clientesOptions.length === 0"
                                 class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-gray-50 p-4 text-center text-gray-600 shadow-lg"
                             >
-                                No se encontraron resultados.
+                                <p class="text-sm sm:text-base mb-2">No se encontraron resultados.</p>
                                 <AddCliente />
                             </div>
                         </div>
                     </div>
 
                     <!-- Tipo de Recibo (Automático según el cliente seleccionado) -->
-                    <div class="col-span-1">
-                        <label for="tipoRecibo">Tipo de Recibo:</label>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="tipoRecibo" class="block mb-2 text-sm sm:text-base">Tipo de Recibo:</label>
                         <Dropdown
                             v-model="recibo.tipoRecibo"
                             :options="['Factura', 'Boleta']"
@@ -958,8 +969,8 @@ const finalizarMesa = async () => {
                     </div>
 
                     <!-- Tipo de Pago -->
-                    <div class="col-span-1">
-                        <label for="tipoPago">Tipo de Pago:</label>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="tipoPago" class="block mb-2 text-sm sm:text-base">Tipo de Pago:</label>
                         <Dropdown
                             v-model="recibo.tipoPago"
                             :options="['Tarjeta', 'Transferencia', 'Efectivo', 'Yape', 'Plin']"
@@ -969,51 +980,78 @@ const finalizarMesa = async () => {
                     </div>
 
                     <!-- Código de Operación (Solo si no es Efectivo) -->
-                    <div v-if="recibo.tipoPago !== 'Efectivo'" class="col-span-2">
-                        <label for="operationCode">Código de Operación:</label>
-                        <InputText v-model="recibo.operationCode" placeholder="Ingrese el código de operación" class="w-full" />
+                    <div v-if="recibo.tipoPago !== 'Efectivo'" class="col-span-1 sm:col-span-2">
+                        <label for="operationCode" class="block mb-2 text-sm sm:text-base">Código de Operación:</label>
+                        <InputText 
+                            v-model="recibo.operationCode" 
+                            placeholder="Ingrese el código de operación" 
+                            class="w-full" 
+                        />
                     </div>
 
                     <!-- Total -->
-                    <div class="col-span-2">
-                        <label for="total">Total:</label>
-                        <InputText id="total" v-model="recibo.total" :value="totalHistorialPedido" disabled class="w-full" />
+                    <div class="col-span-1 sm:col-span-2">
+                        <label for="total" class="block mb-2 text-sm sm:text-base">Total:</label>
+                        <InputText 
+                            id="total" 
+                            v-model="recibo.total" 
+                            :value="totalHistorialPedido" 
+                            disabled 
+                            class="w-full" 
+                        />
                     </div>
                 </div>
 
-                <div class="mt-4 flex justify-end">
-                    <Button label="Generar" icon="pi pi-check" severity="success" @click="generarRecibo" />
-                    <Button label="Cancelar" icon="pi pi-times" severity="secondary" class="ml-2" @click="showReciboForm = false" />
+                <div class="mt-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-0 sm:space-x-2">
+                    <Button 
+                        label="Generar" 
+                        icon="pi pi-check" 
+                        severity="success" 
+                        class="w-full sm:w-auto order-2 sm:order-1" 
+                        @click="generarRecibo" 
+                    />
+                    <Button 
+                        label="Cancelar" 
+                        icon="pi pi-times" 
+                        severity="secondary" 
+                        class="w-full sm:w-auto order-1 sm:order-2 mb-2 sm:mb-0" 
+                        @click="showReciboForm = false" 
+                    />
                 </div>
             </div>
 
-            <div v-if="showOrderForm" class="card flex flex-col">
-                <div v-if="formulariopedido" class="grid flex-grow grid-cols-2 gap-6">
+            <div v-if="showOrderForm" class="card flex flex-col p-3 sm:p-4">
+                <div v-if="formulariopedido" class="grid flex-grow grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <!-- Columna 1: Mesa y platos disponibles -->
-                    <div class="col-span-1 border-r pr-4">
-                        <h2 class="mb-4 text-lg font-semibold uppercase">
+                    <div class="col-span-1 lg:border-r lg:pr-4 pb-4 lg:pb-0">
+                        <h2 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold uppercase">
                             <strong>Mesa Nº {{ order.tablenum || 'Cargando...' }}</strong>
                         </h2>
 
                         <!-- Buscador de platos -->
-                        <InputText v-model="searchQueryPlato" placeholder="Buscar plato..." class="mb-4 w-full" />
+                        <InputText v-model="searchQueryPlato" placeholder="Buscar plato..." class="mb-3 sm:mb-4 w-full" />
 
                         <!-- Mostrar platos disponibles con búsqueda -->
-                        <div class="platos-disponibles">
-                            <div v-for="plato in filteredPlatos" :key="plato.id" class="plato-item mb-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
+                        <div class="platos-disponibles max-h-60 sm:max-h-80 lg:max-h-96 overflow-y-auto">
+                            <div v-for="plato in filteredPlatos" :key="plato.id" class="plato-item mb-3 sm:mb-4 p-2 border-b">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <div class="flex-1">
                                         <!-- Nombre del plato y precio con texto un poco más pequeño -->
-                                        <span class="text-lg font-medium">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }} </span>
+                                        <span class="text-sm sm:text-base font-medium">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }} </span>
                                         <!-- Stock con texto aún más pequeño -->
                                         <div class="text-xs text-gray-500">Stock: {{ plato.quantity }}</div>
                                     </div>
-                                    <div class="flex space-x-2">
-                                        <Button label="Detalles" icon="pi pi-info-circle" class="p-button-text" @click="verInsumos(plato)" />
+                                    <div class="flex gap-1 sm:gap-2">
+                                        <Button 
+                                            label="Detalles" 
+                                            icon="pi pi-info-circle" 
+                                            class="p-button-text text-xs sm:text-sm" 
+                                            @click="verInsumos(plato)" 
+                                        />
                                         <Button
                                             label="Añadir"
                                             icon="pi pi-plus"
-                                            class="p-button-success"
+                                            class="p-button-success text-xs sm:text-sm"
                                             :disabled="isPlatoAgregado(plato)"
                                             @click="agregarAlPedido(plato)"
                                         />
@@ -1023,58 +1061,82 @@ const finalizarMesa = async () => {
                         </div>
 
                         <!-- Paginación minimalista y dinámica -->
-                        <div class="paginacion mt-4 flex items-center justify-center space-x-6">
+                        <div class="paginacion mt-3 sm:mt-4 flex items-center justify-center gap-4 sm:gap-6">
                             <!-- Página anterior -->
-                            <span v-if="currentPage > 1" class="cursor-pointer text-blue-500" @click="currentPage--">Anterior</span>
+                            <span v-if="currentPage > 1" class="cursor-pointer text-blue-500 text-sm" @click="currentPage--">Anterior</span>
 
                             <!-- Página actual y total -->
-                            <span class="text-sm text-gray-600"> Página {{ currentPage }} de {{ totalPages }} </span>
+                            <span class="text-xs sm:text-sm text-gray-600"> Página {{ currentPage }} de {{ totalPages }} </span>
 
                             <!-- Página siguiente -->
-                            <span v-if="currentPage < totalPages" class="cursor-pointer text-blue-500" @click="currentPage++">Siguiente</span>
+                            <span v-if="currentPage < totalPages" class="cursor-pointer text-blue-500 text-sm" @click="currentPage++">Siguiente</span>
                         </div>
                     </div>
 
                     <!-- Columna 2: Pedido y total -->
-                    <div class="col-span-1 flex flex-col justify-between pl-4">
-                        <h2 class="mb-4 text-lg font-semibold uppercase">
+                    <div class="col-span-1 flex flex-col justify-between lg:pl-4">
+                        <h2 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold uppercase">
                             <strong>Pedido</strong>
                         </h2>
-                        <div class="pedido flex-grow">
+                        <div class="pedido flex-grow max-h-48 sm:max-h-60 lg:max-h-80 overflow-y-auto">
                             <!-- Mostrar los platos agregados al pedido -->
-                            <div v-for="(plato, index) in order.platos" :key="plato.id" class="mb-2 flex items-center justify-between">
-                                <span>{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }}</span>
+                            <div v-for="(plato, index) in order.platos" :key="plato.id" class="mb-2 p-2 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span class="text-sm sm:text-base flex-1">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }}</span>
 
                                 <!-- Botones para ajustar la cantidad -->
-                                <div class="flex items-center space-x-2">
-                                    <Button icon="pi pi-minus" class="p-button-text p-button-danger" @click="adjustQuantity(plato, -1)" />
+                                <div class="flex items-center gap-1 sm:gap-2">
+                                    <Button 
+                                        icon="pi pi-minus" 
+                                        class="p-button-text p-button-danger w-8 h-8" 
+                                        @click="adjustQuantity(plato, -1)" 
+                                    />
                                     <!-- Mostrar la cantidad actual -->
-                                    <span>{{ plato.cantidad }}</span>
-                                    <Button icon="pi pi-plus" class="p-button-text p-button-success" @click="adjustQuantity(plato, 1)" />
-                                    <span>de {{ plato.stock }} disponibles</span>
+                                    <span class="text-sm w-8 text-center">{{ plato.cantidad }}</span>
+                                    <Button 
+                                        icon="pi pi-plus" 
+                                        class="p-button-text p-button-success w-8 h-8" 
+                                        @click="adjustQuantity(plato, 1)" 
+                                    />
+                                    <span class="text-xs text-gray-500 hidden sm:inline">de {{ plato.stock }} disponibles</span>
                                 </div>
 
                                 <!-- Botón para eliminar el plato -->
-                                <Button icon="pi pi-trash" class="p-button-text p-button-danger ml-2" @click="eliminarDelPedido(index)" />
+                                <Button 
+                                    icon="pi pi-trash" 
+                                    class="p-button-text p-button-danger w-8 h-8" 
+                                    @click="eliminarDelPedido(index)" 
+                                />
                             </div>
                         </div>
 
                         <!-- Total y botones al final -->
-                        <div class="total mt-4 font-semibold uppercase">
+                        <div class="total mt-3 sm:mt-4 font-semibold uppercase text-sm sm:text-base">
                             <strong>Total: </strong> S/
                             {{ order.platos.reduce((total, plato) => total + parseFloat(plato.price) * plato.cantidad, 0).toFixed(2) }}
                         </div>
 
                         <!-- Botones debajo del total usando PrimeVue -->
-                        <div class="mt-4 flex space-x-4">
-                            <Button label="Realizar Pedido" icon="pi pi-check" severity="success" class="w-1/2" @click="realizarPedido" />
-                            <Button label="Vaciar" icon="pi pi-times" severity="danger" class="w-1/2" @click="cancelOrder" />
+                        <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row gap-2 sm:gap-4">
+                            <Button 
+                                label="Realizar Pedido" 
+                                icon="pi pi-check" 
+                                severity="success" 
+                                class="w-full sm:w-1/2" 
+                                @click="realizarPedido" 
+                            />
+                            <Button 
+                                label="Vaciar" 
+                                icon="pi pi-times" 
+                                severity="danger" 
+                                class="w-full sm:w-1/2" 
+                                @click="cancelOrder" 
+                            />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div v-if="showOrderHistorial" class="card">
+            <div v-if="showOrderHistorial" class="card p-3 sm:p-4">
                 <DataTable
                     v-if="order.idOrder"
                     :value="historialPlatos"
@@ -1086,18 +1148,22 @@ const finalizarMesa = async () => {
                     :totalRecords="historialPagination.total"
                     dataKey="id"
                     scrollable
-                    scrollHeight="400px"
-                    class="mt-6"
+                    :scrollHeight="scrollHeight"
+                    class="mt-4 sm:mt-6"
                     @page="onHistorialPageChange"
+                    responsiveLayout="scroll"
                 >
                     <template #header>
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <h4 class="m-0">HISTORIAL DE LA ORDEN</h4>
-                            <div class="flex flex-wrap gap-2">
-                                <!-- Dropdown for Floor -->
-
-                                <IconField>
-                                    <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2">
+                        <h4 class="m-0">HISTORIAL DE LA ORDEN</h4>
+                            <div class="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
+                                <IconField class="w-full sm:w-48 mb-2 sm:mb-0">
+                                    <InputText 
+                                        v-model="globalFilterValue" 
+                                        @input="onGlobalSearch" 
+                                        placeholder="Buscar..." 
+                                        class="w-full" 
+                                    />
                                 </IconField>
                                 <Dropdown
                                     v-model="selectedState"
@@ -1105,38 +1171,55 @@ const finalizarMesa = async () => {
                                     option-label="label"
                                     option-value="value"
                                     placeholder="Selecciona un Estado"
-                                    class="w-1/1"
+                                    class="w-full sm:w-48 mb-2 sm:mb-0"
                                     @change="onStateChange"
                                 />
-                                <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadHistorialPlatos" />
+                                <Button 
+                                    icon="pi pi-refresh" 
+                                    outlined 
+                                    rounded 
+                                    aria-label="Refresh" 
+                                    class="w-full sm:w-auto"
+                                    @click="loadHistorialPlatos" 
+                                />
                             </div>
                         </div>
                     </template>
 
-                    <Column field="name" header="Nombre" />
-                    <Column field="quantity" header="Cantidad" />
-                    <Column field="price" header="Precio Unit.">
-                        <template #body="{ data }"> S/ {{ parseFloat(data.price).toFixed(2) }} </template>
-                    </Column>
-                    <!-- Nueva columna "Subtotal" -->
-                    <Column header="Subtotal" style="min-width: 8rem">
-                        <template #body="{ data }"> S/ {{ (parseFloat(data.quantity) * parseFloat(data.price)).toFixed(2) }} </template>
-                    </Column>
-
-                    <Column field="state" header="Estado">
-                        <template #body="{ data }">
-                            <Tag :value="data.state" :severity="getSeverity(data.state)" />
-                            <Button
-                                v-if="data.state === 'pendiente'"
-                                label="Cancelar"
-                                icon="pi pi-times"
-                                severity="danger"
-                                class="p-button-text"
-                                @click="cancelDish(data.id)"
-                            />
+                    <Column field="name" header="Nombre" :style="columnStyle" />
+                    <Column field="quantity" header="Cantidad" :style="columnStyle" />
+                    <Column field="price" header="Precio Unit." :style="columnStyle">
+                        <template #body="{ data }"> 
+                            <span class="text-sm sm:text-base">S/ {{ parseFloat(data.price).toFixed(2) }}</span>
                         </template>
                     </Column>
-                    <Column field="creacion" header="Fecha de creación" />
+                    <!-- Nueva columna "Subtotal" -->
+                    <Column header="Subtotal" :style="columnStyle">
+                        <template #body="{ data }"> 
+                            <span class="text-sm sm:text-base">S/ {{ (parseFloat(data.quantity) * parseFloat(data.price)).toFixed(2) }}</span>
+                        </template>
+                    </Column>
+
+                    <Column field="state" header="Estado" :style="columnStyle">
+                        <template #body="{ data }">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                <Tag :value="data.state" :severity="getSeverity(data.state)" class="text-xs sm:text-sm" />
+                                <Button
+                                    v-if="data.state === 'pendiente'"
+                                    label="Cancelar"
+                                    icon="pi pi-times"
+                                    severity="danger"
+                                    class="p-button-text text-xs sm:text-sm mt-1 sm:mt-0 w-full sm:w-auto"
+                                    @click="cancelDish(data.id)"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="creacion" header="Fecha" :style="columnStyle">
+                        <template #body="{ data }">
+                            <span class="text-sm sm:text-base">{{ data.creacion }}</span>
+                        </template>
+                    </Column>
                 </DataTable>
                 <!-- Mostrar total del historial de la orden, excluyendo los cancelados -->
                 <div class="p-4 text-right font-semibold">
@@ -1159,13 +1242,33 @@ const finalizarMesa = async () => {
             </Dialog>
         </div>
 
-         <!-- El Dialog que muestra el mensaje de advertencia -->
-    <Dialog v-model:visible="finalizarMesaDialog" header="Confirmar Cierre de Mesa" modal>
-        <p class="mb-4">¿Estás seguro de que deseas cerrar esta mesa? La mesa volverá a estar disponible, y se perderá el historial de pedidos.</p>
-        <template #footer>
-            <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="finalizarMesaDialog = false" />
-            <Button label="Confirmar" icon="pi pi-check" severity="danger" @click="finalizarMesa" />
-        </template>
-    </Dialog>
+        <!-- El Dialog que muestra el mensaje de advertencia -->
+        <Dialog 
+            v-model:visible="finalizarMesaDialog" 
+            header="Confirmar Cierre de Mesa" 
+            modal
+            :style="{ width: '90vw', maxWidth: '40rem' }"
+            :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
+        >
+            <p class="mb-4 text-sm sm:text-base">¿Estás seguro de que deseas cerrar esta mesa? La mesa volverá a estar disponible, y se perderá el historial de pedidos.</p>
+            <template #footer>
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-0 sm:space-x-2 w-full">
+                    <Button 
+                        label="Cancelar" 
+                        icon="pi pi-times" 
+                        severity="secondary" 
+                        class="w-full sm:w-auto" 
+                        @click="finalizarMesaDialog = false" 
+                    />
+                    <Button 
+                        label="Confirmar" 
+                        icon="pi pi-check" 
+                        severity="danger" 
+                        class="w-full sm:w-auto" 
+                        @click="finalizarMesa" 
+                    />
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>

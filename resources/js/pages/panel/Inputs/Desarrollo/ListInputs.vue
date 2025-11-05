@@ -138,24 +138,55 @@ onMounted(loadInputs);
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedInputs" :value="inputs" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable 
+        ref="dt" 
+        v-model:selection="selectedInputs" 
+        :value="inputs" 
+        dataKey="id" 
+        :paginator="true"
+        :rows="pagination.perPage" 
+        :totalRecords="pagination.total" 
+        :loading="loading" 
+        :lazy="true" 
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]" 
+        scrollable 
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Insumos">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Insumos"
+        class="w-full"
+        :responsiveLayout="'scroll'"
+    >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
-                <h4 class="m-0">Insumos</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <h4 class="m-0">INSUMOS</h4>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <IconField class="flex-1 sm:flex-none">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar insumo..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar insumo..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
                     
-                    <Select v-model="selectedEstadoInput" :options="estadoInputOptions" optionLabel="name" placeholder="Estado" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadInputs" />
+                    <Select 
+                        v-model="selectedEstadoInput" 
+                        :options="estadoInputOptions" 
+                        optionLabel="name" 
+                        placeholder="Estado" 
+                        class="w-full sm:w-auto"
+                    />
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadInputs" 
+                    />
                 </div>
             </div>
         </template>
@@ -163,25 +194,21 @@ onMounted(loadInputs);
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
 
         <Column field="name" header="Nombre" sortable style="min-width: 10rem" />
-
         <Column field="priceSale" header="Precio Venta" sortable style="min-width: 10rem">
             <template #body="{ data }">
                 {{ formatCurrency(data.priceSale) }}
             </template>
         </Column>
-
         <Column field="quantityUnitMeasure" header="Cantidad" sortable style="min-width: 10rem" />
-
         <Column field="unitMeasure" header="Unidad de Medida" sortable style="min-width: 10rem">
             <template #body="{ data }">
                 {{ data.unitMeasure }}
             </template>
         </Column>
-
         <Column field="almacen_name" header="Almacen" sortable style="min-width: 10rem" />
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem" />
-        <Column field="state" header="Estado" sortable>
+        <Column field="state" header="Estado" sortable style="min-width: 8rem">
             <template #body="{ data }">
                 <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
@@ -194,6 +221,7 @@ onMounted(loadInputs);
         </Column>
     </DataTable>
 
+    <!-- Modales para eliminar y actualizar insumo -->
     <DeleteInput
         v-model:visible="deleteInputDialog"
         :input="input"

@@ -275,77 +275,119 @@ onMounted(() => {
 
 
 <template>
-    <DataTable
-        ref="dt"
-        v-model:selection="selectedOrdenes"
-        :value="ordenes"
-        dataKey="id"
-        :paginator="true"
-        :rows="pagination.perPage"
-        :totalRecords="pagination.total"
-        :loading="loading"
-        :lazy="true"
-        @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]"
-        scrollable
-        scrollHeight="574px"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} de Pedidos"
-    >
-        <template #header>
-            <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="w-full overflow-x-auto">
+        <DataTable
+            ref="dt"
+            v-model:selection="selectedOrdenes"
+            :value="ordenes"
+            dataKey="id"
+            :paginator="true"
+            :rows="pagination.perPage"
+            :totalRecords="pagination.total"
+            :loading="loading"
+            :lazy="true"
+            @page="onPage"
+            :rowsPerPageOptions="[15, 20, 25]"
+            scrollable
+            scrollHeight="574px"
+            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} de Pedidos"
+            class="min-w-full"
+        >
+            <template #header>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
                 <h4 class="m-0">Lista de Pedidos</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por platillo..." />
-                    </IconField>
-                          <Dropdown
-                    v-model="selectedState"
-                    :options="stateOptions"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Selecciona un Estado"
-                    class="w-1/1"
-                    @change="onStateChange"
-                />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadOrdenes" />
+
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                        <IconField class="flex-1 sm:flex-initial w-full sm:w-auto">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText
+                                v-model="globalFilterValue"
+                                @input="onGlobalSearch"
+                                placeholder="Buscar por platillo..."
+                                class="w-full sm:w-60"
+                            />
+                        </IconField>
+
+                        <Dropdown
+                            v-model="selectedState"
+                            :options="stateOptions"
+                            option-label="label"
+                            option-value="value"
+                            placeholder="Selecciona un Estado"
+                            class="w-full sm:w-56"
+                            @change="onStateChange"
+                        />
+
+                        <Button
+                            icon="pi pi-refresh"
+                            outlined
+                            rounded
+                            aria-label="Refresh"
+                            @click="loadOrdenes"
+                            class="w-full sm:w-auto"
+                        />
+                    </div>
                 </div>
-            </div>
-        </template>
-
-        <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="id" header="Nº Orden" sortable style="min-width: 5rem"></Column>
-        <Column field="numeroMesa" header="Nº Mesa" sortable style="min-width: 7rem"></Column>
-        <Column field="name" header="Platillo" sortable style="min-width: 7rem"></Column>
-        <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem"></Column>
- <Column field="state" header="Estado" sortable style="min-width: 8rem" >
-            <template #body="{ data }">
-                <Tag :value="data.state" :severity="getSeverity(data.state)" />
-                
             </template>
-        </Column>
-        <Column field="creacion" header="Creación" sortable style="min-width: 10rem"></Column>
-       <Column header="Acciones" style="min-width: 8rem">
-            <template #body="{ data }">
-                <Button 
-                    icon="pi pi-ellipsis-v" 
-                    class="p-button-rounded p-button-text" 
-                    @click="showActionMenu(data)"
-                />
-            </template>
-        </Column>
-    </DataTable>
 
-      <!-- Menú de acciones -->
-    <Dialog v-model:visible="showActionsDialog" header="Acciones" :style="{ width: '300px' }">
-        <div>
-            <Button label="Preparar Pedido" v-if="selectedOrder.state === 'pendiente'" @click="updateOrderState('en preparación')" style="margin-right: 10px;" />
-            <Button label="Cancelar Pedido" v-if="selectedOrder.state === 'pendiente'" @click="updateOrderState('cancelado')" />
-            <Button label="Marcar como En Entrega" v-if="selectedOrder.state === 'en preparación'" @click="updateOrderState('en entrega')" style="margin-right: 10px;" />
-            <Button label="Marcar como Completado" v-if="selectedOrder.state === 'en entrega'" @click="updateOrderState('completado')" />
+            <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
+            <Column field="id" header="Nº Orden" sortable style="min-width: 5rem"></Column>
+            <Column field="numeroMesa" header="Nº Mesa" sortable style="min-width: 7rem"></Column>
+            <Column field="name" header="Platillo" sortable style="min-width: 7rem"></Column>
+            <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem"></Column>
+            <Column field="state" header="Estado" sortable style="min-width: 8rem">
+                <template #body="{ data }">
+                    <Tag :value="data.state" :severity="getSeverity(data.state)" />
+                </template>
+            </Column>
+            <Column field="creacion" header="Creación" sortable style="min-width: 10rem"></Column>
+            <Column header="Acciones" style="min-width: 8rem">
+                <template #body="{ data }">
+                    <Button 
+                        icon="pi pi-ellipsis-v" 
+                        class="p-button-rounded p-button-text" 
+                        @click="showActionMenu(data)"
+                    />
+                </template>
+            </Column>
+        </DataTable>
+    </div>
+
+    <!-- Menú de acciones -->
+    <Dialog 
+        v-model:visible="showActionsDialog" 
+        header="Acciones" 
+        :style="{ width: '70%', maxWidth: '300px' }"
+        class="sm:w-[400px] w-[90%] mx-auto"
+    >
+        <div class="flex flex-col gap-3">
+            <Button 
+                label="Preparar Pedido" 
+                v-if="selectedOrder.state === 'pendiente'" 
+                @click="updateOrderState('en preparación')" 
+                class="w-full"
+            />
+            <Button 
+                label="Cancelar Pedido" 
+                v-if="selectedOrder.state === 'pendiente'" 
+                @click="updateOrderState('cancelado')" 
+                class="w-full"
+            />
+            <Button 
+                label="Marcar como En Entrega" 
+                v-if="selectedOrder.state === 'en preparación'" 
+                @click="updateOrderState('en entrega')" 
+                class="w-full"
+            />
+            <Button 
+                label="Marcar como Completado" 
+                v-if="selectedOrder.state === 'en entrega'" 
+                @click="updateOrderState('completado')" 
+                class="w-full"
+            />
         </div>
     </Dialog>
 

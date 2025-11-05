@@ -116,12 +116,21 @@ const updateAlmacen = async (): Promise<void> => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Almacen" modal :closable="true" :closeOnEscape="true"
-        :style="{ width: '600px' }">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Almacen" 
+        modal 
+        :closable="true" 
+        :closeOnEscape="true"
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-9">
-                    <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
+                <!-- Nombre -->
+                <div class="col-span-8 sm:col-span-9">
+                    <label for="name" class="block font-bold mb-3">
+                        Nombre <span class="text-red-500">*</span>
+                    </label>
                     <InputText
                         v-model="almacen.name"
                         required
@@ -132,15 +141,22 @@ const updateAlmacen = async (): Promise<void> => {
                     <small v-if="serverErrors.name" class="p-error">{{ serverErrors.name[0] }}</small>
                 </div>
 
-                <div class="col-span-3">
-                    <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+                <!-- Estado -->
+                <div class="col-span-4 sm:col-span-3">
+                    <label for="state" class="block font-bold mb-2">
+                        Estado <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                         <Checkbox v-model="almacen.state" :binary="true" inputId="state" />
-                        <Tag :value="almacen.state ? 'Activo' : 'Inactivo'" :severity="almacen.state ? 'success' : 'danger'" />
+                        <Tag :value="almacen.state ? 'Activo' : 'Inactivo'" 
+                             :severity="almacen.state ? 'success' : 'danger'" 
+                        />
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Footer con botones -->
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
             <Button label="Guardar" icon="pi pi-check" @click="updateAlmacen" :loading="loading" />
