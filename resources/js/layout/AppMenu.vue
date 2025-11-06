@@ -107,8 +107,15 @@ const model = computed<MenuItem[]>(() => [
         hasPermission('ver tipos_empleados') && { label: 'Tipo de empleados', icon: 'pi pi-fw pi-sitemap', to: '/tipo_empleados' },
       ].filter(Boolean) as MenuItem[],
     },
-     hasPermission('ver asistencias') && { label: 'Asistencias de Empleado', icon: 'pi pi-fw pi-clock', to: '/asistencias' },
-
+    (hasPermission('ver asistencias')) && {
+      label: 'Asistencias',
+      icon: 'pi pi-fw pi-clock',
+      items: [
+     hasPermission('ver asistencias') && { label: 'Lista de Asistencia', icon: 'pi pi-fw pi-list', to: '/asistencias' },
+        hasPermission('ver asistencias') && { label: 'Lista de Feriados', icon: 'pi pi-fw pi-sitemap', to: '/asistencias/feriados' },
+      ].filter(Boolean) as MenuItem[],
+    },
+     hasPermission('ver nominas') && { label: 'Nominas', icon: 'pi pi-fw pi-list', to: '/nominas' },
     hasPermission('ver presentaciones') && { label: 'Presentaciones', icon: 'pi pi-fw pi-check-square', to: '/presentaciones' },
   ].filter(Boolean) as MenuItem[],
 },

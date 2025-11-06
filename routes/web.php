@@ -45,10 +45,12 @@ use App\Http\Controllers\Api\EmployeeTypeController;
 use App\Http\Controllers\Api\SunatController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\FloorController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\MovementInputKardexController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\GeneralHolidayController;
 use App\Http\Controllers\Web\CertificadoWebController;
 use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
@@ -80,6 +82,8 @@ use App\Http\Controllers\Web\MovementInputKardexWebController;
 use App\Http\Controllers\Web\MovementInputDetailWebController;
 use App\Http\Controllers\Web\ReservationWebController;
 use App\Http\Controllers\Web\AttendancesWebController;
+use App\Http\Controllers\Web\GeneralHolidayWebController;
+use App\Http\Controllers\Web\PayrollWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -98,6 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     #VISTAS DEL FRONTEND
     Route::get('/almacenes', [AlmacenWebController::class, 'index'])->name('index.view');
+    Route::get('/nominas', [PayrollWebController::class, 'index'])->name('index.view');
     Route::get('/categorias', [CategoryWebController::class, 'index'])->name('index.view');
     Route::get('/proveedores', [SupplierWebController::class, 'index'])->name('index.view');
     Route::get('/presentaciones', [PresentationWebController::class, 'index'])->name('index.view');
@@ -135,6 +140,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/certificado', [CertificadoWebController::class, 'index'])->name('index.view');
     Route::post('/enviar-certificado', [CertificadoController::class, 'subircertificado'])->name('subir.certificado');
     Route::get('/crear-certificado', [CrearPemController::class, 'crear']);
+    Route::get('/asistencias/feriados', [GeneralHolidayWebController::class, 'index'])->name('index.view');
+    
+Route::get('/nominas/generate', [PayrollController::class, 'generateEmployeePayroll']);
 
     #CONSULTA  => BACKEND
     Route::get('/consulta/{dni}', [ConsultasDni::class, 'consultar'])->name('consultar.dni');
@@ -254,6 +262,24 @@ Route::prefix('insumos')->group(function () {
         Route::put('{customer}', [CustomerController::class, 'update'])->name('clientes.update');
         Route::delete('{customer}', [CustomerController::class, 'destroy'])->name('clientes.destroy');
     });
+    #FERIADOS => BACKEND
+    Route::prefix('asistencias/feriado')->group(function () {
+        Route::get('/', [GeneralHolidayController::class, 'index'])->name('feriados.index');
+        Route::post('/', [GeneralHolidayController::class, 'store'])->name('feriados.store');
+        Route::get('{generalHoliday}', [GeneralHolidayController::class, 'show'])->name('feriados.show');
+        Route::put('{generalHoliday}', [GeneralHolidayController::class, 'update'])->name('feriados.update');
+        Route::delete('{generalHoliday}', [GeneralHolidayController::class, 'destroy'])->name('feriados.destroy');
+    });
+    #NOMINA => BACKEND
+    Route::prefix('nomina')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('nomina.index');
+        Route::post('/', [PayrollController::class, 'store'])->name('nomina.store');
+        Route::get('{payroll}', [PayrollController::class, 'show'])->name('nomina.show');
+        Route::put('{payroll}', [PayrollController::class, 'update'])->name('nomina.update');
+        Route::delete('{payroll}', [PayrollController::class, 'destroy'])->name('nomina.destroy');
+    });
+
+
 
     // PROVEEDOR -> BACKEND
     Route::prefix('proveedor')->group(function () {
