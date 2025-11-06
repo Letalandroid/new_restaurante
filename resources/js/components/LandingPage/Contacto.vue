@@ -265,6 +265,7 @@
                       maxlength="9"
                       placeholder="999999999"
                       class="w-full text-sm sm:text-base"
+                      @keypress="soloNumerosKeyPress($event)"
                       :class="{ 'p-invalid': serverErrors.phone }"
                     />
                     <small v-if="serverErrors.phone" class="text-red-500 text-xs">{{ serverErrors.phone[0] }}</small>
@@ -301,6 +302,7 @@
                       :maxlength="reserva.client_type_id === 1 ? 8 : 11"
                       :placeholder="reserva.client_type_id === 1 ? 'Ingresa tu DNI' : 'Ingresa tu RUC'"
                       class="w-full text-sm sm:text-base"
+                      @keypress="soloNumerosKeyPress($event)"
                       :class="{ 'p-invalid': serverErrors.codigo }"
                     />
                     <small v-if="serverErrors.codigo" class="text-red-500 text-xs">{{ serverErrors.codigo[0] }}</small>
@@ -433,6 +435,13 @@ const reserva = reactive({
   client_type_id: null as number | null,
   codigo: ''
 })
+// Bloquea caracteres que no sean números desde el teclado
+const soloNumerosKeyPress = (event: KeyboardEvent) => {
+  const charCode = event.charCode
+  if (charCode < 48 || charCode > 57) {
+    event.preventDefault() // Bloquea cualquier carácter que no sea número
+  }
+}
 
 // Tipos de cliente cargados desde el backend
 const tiposCliente = ref<any[]>([])
@@ -587,36 +596,56 @@ const resetearFormulario = (): void => {
 
 const confirmarReserva = async () => {
   // Validar campos requeridos
-  if (!reserva.name || !reserva.lastname || !reserva.email || !reserva.phone || 
-      !reserva.client_type_id || !reserva.codigo || !reserva.number_people || 
+  if (!reserva.name || !reserva.lastname || !reserva.email || !reserva.phone ||
+      !reserva.client_type_id || !reserva.codigo || !reserva.number_people ||
       !reserva.date || !reserva.hour) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Por favor completa todos los campos obligatorios',
-      life: 3000
-    })
+
+    const texto = 'Por favor completa todos los campos obligatorios'
+    toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 3000 })
+    mensaje.text = texto
+    mensaje.tipo = 'error'
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
+    return
+  }
+
+  // Validar número de teléfono
+  const phoneRegex = /^[0-9]{9}$/
+  if (!phoneRegex.test(reserva.phone)) {
+    const texto = 'El número de teléfono debe tener 9 dígitos numéricos'
+    toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 3000 })
+    mensaje.text = texto
+    mensaje.tipo = 'error'
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
     return
   }
 
   // Validar longitud del código según el tipo de cliente
   if (reserva.client_type_id === 1 && reserva.codigo.length !== 8) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'El DNI debe tener 8 dígitos',
-      life: 3000
-    })
+    const texto = 'El DNI debe tener 8 dígitos'
+    toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 3000 })
+    mensaje.text = texto
+    mensaje.tipo = 'error'
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
     return
   }
 
   if (reserva.client_type_id === 2 && reserva.codigo.length !== 11) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'El RUC debe tener 11 dígitos',
-      life: 3000
-    })
+    const texto = 'El RUC debe tener 11 dígitos'
+    toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 3000 })
+    mensaje.text = texto
+    mensaje.tipo = 'error'
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
+    return
+  }
+
+  // Validar formato de correo
+  const correoRegex = /^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook)\.com$/i
+  if (!correoRegex.test(reserva.email)) {
+    const texto = 'Correo no válido. Usa @gmail.com, @hotmail.com o @outlook.com'
+    toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 4000 })
+    mensaje.text = texto
+    mensaje.tipo = 'error'
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
     return
   }
 
@@ -626,65 +655,54 @@ const confirmarReserva = async () => {
   mensaje.tipo = undefined
 
   try {
-    // Preparar datos para enviar al backend
+    // Datos a enviar al backend
     const datosReserva = {
-      // Datos del cliente
       name: reserva.name,
       lastname: reserva.lastname,
       email: reserva.email,
       phone: reserva.phone,
       codigo: reserva.codigo,
       client_type_id: reserva.client_type_id,
-      state: true, // Por defecto activo
-      
-      // Datos de la reservación
+      state: true,
       number_people: reserva.number_people,
-      date: reserva.date.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      date: reserva.date.toISOString().split('T')[0],
       hour: reserva.hour
     }
 
-    // Enviar la reservación al backend
+    // Enviar reserva
     await axios.post('/reservacionL', datosReserva)
 
-    // Mostrar mensaje de éxito
+    // Éxito
     mensaje.text = '¡Reserva realizada con éxito! Te hemos enviado un correo de confirmación.'
     mensaje.tipo = 'success'
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Reserva realizada correctamente', life: 5000 })
 
-    toast.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Reserva realizada correctamente',
-      life: 5000
-    })
-
-    // Cerrar el diálogo después de 2 segundos (para que el usuario vea el mensaje de éxito)
     setTimeout(() => {
+      mensaje.text = ''
+      mensaje.tipo = undefined
       closeDialog()
     }, 3000)
 
   } catch (error: any) {
     console.error('Error al realizar reserva:', error)
-    
+
     if (error.response && error.response.status === 422) {
-      // Errores de validación del backend
       serverErrors.value = error.response.data.errors || {}
       mensaje.text = 'Por favor corrige los errores en el formulario'
       mensaje.tipo = 'error'
     } else {
-      // Error general
-      mensaje.text = 'Hubo un error al realizar la reserva. Por favor intente confirmar la reserva nuevamente.'
+      const texto = 'Hubo un error al realizar la reserva. Por favor intente confirmar la reserva nuevamente.'
+      mensaje.text = texto
       mensaje.tipo = 'error'
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo realizar la reserva',
-        life: 3000
-      })
+      toast.add({ severity: 'error', summary: 'Error', detail: texto, life: 3000 })
     }
+
+    setTimeout(() => { mensaje.text = ''; mensaje.tipo = undefined }, 5000)
   } finally {
     loading.value = false
   }
 }
+
 
 // Cargar tipos de cliente cuando se monta el componente
 onMounted(() => {

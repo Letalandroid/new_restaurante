@@ -11,31 +11,47 @@
                 <!-- Campo de Cliente -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Cliente <span class="text-red-500">*</span></label>
-                    <Dropdown
-                        v-model="reserva.customer_id"
-                        :options="clientes"
-                        optionLabel="fullName"
-                        optionValue="id"
-                        fluid
-                        placeholder="Seleccione un cliente"
-                        filter
-                        filterBy="name,lastname"
-                        filterPlaceholder="Buscar cliente..."
-                        class="w-full"
-                    >
-                        <template #option="slotProps">
-                            <div class="flex flex-col">
-                                <span>{{ slotProps.option.name }} {{ slotProps.option.lastname }}</span>
-                                <small class="text-gray-500">{{ slotProps.option.email }} - {{ slotProps.option.phone }}</small>
+                    <div class="flex flex-col gap-2">
+                        <!-- Campo de búsqueda -->
+                        <InputText
+                            v-model="clienteBusqueda"
+                            placeholder="Ingrese el nombre del cliente"
+                            @input="buscarCliente"
+                            :disabled="!!reserva.customer_id"
+                            fluid
+                            class="w-full"
+                        />
+
+                        <!-- Sugerencias -->
+                        <ul v-if="clientesFiltrados.length > 0" class="border rounded-md bg-white shadow-md max-h-40 overflow-y-auto">
+                            <li 
+                                v-for="cliente in clientesFiltrados" 
+                                :key="cliente.id"
+                                @click="seleccionarCliente(cliente)"
+                                class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                            >
+                                {{ cliente.name }} {{ cliente.lastname }} 
+                                <small class="text-gray-500">({{ cliente.email }})</small>
+                            </li>
+                        </ul>
+
+                        <!-- Cliente seleccionado -->
+                        <div v-if="reserva.customer_id" class="mt-2 p-3 bg-gray-50 rounded-md border flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold">{{ clienteSeleccionado?.name }} {{ clienteSeleccionado?.lastname }}</p>
+                                <p class="text-sm text-gray-600">{{ clienteSeleccionado?.email }} - {{ clienteSeleccionado?.phone }}</p>
                             </div>
-                        </template>
-                        <template #value="slotProps">
-                            <div v-if="slotProps.value">
-                                <span>{{ getClienteNombre(slotProps.value) }}</span>
-                            </div>
-                            <span v-else>{{ slotProps.placeholder }}</span>
-                        </template>
-                    </Dropdown>
+                            <Button 
+                                icon="pi pi-times" 
+                                severity="danger" 
+                                text 
+                                rounded 
+                                aria-label="Quitar cliente"
+                                @click="quitarCliente"
+                            />
+                        </div>
+                    </div>
+
                     <small v-if="submitted && !reserva.customer_id" class="text-red-500">El cliente es obligatorio.</small>
                     <small v-if="serverErrors.customer_id" class="text-red-500">{{ serverErrors.customer_id[0] }}</small>
                 </div>
@@ -144,7 +160,6 @@ import InputNumber from 'primevue/inputnumber';
 import Calendar from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
-import Dropdown from 'primevue/dropdown';
 import { useToast } from 'primevue/usetoast';
 
 interface Reserva {
@@ -178,6 +193,9 @@ const reservaDialog = ref(false);
 const serverErrors = ref<ServerErrors>({});
 const clientes = ref<Cliente[]>([]);
 const minDate = ref(new Date());
+const clienteBusqueda = ref('');
+const clientesFiltrados = ref<Cliente[]>([]);
+const clienteSeleccionado = ref<Cliente | null>(null);
 
 const reserva = ref<Reserva>({
     customer_id: null,
@@ -199,6 +217,11 @@ function resetReserva(): void {
     };
     serverErrors.value = {};
     submitted.value = false;
+
+    //Limpieza del campo cliente y sus auxiliares
+    clienteBusqueda.value = '';
+    clientesFiltrados.value = [];
+    clienteSeleccionado.value = null;
 }
 
 function openNew(): void {
@@ -210,6 +233,13 @@ function openNew(): void {
 function hideDialog(): void {
     reservaDialog.value = false;
     resetReserva();
+}
+
+function quitarCliente() {
+    reserva.value.customer_id = null;
+    clienteSeleccionado.value = null;
+    clienteBusqueda.value = '';
+    clientesFiltrados.value = [];
 }
 
 function fetchClientes(): void {
@@ -231,10 +261,24 @@ function fetchClientes(): void {
         });
 }
 
-// Función para obtener el nombre completo del cliente seleccionado
-function getClienteNombre(customerId: number): string {
-    const cliente = clientes.value.find(c => c.id === customerId);
-    return cliente ? `${cliente.name} ${cliente.lastname}` : '';
+// Buscar cliente por nombre en el array de clientes cargado
+function buscarCliente() {
+    const termino = clienteBusqueda.value.toLowerCase();
+    if (!termino) {
+        clientesFiltrados.value = [];
+        return;
+    }
+
+    clientesFiltrados.value = clientes.value.filter(cliente =>
+        `${cliente.name} ${cliente.lastname}`.toLowerCase().includes(termino)
+    );
+}
+// Cuando se selecciona un cliente de la lista
+function seleccionarCliente(cliente: Cliente) {
+    reserva.value.customer_id = cliente.id;
+    clienteSeleccionado.value = cliente;
+    clienteBusqueda.value = `${cliente.name} ${cliente.lastname}`;
+    clientesFiltrados.value = [];
 }
 
 function generarCodigoReserva(): void {

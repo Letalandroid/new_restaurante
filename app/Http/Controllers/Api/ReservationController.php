@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Reservaciones\StoreLReservationRequest;
 use App\Http\Requests\Reservaciones\StoreReservationRequest;
 use App\Http\Requests\Reservaciones\UpdateReservationRequest;
+use App\Http\Resources\PublicReservationResource;
 use App\Http\Resources\ReservationResource;
 use App\Models\Customer;
 use App\Models\Reservation;
 use App\Pipelines\FilterByCodeRyName;
 use App\Pipelines\FilterByDate;
 use App\Pipelines\FilterByState;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
@@ -65,10 +67,13 @@ class ReservationController extends Controller
             'state' => true, // ← AGREGAR ESTA LÍNEA
         ]);
 
+        //Enviar correo
+        EmailService::enviarCorreoReserva($customer->load('clienteType'), $reservation);
+
         return response()->json([
             'state' => true,
-            'message' => 'Reservación creada correctamente.',
-            'reservation' => new ReservationResource($reservation->load('customer'))
+            'message' => 'Reservación creada correctamente y correo enviado.',
+            'reservation' => new PublicReservationResource($reservation->load('customer'))
         ]);
     }
     public function store(StoreReservationRequest $request)
@@ -98,9 +103,6 @@ class ReservationController extends Controller
     {
         Gate::authorize('update', $reservation);
         $validated = $request->validated();
-        
-        // Generar nuevo código de reservación automáticamente
-        $validated['reservation_code'] = $this->generateReservationCode();
         
         // Si el estado cambia a false, también actualizar el estado del cliente
         if (isset($validated['state']) && $validated['state'] === false) {

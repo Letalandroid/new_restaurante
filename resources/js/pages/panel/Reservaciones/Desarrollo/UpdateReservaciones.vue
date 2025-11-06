@@ -9,7 +9,7 @@ import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
-import Dropdown from 'primevue/dropdown';
+//import Dropdown from 'primevue/dropdown';
 
 interface Reservacion {
     id?: number;
@@ -134,7 +134,8 @@ const fetchClientes = async (): Promise<void> => {
 };
 
 // Función para obtener el nombre completo del cliente seleccionado
-function getClienteNombre(customerId: number): string {
+function getClienteNombre(customerId: number | null): string {
+    if (customerId === null) return ''; // si no hay cliente
     const cliente = clientes.value.find(c => c.id === customerId);
     return cliente ? `${cliente.name} ${cliente.lastname}` : '';
 }
@@ -162,7 +163,7 @@ const updateReservacion = async (): Promise<void> => {
         toast.add({
             severity: 'success',
             summary: 'Actualizado',
-            detail: 'Reservación actualizada correctamente. Se generó un nuevo código.',
+            detail: 'Reservación actualizada correctamente.', // ← Cambiar este mensaje
             life: 3000
         });
 
@@ -215,26 +216,16 @@ function formatTimeForBackend(time: Date | null): string {
     >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <!-- Campo de Cliente (deshabilitado) -->
+                <!-- Campo de Cliente (solo lectura) -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Cliente</label>
-                    <Dropdown
-                        v-model="reservacion.customer_id"
-                        :options="clientes"
-                        optionLabel="fullName"
-                        optionValue="id"
-                        fluid
-                        placeholder="Cliente de la reservación"
-                        class="w-full"
+                    <InputText
+                        :value="getClienteNombre(reservacion.customer_id)"
+                        readonly
                         disabled
-                    >
-                        <template #value="slotProps">
-                            <div v-if="slotProps.value">
-                                <span>{{ getClienteNombre(slotProps.value) }}</span>
-                            </div>
-                            <span v-else>{{ slotProps.placeholder }}</span>
-                        </template>
-                    </Dropdown>
+                        class="w-full bg-gray-100"
+                        placeholder="Cliente de la reservación"
+                    />
                     <small class="text-gray-500">El cliente no se puede modificar</small>
                 </div>
 
