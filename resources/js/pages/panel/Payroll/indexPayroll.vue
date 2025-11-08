@@ -8,8 +8,15 @@
 
             <template v-else>
                 <div class="card">
-                    <AddPayroll @payroll-agregado="refrescarListado"/>
-                    <ListPayroll :refresh="refreshKey"/>
+                 <AddPayroll 
+  @payroll-agregado="refrescarListado"
+  :filtros="filtros"
+/>
+
+<ListPayroll 
+  :refresh="refreshKey" 
+  @update-filtros="actualizarFiltros" 
+/>
                 </div>
             </template>
         </div>
@@ -36,4 +43,10 @@ onMounted(() => {
         isLoading.value = false;
     }, 1000);
 });
+const filtros = ref({ search: '', paid: '', month: null });
+
+function actualizarFiltros(nuevos: any) {
+  filtros.value = nuevos;
+}
+
 </script>
