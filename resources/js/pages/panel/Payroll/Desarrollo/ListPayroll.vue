@@ -42,8 +42,10 @@ const perPage = ref<number>(15);
 const totalRecords = ref<number>(0);
 // Emit para actualizar la tabla padre
 const emit = defineEmits<{
-    (e: 'payroll-agregado'): void;
+  (e: 'payroll-agregado'): void;
+  (e: 'update-filtros', filtros: { search: string; paid: string | boolean; month: number | null }): void;
 }>();
+
 
 const selectedPayroll = ref<Payroll | null>(null);
 const viewDialog = ref(false);
@@ -141,6 +143,13 @@ const confirmPayment = async (payroll: Payroll) => {
         toast.value.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar la nómina', life: 3000 });
     }
 };
+watch([globalFilterValue, selectedEstado, selectedMonth], () => {
+  emit('update-filtros', {
+    search: globalFilterValue.value,
+    paid: selectedEstado.value?.value ?? '',
+    month: selectedMonth.value ?? '',
+  });
+});
 
 </script>
 

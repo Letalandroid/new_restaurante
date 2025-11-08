@@ -11,17 +11,6 @@
       :disabled="loading"
     />
 
-    <!-- Botón Exportar PDF -->
-    <Button 
-      variant="outlined"
-      size="small"
-      class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
-      icon="pi pi-file-pdf"
-      label="Exportar a PDF"
-      @click="startDownload('pdf')"
-      :disabled="loading"
-    />
-
     <!-- Dialog de descarga -->
     <Dialog v-model:visible="loading" modal :closable="false" header="Descargando" :style="{ width: '90%', maxWidth: '400px' }">
       <div class="flex flex-col items-center justify-center p-4 text-center">
@@ -47,46 +36,76 @@ import axios from 'axios'
 const toast = useToast()
 const loading = ref(false)
 const downloadingText = ref('')
+const props = defineProps({
+  selectedStatus: Object,
+  globalFilterValue: String,
+  selectedDateRange: Array
+})
 
 const startDownload = async (type: 'pdf' | 'excel') => {
-  const url = type === 'pdf' 
-    ? '/panel/reports/export-pdf-almacenes' 
-    : '/panel/reports/export-excel-almacenes'
+  const baseUrl = type === 'pdf'
+    ? '/panel/reports/export-pdf-attendances'
+    : '/panel/reports/export-excel-attendances'
 
-  const filename = type === 'pdf' ? 'Almacenes.pdf' : 'Almacenes.xlsx'
+  const params: any = {}
 
-  try {
-    loading.value = true
-    downloadingText.value = type === 'pdf' ? 'Descargando PDF...' : 'Descargando Excel...'
+  if (props.selectedStatus?.value) params.status = props.selectedStatus.value
+  if (props.globalFilterValue) params.employee = props.globalFilterValue
 
-    const response = await axios.get(url, { responseType: 'blob' })
-
-    const blob = new Blob([response.data], { type: response.data.type })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Éxito', 
-      detail: `${filename} descargado correctamente.`,
-      life: 3000
-    })
-  } catch (error) {
-    console.error(error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'Hubo un error al descargar el archivo.',
-      life: 3000
-    })
-  } finally {
-    loading.value = false
+  if (props.selectedDateRange?.length) {
+    const formatDate = (date: Date) => date.toISOString().split('T')[0]
+    params.date_from = formatDate(props.selectedDateRange[0])
+    if (props.selectedDateRange.length === 2)
+      params.date_to = formatDate(props.selectedDateRange[1])
   }
+
+  const queryString = new URLSearchParams(params).toString()
+  const url = `${baseUrl}?${queryString}`
+
+try {
+  loading.value = true
+  downloadingText.value = type === 'pdf' ? 'Descargando PDF...' : 'Descargando Excel...'
+
+  const response = await axios.get(url, { responseType: 'blob' })
+
+  // 🔹 Obtener el nombre dinámico del archivo desde los headers
+  const contentDisposition = response.headers['content-disposition']
+  let filename = type === 'pdf' ? 'Asistencias.pdf' : 'Asistencias.xlsx'
+
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="?([^"]+)"?/)
+    if (match && match[1]) filename = match[1]
+  }
+
+  // 🔹 Crear el enlace de descarga
+  const blob = new Blob([response.data], { type: response.data.type })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  toast.add({
+    severity: 'success',
+    summary: 'Éxito',
+    detail: `Descarga completada.`,
+    life: 3000
+  })
+} catch (error) {
+  console.error(error)
+  toast.add({
+    severity: 'error',
+    summary: 'Error',
+    detail: 'No se pudo descargar el archivo.',
+    life: 3000
+  })
+} finally {
+  loading.value = false
 }
+
+}
+
 </script>
 
 <style scoped>

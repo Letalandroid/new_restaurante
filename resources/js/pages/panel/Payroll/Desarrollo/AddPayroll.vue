@@ -1,9 +1,27 @@
 <template>
-    <Toolbar class="mb-6">
+   <Toolbar class="mb-6 flex flex-wrap gap-3 justify-between items-center">
+        <!-- Sección izquierda -->
         <template #start>
-            <Button label="Generar Nómina" icon="pi pi-calendar" severity="success" class="mr-2" @click="openDialog" />
+            <Button 
+                label="Generar Nómina" 
+                icon="pi pi-calendar" 
+                severity="success" 
+                class="mr-2" 
+                @click="openDialog" 
+            />
+        </template>
+
+        <!-- 🔹 Sección derecha: botones de exportación -->
+        <template #end>
+        <ToolsPayroll 
+  :search="props.filtros.search"
+  :paid="props.filtros.paid"
+  :month="props.filtros.month"
+/>
+
         </template>
     </Toolbar>
+
 
     <!-- Modal profesional para generar nómina -->
     <Dialog
@@ -84,8 +102,15 @@ import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
-
+import ToolsPayroll from './ToolsPayroll.vue'; 
 const toast = useToast();
+const props = defineProps<{
+  filtros: {
+    search: string;
+    paid: string | boolean;
+    month: number | null;
+  };
+}>();
 
 // Modal
 const showGenerateDialog = ref(false);
