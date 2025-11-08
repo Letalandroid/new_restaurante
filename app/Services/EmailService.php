@@ -7,7 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 
 class EmailService
 {
-    public static function enviarCorreoReserva($cliente, $reserva)
+    public static function enviarCorreoReserva($cliente, $reserva, $waitingMinutes)
     {
         $mail = new PHPMailer(true);
 
@@ -68,7 +68,19 @@ class EmailService
                             <p style='margin: 6px 0; font-size: 15px;'><b>N° de personas:</b> {$reserva->number_people}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Fecha:</b> {$reserva->date}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Hora:</b> {$reserva->hour} pm</p>
-                            <p style='margin: 6px 0; font-size: 15px;'><b>Código de Reservación:</b> <span style='font-weight:bold; color:#15803d;'>{$reserva->reservation_code}</span></p>
+
+                            <!-- NUEVAS LÍNEAS -->
+                            <p style='margin: 6px 0; font-size: 15px;'><b>Tiempo de espera:</b> {$waitingMinutes} minutos</p>
+                            <p style='margin: 6px 0; font-size: 15px;'><b>Hora límite de espera:</b> {$reserva->waiting_hour} pm</p>
+
+                            <p style='margin: 6px 0; font-size: 15px;'><b>Código de Reservación:</b> 
+                            <span style='font-weight:bold; color:#15803d;'>{$reserva->reservation_code}</span></p>
+
+                            <!-- TEXTO EXPLICATIVO -->
+                            <p style='margin-top: 15px; font-size: 14px; color: #555;'>
+                                ⏰ Usted tiene un tiempo de espera de <b>{$waitingMinutes} minutos</b>, hasta las <b>{$reserva->waiting_hour} pm</b>. 
+                                Luego de ese tiempo, la reservación podría expirar automáticamente.
+                            </p>
                         </div>
 
                         <div style='margin-top: 30px; text-align: center;'>

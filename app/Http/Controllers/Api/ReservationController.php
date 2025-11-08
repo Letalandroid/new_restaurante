@@ -125,7 +125,7 @@ class ReservationController extends Controller
         ]);
 
         //Enviar correo
-        EmailService::enviarCorreoReserva($customer->load('clienteType'), $reservation);
+        EmailService::enviarCorreoReserva($customer->load('clienteType'), $reservation, $waitingMinutes);
 
         return response()->json([
             'state' => true,
