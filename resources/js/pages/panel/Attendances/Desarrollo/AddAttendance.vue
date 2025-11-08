@@ -4,8 +4,12 @@
       <Button label="Registrar Asistencia" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
     </template>
     <template #end>
-      <!-- ToolsAttendance para exportar o importar -->
-      <ToolsAttendance @import-success="loadAttendances" />
+  <ToolsAttendance
+  :selected-status="props.selectedStatus"
+  :global-filter-value="props.globalFilterValue"
+  :selected-date-range="props.selectedDateRange"
+/>
+
     </template>
   </Toolbar>
 <Dialog v-model:visible="attendanceDialog" :style="{ width: '600px' }" header="Registrar Asistencia" :modal="true">
@@ -41,9 +45,11 @@
         <small v-else-if="serverErrors.work_date" class="text-red-500">{{ serverErrors.work_date[0] }}</small>
       </div>
 
-
 <!-- Hora de entrada -->
-<div class="col-span-12 sm:col-span-6 md:col-span-3">
+<div
+  v-if="attendance.status_id !== 3 && attendance.status_id !== 5" 
+  class="col-span-12 sm:col-span-6 md:col-span-3"
+>
   <label for="check_in" class="block font-bold mb-3">Hora entrada</label>
   <input
     type="time"
@@ -53,6 +59,7 @@
   />
   <small v-if="serverErrors.check_in" class="text-red-500">{{ serverErrors.check_in[0] }}</small>
 </div>
+
 
 
 
@@ -170,6 +177,12 @@ function hideDialog() {
     attendanceDialog.value = false;
     resetAttendance();
 }
+const props = defineProps({
+  selectedStatus: Object,
+  globalFilterValue: String,
+  selectedDateRange: Array
+})
+
 
 const statusOptions = ref<{ name: string; value: number | null }[]>([
   { name: 'PRESENTE', value: 1 },
@@ -200,20 +213,26 @@ function guardarAttendance() {
     submitted.value = true;
     serverErrors.value = {};
 
-    const payload = {
+    // Si el estado es "FALTA" o "DÍA LIBRE", no se envían horas
+    const omitHours = attendance.value.status_id === 3 || attendance.value.status_id === 5;
+
+    const payload: any = {
         employee_id: attendance.value.employee_id,
         work_date: attendance.value.work_date,
-        check_in: attendance.value.check_in,
         status_id: attendance.value.status_id,
         justification: attendance.value.justification,
     };
+
+    if (!omitHours) {
+        payload.check_in = attendance.value.check_in;
+    }
 
     axios.post('/asistencia', payload)
         .then(() => {
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
-                detail: 'Asistencia registrada correctamente (hora de entrada).',
+                detail: 'Asistencia registrada correctamente.',
                 life: 3000
             });
             hideDialog();
@@ -223,10 +242,7 @@ function guardarAttendance() {
             if (error.response && error.response.status === 422) {
                 const data = error.response.data as any;
                 serverErrors.value = data.errors || {};
-
-                // 🔸 Mostrar todos los mensajes del request como toasts
-                const allMessages = Object.values(serverErrors.value).flat();
-                allMessages.forEach((msg: string) => {
+                Object.values(serverErrors.value).flat().forEach((msg: string) => {
                     toast.add({
                         severity: 'warn',
                         summary: 'Validación',
@@ -244,6 +260,7 @@ function guardarAttendance() {
             }
         });
 }
+
 
 
 </script>

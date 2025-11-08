@@ -25,8 +25,9 @@ class FilterByEmployeeName
 
         $builder->whereHas('employee', function ($query) use ($terms) {
             foreach ($terms as $term) {
-                $query->whereRaw("LOWER(name) LIKE ?", ["%{$term}%"]);
-                // Si agregas apellidos en tu tabla employees, descomenta:
+                $query->whereRaw("LOWER(name) LIKE ?", ["%{$term}%"])
+                      ->orWhereRaw("LOWER(codigo) LIKE ?", ["%{$term}%"]);
+                // Si agregas apellidos en tu tabla employees, puedes incluir:
                 // ->orWhereRaw("LOWER(apellidos) LIKE ?", ["%{$term}%"]);
             }
         });

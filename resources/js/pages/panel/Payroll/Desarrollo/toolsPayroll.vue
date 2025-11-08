@@ -11,16 +11,7 @@
       :disabled="loading"
     />
 
-    <!-- Botón Exportar PDF -->
-    <Button 
-      variant="outlined"
-      size="small"
-      class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
-      icon="pi pi-file-pdf"
-      label="Exportar a PDF"
-      @click="startDownload('pdf')"
-      :disabled="loading"
-    />
+
 
     <!-- Dialog de descarga -->
     <Dialog v-model:visible="loading" modal :closable="false" header="Descargando" :style="{ width: '90%', maxWidth: '400px' }">
@@ -47,46 +38,62 @@ import axios from 'axios'
 const toast = useToast()
 const loading = ref(false)
 const downloadingText = ref('')
+const props = defineProps<{
+  search?: string;
+  paid?: string | boolean;
+  month?: number | null;
+}>();
 
 const startDownload = async (type: 'pdf' | 'excel') => {
-  const url = type === 'pdf' 
-    ? '/panel/reports/export-pdf-almacenes' 
-    : '/panel/reports/export-excel-almacenes'
+  const url =
+    type === 'pdf'
+      ? '/panel/reports/export-pdf-payrolls'
+      : '/panel/reports/export-excel-payrolls';
 
-  const filename = type === 'pdf' ? 'Almacenes.pdf' : 'Almacenes.xlsx'
+  const filename = type === 'pdf' ? 'Nominas.pdf' : 'Nominas.xlsx';
 
   try {
-    loading.value = true
-    downloadingText.value = type === 'pdf' ? 'Descargando PDF...' : 'Descargando Excel...'
+    loading.value = true;
+    downloadingText.value = type === 'pdf' ? 'Generando PDF...' : 'Generando Excel...';
 
-    const response = await axios.get(url, { responseType: 'blob' })
+    const response = await axios.get(url, {
+      responseType: 'blob',
+      params: {
+        search: props.search || '',
+        paid: props.paid ?? '',
+        month: props.month ?? '',
+      },
+    });
 
-    const blob = new Blob([response.data], { type: response.data.type })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
+    const blob = new Blob([response.data], { type: response.data.type });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Éxito', 
+    toast.add({
+      severity: 'success',
+      summary: 'Éxito',
       detail: `${filename} descargado correctamente.`,
-      life: 3000
-    })
+      life: 3000,
+    });
   } catch (error) {
-    console.error(error)
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Error', 
-      detail: 'Hubo un error al descargar el archivo.',
-      life: 3000
-    })
+    console.error(error);
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Ocurrió un error al descargar el archivo.',
+      life: 3000,
+    });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
+
+
+
 </script>
 
 <style scoped>

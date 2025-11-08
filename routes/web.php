@@ -419,6 +419,12 @@ Route::prefix('insumos')->group(function () {
         // Ruta para importar desde Excel
         Route::post('/import-excel-categories', [CategoryController::class, 'importExcel'])->name('import-excel-categories');
 
+        #EXPORTACION Y IMPORTACION ASISTENCIAS
+        Route::get('/export-excel-attendances', [AttendanceController::class, 'exportExcel'])->name('export-excel-attendances');
+
+        #EXPORTACION Y IMPORTACION NOMINAS
+Route::get('/export-excel-payrolls', [PayrollController::class, 'exportExcel'])
+    ->name('export-excel-payrolls');
         #EXPORTACION Y IMPORTACION ALMACENES
         Route::get('/export-excel-almacenes', [AlmacenController::class, 'exportExcel'])->name('export-excel-almacenes');
         Route::get('/export-pdf-almacenes', [AlmacenPDFController::class, 'exportPDF'])->name('export-pdf-almacenes');

@@ -8,8 +8,17 @@
 
             <template v-else>
                 <div class="card">
-                 <AddAsistencias @attendance-registered="refrescarListado" />
-<ListAsistencias :refresh="refreshKey" />
+<AddAsistencias 
+  @attendance-registered="refrescarListado"
+  :selected-status="selectedStatus"
+  :global-filter-value="globalFilterValue"
+  :selected-date-range="selectedDateRange"
+/>
+
+<ListAsistencias 
+  :refresh="refreshKey"
+  @filters-changed="handleFiltersChanged"
+/>
 
                 </div>
             </template>
@@ -37,4 +46,14 @@ onMounted(() => {
         isLoading.value = false;
     }, 1000);
 });
+const selectedStatus = ref(null)
+const globalFilterValue = ref('')
+const selectedDateRange = ref(null)
+
+function handleFiltersChanged(filters: any) {
+  selectedStatus.value = filters.selectedStatus
+  globalFilterValue.value = filters.globalFilterValue
+  selectedDateRange.value = filters.selectedDateRange
+}
+
 </script>

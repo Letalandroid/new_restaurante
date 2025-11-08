@@ -81,14 +81,15 @@ watch(() => selectedDateRange.value, () => {
     loadAttendances();
 });
 
-const statusOptions = ref<{ name: string; value: string | null }[]>([
-    { name: 'TODOS', value: null },
-    { name: 'PRESENTE', value: 'Presente' },
-    { name: 'TARDE', value: 'Tarde' },
-    { name: 'FALTA', value: 'Falta' },
-    { name: 'JUSTIFICADO', value: 'Justificado' },
-    { name: 'DÍA LIBRE', value: 'Día libre' },
+const statusOptions = ref<{ name: string; value: number | null }[]>([
+  { name: 'TODOS', value: null },
+  { name: 'PRESENTE', value: 1 },
+  { name: 'TARDE', value: 2 },
+  { name: 'FALTA', value: 3 },
+  { name: 'JUSTIFICADO', value: 4 },
+  { name: 'DÍA LIBRE', value: 5 },
 ]);
+
 
 function confirmDeleteAttendance(selected: Attendance) {
     attendance.value = selected;
@@ -161,17 +162,19 @@ const onPage = (event: any) => {
     pagination.value.perPage = event.rows;
     loadAttendances();
 };
-
 const getSeverity = (status: string | null): 'success' | 'danger' | 'warning' | 'info' | undefined => {
     switch (status?.toLowerCase()) {
         case 'presente':
-            return 'success';
+            return 'success';     // Verde
         case 'tarde':
-            return 'warning';
-        case 'falto':
-            return 'danger';
+            return 'warning';     // Amarillo
+        case 'ausente':
+            return 'danger';      // Rojo
         case 'justificado':
-            return 'info';
+            return 'info';        // Azul
+        case 'día libre':
+        case 'dia libre':         // cubrir sin tilde también
+            return 'secondary';   // Gris (neutral)
         default:
             return undefined;
     }
@@ -190,6 +193,16 @@ const clearDateFilter = () => {
 onMounted(() => {
     loadAttendances();
 });
+const emit = defineEmits(['filters-changed'])
+
+watch([selectedStatus, globalFilterValue, selectedDateRange], () => {
+  emit('filters-changed', {
+    selectedStatus: selectedStatus.value,
+    globalFilterValue: globalFilterValue.value,
+    selectedDateRange: selectedDateRange.value
+  })
+}, { deep: true })
+
 </script>
 <template>
     <DataTable
@@ -289,4 +302,5 @@ onMounted(() => {
         :attendanceId="selectedAttendanceId"
         @updated="handleAttendanceUpdated"
     />
+    
 </template>

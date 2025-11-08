@@ -14,6 +14,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Pipelines\FilterByEmployeeName;
 use App\Pipelines\FilterByEmployeeDate;
 use App\Pipelines\FilterByStateEmployeeAttendance;
+use App\Exports\AttendanceExport;
 
 class AttendanceController extends Controller
 {
@@ -39,38 +40,38 @@ public function index(Request $request)
 
     return AttendanceResource::collection($query->paginate($perPage));
 }
-    public function store(StoreAttendanceRequest $request)
-        {
-            Gate::authorize('create', Attendance::class);
-            $validated = $request->validated();
 
-            // Verificar si ya existe asistencia para ese empleado y fecha
-            $exists = Attendance::where('employee_id', $validated['employee_id'])
-                ->whereDate('work_date', $validated['work_date'])
-                ->exists();
+public function store(StoreAttendanceRequest $request)
+{
+    Gate::authorize('create', Attendance::class);
+    $validated = $request->validated();
 
-            if ($exists) {
-                return response()->json([
-                    'errors' => ['attendance' => ['El empleado ya tiene un registro de asistencia en esta fecha.']]
-                ], 422);
-            }
+    // Verificar si ya existe asistencia para ese empleado y fecha
+    $exists = Attendance::where('employee_id', $validated['employee_id'])
+        ->whereDate('work_date', $validated['work_date'])
+        ->exists();
 
-            // Crear registro
-            $attendance = Attendance::create([
-                'employee_id' => $validated['employee_id'],
-                'work_date' => $validated['work_date'],
-                'check_in' => $validated['check_in'], // ✅ ahora se guarda correctamente
-                'status_id' => $validated['status_id'], // ✅ corregido
-                'justification' => $validated['justification'] ?? null,
-            ]);
+    if ($exists) {
+        return response()->json([
+            'errors' => ['attendance' => ['El empleado ya tiene un registro de asistencia en esta fecha.']]
+        ], 422);
+    }
 
-            return response()->json([
-                'state' => true,
-                'message' => 'Asistencia registrada correctamente (hora de entrada).',
-                'attendance' => $attendance
-            ]);
-        }
+    // Crear registro con seguridad para campos opcionales
+    $attendance = Attendance::create([
+        'employee_id'   => $validated['employee_id'],
+        'work_date'     => $validated['work_date'],
+        'check_in'      => $validated['check_in'] ?? null, // 👈 evita el error si no existe
+        'status_id'     => $validated['status_id'],
+        'justification' => $validated['justification'] ?? null,
+    ]);
 
+    return response()->json([
+        'state' => true,
+        'message' => 'Asistencia registrada correctamente.',
+        'attendance' => $attendance
+    ]);
+}
 
 
 
@@ -91,7 +92,14 @@ public function update(UpdateAttendanceRequest $request, Attendance $asistencia)
     Gate::authorize('update', $asistencia);
 
     $validated = $request->validated();
+
+    if (in_array($validated['status_id'], [3, 5])) {
+        $validated['check_in']  = null;
+        $validated['check_out'] = null;
+    }
+
     $asistencia->update($validated);
+
     return response()->json([
         'state' => true,
         'message' => 'Asistencia actualizada correctamente.',
@@ -110,5 +118,36 @@ public function update(UpdateAttendanceRequest $request, Attendance $asistencia)
         ]);
     }
 
-   
+public function exportExcel(Request $request)
+{
+    $employee = $request->input('employee');
+    $status = $request->input('status');
+    $dateFrom = $request->input('date_from');
+    $dateTo = $request->input('date_to');
+
+    // Export con filtros
+    $export = new AttendanceExport($employee, $status, $dateFrom, $dateTo);
+
+    // Nombre dinámico del archivo
+    $filename = 'Asistencias';
+
+    if ($employee) {
+        $filename = str_replace(' ', '_', $employee);
+    }
+
+    if ($dateFrom && $dateTo) {
+        $filename .= " - {$dateFrom}_a_{$dateTo}";
+    } elseif ($dateFrom) {
+        $filename .= " - desde_{$dateFrom}";
+    } elseif ($dateTo) {
+        $filename .= " - hasta_{$dateTo}";
+    } else {
+        $filename .= " - Todas";
+    }
+
+    $filename .= '.xlsx';
+
+    return Excel::download($export, $filename);
+}
+
 }

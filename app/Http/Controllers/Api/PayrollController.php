@@ -17,6 +17,8 @@ use App\Models\Attendance;
 use Carbon\Carbon;
 use App\Models\Employee;
 
+use App\Exports\PayrollsExport;
+use Maatwebsite\Excel\Facades\Excel;
 class PayrollController extends Controller
 {
 public function index(Request $request)
@@ -360,6 +362,18 @@ $payroll->details()->createMany($details);
         'gross_salary' => round($grossSalary,2),
     ]);
 }
+
+
+public function exportExcel(Request $request)
+ {
+        $search = $request->input('search');
+        $paid   = $request->input('paid');
+        $month  = $request->input('month');
+
+        $fileName = 'Nominas_' . now()->format('Y_m_d_His') . '.xlsx';
+
+        return Excel::download(new PayrollsExport($search, $paid, $month), $fileName);
+    }
 
 
 }

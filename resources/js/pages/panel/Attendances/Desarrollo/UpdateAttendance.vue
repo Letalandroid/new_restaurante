@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -7,7 +7,6 @@ import Dropdown from 'primevue/dropdown';
 import Calendar from 'primevue/calendar';
 import axios, { AxiosError } from 'axios';
 import { useToast } from 'primevue/usetoast';
-import Tag from 'primevue/tag';
 
 interface Attendance {
     employee_id: number | null;
@@ -65,18 +64,24 @@ const statusOptions = ref<{ name: string; value: number | null }[]>([
     { name: 'DÍA LIBRE', value: 5 },
 ]);
 
+// 👉 Variable reactiva para saber si se deben ocultar horas
+const hideHours = ref(false);
+
+watch(() => attendance.value.status_id, (newVal) => {
+    hideHours.value = newVal === 3 || newVal === 5; // FALTA o DÍA LIBRE
+    if (hideHours.value) {
+        attendance.value.check_in = null;
+        attendance.value.check_out = null;
+    }
+});
+
 // Cargar empleados
 const loadEmployees = async () => {
     try {
         const response = await axios.get('/empleado');
         employees.value = response.data.data || [];
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudieron cargar los empleados',
-            life: 3000
-        });
+    } catch {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los empleados', life: 3000 });
     }
 };
 
@@ -94,13 +99,11 @@ const fetchAttendance = async () => {
         attendance.value.check_out = data.check_out;
         attendance.value.status_id = data.status_id;
         attendance.value.justification = data.justification;
+
+        // Evaluar si se deben ocultar horas
+        hideHours.value = data.status_id === 3 || data.status_id === 5;
     } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo cargar la asistencia',
-            life: 3000
-        });
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la asistencia', life: 3000 });
         console.error(error);
     } finally {
         loading.value = false;
@@ -118,7 +121,6 @@ watch(
   { immediate: true }
 );
 
-
 // Actualizar asistencia
 const updateAttendance = async (): Promise<void> => {
     submitted.value = true;
@@ -130,8 +132,8 @@ const updateAttendance = async (): Promise<void> => {
         const payload = {
             employee_id: attendance.value.employee_id,
             work_date: attendance.value.work_date,
-            check_in: attendance.value.check_in,
-            check_out: attendance.value.check_out,
+            check_in: hideHours.value ? null : attendance.value.check_in,
+            check_out: hideHours.value ? null : attendance.value.check_out,
             status_id: attendance.value.status_id,
             justification: attendance.value.justification,
         };
@@ -181,9 +183,8 @@ const updateAttendance = async (): Promise<void> => {
             <div class="grid grid-cols-12 gap-4">
                 <!-- Empleado -->
                 <div class="col-span-12">
-                    <label for="employee_id" class="block font-bold mb-3">Empleado <span class="text-red-500">*</span></label>
+                    <label class="block font-bold mb-3">Empleado <span class="text-red-500">*</span></label>
                     <Dropdown
-                        id="employee_id"
                         v-model="attendance.employee_id"
                         :options="employees"
                         optionLabel="name"
@@ -196,9 +197,8 @@ const updateAttendance = async (): Promise<void> => {
 
                 <!-- Fecha -->
                 <div class="col-span-6">
-                    <label for="work_date" class="block font-bold mb-3">Fecha <span class="text-red-500">*</span></label>
+                    <label class="block font-bold mb-3">Fecha <span class="text-red-500">*</span></label>
                     <Calendar
-                        id="work_date"
                         v-model="attendance.work_date"
                         dateFormat="dd-mm-yy"
                         showIcon
@@ -206,34 +206,32 @@ const updateAttendance = async (): Promise<void> => {
                     />
                     <small v-if="serverErrors.work_date" class="p-error">{{ serverErrors.work_date[0] }}</small>
                 </div>
+<!-- Hora entrada -->
+<div class="col-span-3" v-if="attendance.status_id !== 3 && attendance.status_id !== 5">
+  <label for="check_in" class="block font-bold mb-3">Entrada</label>
+  <input
+      type="time"
+      id="check_in"
+      v-model="attendance.check_in"
+      class="border border-gray-300 rounded p-2 w-full"
+  />
+</div>
 
-                <!-- Hora entrada -->
-                <div class="col-span-3">
-                    <label for="check_in" class="block font-bold mb-3">Entrada</label>
-                    <input
-                        type="time"
-                        id="check_in"
-                        v-model="attendance.check_in"
-                        class="border border-gray-300 rounded p-2 w-full"
-                    />
-                </div>
-
-                <!-- Hora salida -->
-                <div class="col-span-3">
-                    <label for="check_out" class="block font-bold mb-3">Salida</label>
-                    <input
-                        type="time"
-                        id="check_out"
-                        v-model="attendance.check_out"
-                        class="border border-gray-300 rounded p-2 w-full"
-                    />
-                </div>
+<!-- Hora salida -->
+<div class="col-span-3" v-if="attendance.status_id !== 3 && attendance.status_id !== 5">
+  <label for="check_out" class="block font-bold mb-3">Salida</label>
+  <input
+      type="time"
+      id="check_out"
+      v-model="attendance.check_out"
+      class="border border-gray-300 rounded p-2 w-full"
+  />
+</div>
 
                 <!-- Estado -->
                 <div class="col-span-12">
-                    <label for="status_id" class="block font-bold mb-3">Estado</label>
+                    <label class="block font-bold mb-3">Estado</label>
                     <Dropdown
-                        id="status_id"
                         v-model="attendance.status_id"
                         :options="statusOptions"
                         optionLabel="name"
@@ -246,13 +244,8 @@ const updateAttendance = async (): Promise<void> => {
 
                 <!-- Justificación -->
                 <div class="col-span-12">
-                    <label for="justification" class="block font-bold mb-3">Justificación</label>
-                    <InputText
-                        id="justification"
-                        v-model="attendance.justification"
-                        maxlength="255"
-                        class="w-full"
-                    />
+                    <label class="block font-bold mb-3">Justificación</label>
+                    <InputText v-model="attendance.justification" maxlength="255" class="w-full" />
                     <small v-if="serverErrors.justification" class="p-error">{{ serverErrors.justification[0] }}</small>
                 </div>
             </div>
