@@ -56,6 +56,7 @@ use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
 use App\Http\Controllers\Api\ProductStockController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\ReservationSettingController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
@@ -512,6 +513,14 @@ Route::prefix('insumos')->group(function () {
             ->middleware('guest');
         Route::get('/tipo_cliente', [ClientTypeController::class, 'index'])->name('Tipos_Clientes.index');
         Route::post('/reservacionL', [ReservationController::class, 'storeLanding'])->name('reservacionL.storeLanding');
+
+        // Mostrar la configuración actual
+        Route::get('/reservation-settings', [ReservationSettingController::class, 'index'])
+            ->name('reservation-settings.index');
+
+        // Crear o actualizar una nueva configuración
+        Route::post('/reservation-settings', [ReservationSettingController::class, 'store'])
+            ->name('reservation-settings.store');
 // Archivos de configuración adicionales
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

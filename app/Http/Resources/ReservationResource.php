@@ -23,6 +23,7 @@ class ReservationResource extends JsonResource
             'number_people' => $this->number_people,
             'date' => Carbon::parse($this->date)->format('d-m-Y'),
             'hour' => Carbon::parse($this->hour)->format('H:i'),
+            'waiting_hour' => Carbon::parse($this->waiting_hour)->format('H:i'), // 🔹 Nuevo campo
             'reservation_code' => $this->reservation_code,
             'state' => $this->state,
             'creacion' => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),

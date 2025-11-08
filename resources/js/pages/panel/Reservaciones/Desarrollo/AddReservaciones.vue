@@ -3,6 +3,9 @@
         <template #start>
             <Button label="Nueva reservación" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
         </template>
+        <template #end>
+            <ConfigTiempoReserva/>  
+        </template>
     </Toolbar>
 
     <Dialog v-model:visible="reservaDialog" :style="{ width: '85%', maxWidth: '700px' }" header="Registro de reservación" :modal="true">
@@ -161,6 +164,7 @@ import Calendar from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
+import ConfigTiempoReserva from './ConfigTiempoReserva.vue';
 
 interface Reserva {
     customer_id: number | null;

@@ -20,6 +20,7 @@ class Reservation extends Model
         'number_people',
         'date',
         'hour',
+        'waiting_hour', //Nuevo campo
         'reservation_code',
         'state',
     ];
@@ -32,7 +33,8 @@ class Reservation extends Model
     protected $casts = [
         'state' => 'boolean',
         'date' => 'date',
-        'hour' => 'string', // O 'time' si prefieres
+        'hour' => 'string',
+        'waiting_hour' => 'string', //Nuevo cast
         'number_people' => 'integer',
     ];
 

@@ -10,10 +10,12 @@ use App\Http\Resources\PublicReservationResource;
 use App\Http\Resources\ReservationResource;
 use App\Models\Customer;
 use App\Models\Reservation;
+use App\Models\ReservationSetting;
 use App\Pipelines\FilterByCodeRyName;
 use App\Pipelines\FilterByDate;
 use App\Pipelines\FilterByState;
 use App\Services\EmailService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +25,10 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Reservation::class);
+        
+        // Primero, actualizar reservaciones expiradas
+        $this->expireOldReservations();
+        
         $perPage = $request->input('per_page', 15);
         $search = $request->input(key: 'search');
         $date = $request->input('date');
@@ -37,6 +43,50 @@ class ReservationController extends Controller
             ->thenReturn();
 
         return ReservationResource::collection($query->paginate($perPage));
+    }
+    /**
+     * Expirar reservaciones pasada la hora de espera y desactivar clientes si es necesario.
+     */
+    private function expireOldReservations(): void
+    {
+        //Obtener la última configuración
+        $config = ReservationSetting::latest()->first();
+
+        // Si no existe configuración o está desactivada la expiración automática → salir
+        if (!$config || !$config->auto_expire) {
+            return;
+        }
+
+        $now = now()->format('H:i');
+        $today = now()->format('Y-m-d');
+        
+        // Obtener los IDs de las reservaciones que van a expirar
+        $expiredReservationIds = Reservation::where('state', true)
+            ->where(function($query) use ($today, $now) {
+                $query->where('date', '<', $today)
+                    ->orWhere(function($q) use ($today, $now) {
+                        $q->where('date', $today)
+                            ->where('waiting_hour', '<', $now);
+                    });
+            })
+            ->pluck('id');
+
+        if ($expiredReservationIds->isNotEmpty()) {
+            // Desactivar las reservaciones
+            Reservation::whereIn('id', $expiredReservationIds)->update(['state' => false]);
+            
+            // Desactivar los clientes asociados a estas reservaciones
+            $customerIds = Reservation::whereIn('id', $expiredReservationIds)
+                ->pluck('customer_id')
+                ->unique()
+                ->filter();
+
+            if ($customerIds->isNotEmpty()) {
+                Customer::whereIn('id', $customerIds)
+                    ->where('state', true)
+                    ->update(['state' => false]);
+            }
+        }
     }
 
     public function storeLanding(StoreLReservationRequest $request)
@@ -57,12 +107,19 @@ class ReservationController extends Controller
             ]
         );
 
-        // Crear la reservación
+        //Obtener configuración dinámica
+        $config = ReservationSetting::latest()->first();
+        $waitingMinutes = $config?->waiting_minutes ?? 2;
+
+        $hour = Carbon::createFromFormat('H:i', $validated['hour']);
+        $waitingHour = $hour->copy()->addMinutes($waitingMinutes)->format('H:i');
+
         $reservation = Reservation::create([
             'customer_id' => $customer->id,
             'number_people' => $validated['number_people'],
             'date' => $validated['date'],
             'hour' => $validated['hour'],
+            'waiting_hour' => $waitingHour,
             'reservation_code' => $this->generateReservationCode(),
             'state' => true, // ← AGREGAR ESTA LÍNEA
         ]);
@@ -80,12 +137,20 @@ class ReservationController extends Controller
     {
         Gate::authorize('create', Reservation::class);
         $validated = $request->validated();
-        
-        
+
+        //Obtener configuración actual
+        $config = ReservationSetting::latest()->first();
+        $waitingMinutes = $config?->waiting_minutes ?? 2;
+
+        $hour = Carbon::createFromFormat('H:i', $validated['hour']);
+        $waitingHour = $hour->copy()->addMinutes($waitingMinutes)->format('H:i');
+
+        $validated['waiting_hour'] = $waitingHour;
+
         $reservation = Reservation::create($validated);
         return response()->json([
             'state' => true,
-            'message' => 'Reservacion registrada correctamente.',
+            'message' => 'Reservación registrada correctamente.',
             'reservation' => $reservation
         ]);
     }
@@ -103,8 +168,19 @@ class ReservationController extends Controller
     {
         Gate::authorize('update', $reservation);
         $validated = $request->validated();
-        
-        // Si el estado cambia a false, también actualizar el estado del cliente
+
+        //Obtener configuración actual
+        $config = ReservationSetting::latest()->first();
+        $waitingMinutes = $config?->waiting_minutes ?? 2;
+
+        // Si el campo "hour" está presente en la actualización, recalculamos la hora de espera
+        if (isset($validated['hour'])) {
+            $hour = Carbon::createFromFormat('H:i', $validated['hour']);
+            $waitingHour = $hour->copy()->addMinutes($waitingMinutes)->format('H:i');
+            $validated['waiting_hour'] = $waitingHour;
+        }
+
+        // Si el estado cambia a false, también actualizamos el cliente
         if (isset($validated['state']) && $validated['state'] === false) {
             $customer = $reservation->customer;
             if ($customer && $customer->state) {

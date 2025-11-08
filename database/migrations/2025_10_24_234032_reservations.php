@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('number_people')->comment('Cantidad de personas');
             $table->date('date')->comment('Fecha de la reserva (dd-mm-yyyy)');
             $table->time('hour')->comment('Hora de la reserva');
+            $table->time('waiting_hour')->comment('Hora límite de espera para la reserva'); //Nuevo campo
             $table->string('reservation_code', 6)->unique()->comment('Código de reserva de 6 dígitos');
             $table->boolean('state')->default(true);
             $table->timestamps();

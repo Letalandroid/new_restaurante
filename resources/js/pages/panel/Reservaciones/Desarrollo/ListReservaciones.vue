@@ -259,6 +259,7 @@ onMounted(() => {
         <Column field="number_people" header="N° Personas" sortable style="min-width: 10rem" />
         <Column field="date" header="Fecha" sortable style="min-width: 10rem" />
         <Column field="hour" header="Hora" sortable style="min-width: 10rem" />
+        <Column field="waiting_hour" header="Hora de espera" sortable style="min-width: 10rem" />
         <Column field="reservation_code" header="Código Reserva" sortable style="min-width: 12rem" />
         <Column field="creacion" header="Creación" sortable style="min-width: 13rem" />
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 13rem" />
