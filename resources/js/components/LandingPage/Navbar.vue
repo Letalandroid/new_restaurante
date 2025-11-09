@@ -24,11 +24,23 @@
           </NavigationMenuList>
         </NavigationMenu>
 
+        <!-- Botón de modo oscuro/claro -->
+        <button
+          @click="toggleDarkMode"
+          class="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          :title="isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        >
+          <Sun v-if="isDark" class="h-5 w-5" />
+          <Moon v-else class="h-5 w-5" />
+        </button>
+
         <!-- Ícono de cuenta -->
-        <a href="/login" class="ml-2 text-gray-800 hover:text-blue-800 dark:text-gray-200 dark:hover:text-blue-400">
+        <a href="/login" class="ml-3 flex items-center text-gray-800 hover:text-blue-800 dark:text-gray-200 dark:hover:text-cyan-400">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5">
-            <path fill-rule="evenodd" d="M3.757 4.5c.18.217.376.42.586.608.153-.61.354-1.175.596-1.678A5.53 5.53 0 0 0 3.757 4.5ZM8 1a6.994 6.994 0 0 0-7 7 7 7 0 1 0 7-7Zm0 1.5c-.476 0-1.091.386-1.633 1.427-.293.564-.531 1.267-.683 2.063A5.48 5.48 0 0 0 8 6.5a5.48 5.48 0 0 0 2.316-.51c-.152-.796-.39-1.499-.683-2.063C9.09 2.886 8.476 2.5 8 2.5Zm3.657 2.608a8.823 8.823 0 0 0-.596-1.678c.444.298.842.659 1.182 1.07-.18.217-.376.42-.586.608Zm-1.166 2.436A6.983 6.983 0 0 1 8 8a6.983 6.983 0 0 1-2.49-.456 10.703 10.703 0 0 0 .202 2.6c.72.231 1.49.356 2.288.356.798 0 1.568-.125 2.29-.356a10.705 10.705 0 0 0 .2-2.6Zm1.433 1.85a12.652 12.652 0 0 0 .018-2.609c.405-.276.78-.594 1.117-.947a5.48 5.48 0 0 1 .44 2.262 7.536 7.536 0 0 1-1.575 1.293Zm-2.172 2.435a9.046 9.046 0 0 1-3.504 0c.039.084.078.166.12.244C6.907 13.114 7.523 13.5 8 13.5s1.091-.386 1.633-1.427c.04-.078.08-.16.12-.244Zm1.31.74a8.5 8.5 0 0 0 .492-1.298c.457-.197.893-.43 1.307-.696a5.526 5.526 0 0 1-1.8 1.995Zm-6.123 0a5.526 5.526 0 0 1-1.8-1.995c.414.266.85.499 1.307.696.14.44.294.866.492 1.298ZM2.267 9.328a5.481 5.481 0 0 1 .44-2.262c.338.353.712.67 1.117.947a12.65 12.65 0 0 0 .018 2.609A7.536 7.536 0 0 1 2.267 9.328Z"/>
+            <path fill-rule="evenodd"
+              d="M8 0a8 8 0 100 16A8 8 0 008 0zM5.5 5.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zM8 9c-2.21 0-4 1.57-4 3.5V13h8v-.5C12 10.57 10.21 9 8 9z" />
           </svg>
+          <span class="ml-1">Intranet</span>
         </a>
 
  
@@ -55,10 +67,25 @@
             </NavigationMenuLink>
           </NavigationMenuItem>
 
+          <!-- Botón de modo oscuro/claro en móvil -->
+          <NavigationMenuItem>
+            <button
+              @click="toggleDarkMode"
+              class="flex items-center space-x-2 text-gray-800 hover:text-blue-800 gap-2 rounded-lg p-2 dark:text-gray-200 dark:hover:text-blue-400 w-full text-left"
+            >
+              <Sun v-if="isDark" class="h-5 w-5" />
+              <Moon v-else class="h-5 w-5" />
+              <span>{{ isDark ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+            </button>
+          </NavigationMenuItem>
+
           <!-- Ícono de cuenta en móvil -->
           <NavigationMenuItem>
-            <a href="/login" class="flex items-center space-x-2 text-gray-800 hover:text-blue-800  gap-2 rounded-lg p-2 dark:text-gray-200 dark:hover:text-blue-400">
-             
+            <a href="/login" class="flex items-center space-x-2 text-gray-800 hover:text-blue-800 gap-2 rounded-lg p-2 dark:text-gray-200 dark:hover:text-blue-400">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5">
+                <path fill-rule="evenodd"
+                  d="M8 0a8 8 0 100 16A8 8 0 008 0zM5.5 5.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zM8 9c-2.21 0-4 1.57-4 3.5V13h8v-.5C12 10.57 10.21 9 8 9z" />
+              </svg>
               <span>Intranet</span>
             </a>
           </NavigationMenuItem>
@@ -71,8 +98,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Moon, Sun} from 'lucide-vue-next';
-
+import { Moon, Sun } from 'lucide-vue-next'
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -86,20 +112,35 @@ const menuOpen = ref(false)
 const isDark = ref(false)
 
 onMounted(() => {
-  // Siempre inicia en modo claro
-  document.documentElement.classList.remove("dark")
-  localStorage.setItem("theme", "light")
+  // Verificar si ya hay una preferencia guardada
+  const savedTheme = localStorage.getItem("theme")
+  const hasDarkClass = document.documentElement.classList.contains("app-dark")
+  
+  if (savedTheme === "dark" || hasDarkClass) {
+    enableDarkMode()
+  } else {
+    enableLightMode()
+  }
 })
 
 function toggleDarkMode() {
-  isDark.value = !isDark.value
   if (isDark.value) {
-    document.documentElement.classList.add("dark")
-    localStorage.setItem("theme", "dark")
+    enableLightMode()
   } else {
-    document.documentElement.classList.remove("dark")
-    localStorage.setItem("theme", "light")
+    enableDarkMode()
   }
+}
+
+function enableDarkMode() {
+  isDark.value = true
+  document.documentElement.classList.add("app-dark")
+  localStorage.setItem("theme", "dark")
+}
+
+function enableLightMode() {
+  isDark.value = false
+  document.documentElement.classList.remove("app-dark")
+  localStorage.setItem("theme", "light")
 }
 
 // Links del menú

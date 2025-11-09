@@ -25,7 +25,7 @@
 
         <!-- Call to action -->
         <div class="mt-6 flex space-x-4">
-          <Button asChild size="lg">
+          <Button asChild size="lg" class="bg-orange-600 hover:bg-orange-700 dark:bg-orange-400 dark:hover:bg-orange-500 text-white">
             <a href="#servicios">Servicios</a>
           </Button>
           <Button asChild variant="outline" size="lg" class="dark:border-gray-500 dark:text-gray-200 dark:hover:bg-gray-700">

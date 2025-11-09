@@ -3,7 +3,7 @@
     id="galeria" 
     class="flex flex-col min-h-screen items-center justify-center 
            px-6 py-16 
-           bg-gradient-to-r from-yellow-50 to-orange-50
+           bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-900 dark:to-gray-800
            transition-colors duration-500"
   >
     <!-- Título -->
