@@ -148,10 +148,16 @@ class ReservationController extends Controller
         $validated['waiting_hour'] = $waitingHour;
 
         $reservation = Reservation::create($validated);
+
+        // Obtener el cliente (ya existente)
+        $cliente = $reservation->customer()->with('clienteType')->first();
+
+        // Enviar correo de confirmación
+        EmailService::enviarCorreoReserva($cliente, $reservation, $waitingMinutes);
         return response()->json([
             'state' => true,
-            'message' => 'Reservación registrada correctamente.',
-            'reservation' => $reservation
+            'message' => 'Reservación registrada correctamente y correo enviado.',
+            'reservation' => new ReservationResource($reservation->load('customer'))
         ]);
     }
     public function show(Reservation $reservation)
@@ -168,6 +174,7 @@ class ReservationController extends Controller
     {
         Gate::authorize('update', $reservation);
         $validated = $request->validated();
+        $cliente = $reservation->customer;
 
         //Obtener configuración actual
         $config = ReservationSetting::latest()->first();
@@ -180,15 +187,30 @@ class ReservationController extends Controller
             $validated['waiting_hour'] = $waitingHour;
         }
 
-        // Si el estado cambia a false, también actualizamos el cliente
-        if (isset($validated['state']) && $validated['state'] === false) {
-            $customer = $reservation->customer;
-            if ($customer && $customer->state) {
-                $customer->update(['state' => false]);
+        // --- CASO 1: Inactivación manual (por el cliente) ---
+        if (array_key_exists('state', $validated) && $validated['state'] === false) {
+            if ($cliente && $cliente->state) {
+                $cliente->update(['state' => false]);
             }
+
+            // Solo enviar correo si es el cliente quien inactiva (no expiración automática)
+            EmailService::enviarCorreoInactivacionReserva($cliente, $reservation);
+
+            $reservation->update($validated);
+            return response()->json([
+                'state' => true,
+                'message' => 'Reservación e información del cliente inactivadas correctamente. Correo enviado.',
+                'reservation' => $reservation->refresh()
+            ]);
         }
-        
+
+        // --- CASO 2: Actualización normal ---
         $reservation->update($validated);
+
+        // Verificar si se modificaron number_people, date o hour
+        if ($request->hasAny(['number_people', 'date', 'hour'])) {
+            EmailService::enviarCorreoActualizacionReserva($cliente, $reservation, $waitingMinutes);
+        }
 
         return response()->json([
             'state' => true,

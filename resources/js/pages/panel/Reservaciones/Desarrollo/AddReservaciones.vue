@@ -26,23 +26,29 @@
                         />
 
                         <!-- Sugerencias -->
-                        <ul v-if="clientesFiltrados.length > 0" class="border rounded-md bg-white shadow-md max-h-40 overflow-y-auto">
+                        <ul v-if="clientesFiltrados.length > 0" class="border rounded-md bg-white dark:bg-gray-800 shadow-md max-h-40 overflow-y-auto">
                             <li 
                                 v-for="cliente in clientesFiltrados" 
                                 :key="cliente.id"
                                 @click="seleccionarCliente(cliente)"
-                                class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                                class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
                                 {{ cliente.name }} {{ cliente.lastname }} 
-                                <small class="text-gray-500">({{ cliente.email }})</small>
+                                <small class="text-gray-500 dark:text-gray-400">({{ cliente.email }})</small>
                             </li>
                         </ul>
 
                         <!-- Cliente seleccionado -->
-                        <div v-if="reserva.customer_id" class="mt-2 p-3 bg-gray-50 rounded-md border flex justify-between items-center">
+                        <div 
+                            v-if="reserva.customer_id" 
+                            class="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 
+                                    flex justify-between items-center text-gray-900 dark:text-gray-100"
+                            >
                             <div>
                                 <p class="font-semibold">{{ clienteSeleccionado?.name }} {{ clienteSeleccionado?.lastname }}</p>
-                                <p class="text-sm text-gray-600">{{ clienteSeleccionado?.email }} - {{ clienteSeleccionado?.phone }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ clienteSeleccionado?.email }} - {{ clienteSeleccionado?.phone }}
+                                </p>
                             </div>
                             <Button 
                                 icon="pi pi-times" 
@@ -343,7 +349,7 @@ function guardarReserva(): void {
             toast.add({ 
                 severity: 'success', 
                 summary: 'Éxito', 
-                detail: 'Reservación registrada correctamente', 
+                detail: 'Reservación registrada correctamente y correo enviado.', 
                 life: 3000 
             });
             hideDialog();

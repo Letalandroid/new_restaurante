@@ -163,7 +163,7 @@ const updateReservacion = async (): Promise<void> => {
         toast.add({
             severity: 'success',
             summary: 'Actualizado',
-            detail: 'Reservación actualizada correctamente.', // ← Cambiar este mensaje
+            detail: 'Reservación actualizada correctamente y correo enviado con los datos actualizados.', // ← Cambiar este mensaje
             life: 3000
         });
 
