@@ -153,7 +153,13 @@
 
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-            <Button label="Guardar" icon="pi pi-check" @click="guardarReserva" :disabled="!reserva.reservation_code" />
+            <Button 
+                label="Guardar" 
+                icon="pi pi-check" 
+                @click="guardarReserva" 
+                :loading="isLoading" 
+                :disabled="!reserva.reservation_code || isLoading" 
+            />
         </template>
     </Dialog>
 </template>
@@ -206,6 +212,7 @@ const minDate = ref(new Date());
 const clienteBusqueda = ref('');
 const clientesFiltrados = ref<Cliente[]>([]);
 const clienteSeleccionado = ref<Cliente | null>(null);
+const isLoading = ref(false);
 
 const reserva = ref<Reserva>({
     customer_id: null,
@@ -314,7 +321,7 @@ watch([() => reserva.value.customer_id, () => reserva.value.date, () => reserva.
     }
 });
 
-function guardarReserva(): void {
+async function guardarReserva(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -334,7 +341,7 @@ function guardarReserva(): void {
         return;
     }
 
-    // Formatear fecha y hora para el backend
+    isLoading.value = true; //activar loading
     const reservaData = {
         customer_id: reserva.value.customer_id,
         number_people: reserva.value.number_people,
@@ -344,8 +351,8 @@ function guardarReserva(): void {
         reservation_code: reserva.value.reservation_code
     };
 
-    axios.post('/reservacion', reservaData)
-        .then(() => {
+        try {
+            await axios.post('/reservacion', reservaData);
             toast.add({ 
                 severity: 'success', 
                 summary: 'Éxito', 
@@ -354,8 +361,7 @@ function guardarReserva(): void {
             });
             hideDialog();
             emit('reserva-agregada');
-        })
-        .catch(error => {
+        } catch (error: any) {
             if (error.response && error.response.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
                 // Si hay error con el código, generar uno nuevo
@@ -370,7 +376,9 @@ function guardarReserva(): void {
                     life: 3000
                 });
             }
-        });
+        } finally {
+            isLoading.value = false; //desactivar loading al terminar
+        }
 }
 
 function formatDateForBackend(date: Date | null): string {

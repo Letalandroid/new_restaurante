@@ -7,6 +7,7 @@ import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
+import ToolsReservation from './ToolsReservation.vue';
 
 //Toast de notificaciones
 const toast = useToast();
@@ -121,6 +122,10 @@ async function guardarConfiguracion() {
         @click="openDialog"
       />
     </template>
+    <template #end>
+            <!-- ToolsPresentation para los botones de exportar e importar -->
+            <ToolsReservation/>       
+        </template>
   </Toolbar>
 
   <Dialog

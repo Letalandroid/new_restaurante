@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithStyles
+class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithCustomStartCell
 {
     public function collection()
     {
@@ -23,23 +23,32 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithS
             $product->id,
             $product->name,
             $product->details,
-            $product->category->name,
-            $product->almacen->name,
+            $product->category->name ?? 'Sin categoría',
+            $product->almacen->name ?? 'Sin almacén',
+            $product->stock_quantity ?? 0,
+            number_format($product->priceSale, 2),
+            $product->quantityUnitMeasure,
+            $product->unitMeasure,
             $product->state == 1 ? 'Activo' : 'Inactivo',
-            $product->created_at->format('d-m-Y H:i:s'), // Fecha de creación formateada
-            $product->updated_at->format('d-m-Y H:i:s')  // Fecha de actualización formateada
+            $product->created_at->format('d-m-Y H:i:s'),
+            $product->updated_at->format('d-m-Y H:i:s'),
         ];
     }
+
     public function headings(): array
     {
-        // Este array define los encabezados en la fila 3
-    return [
-        ['LISTA DE PRODUCTOS', '', '', '', '', '', '', ''],  // Fila 1 con el título
-        [],  // Fila 2 en blanco (espaciado entre el título y los encabezados)
-        ['ID', 'Nombre', 'Detalles', 'Categoria', 'Almacen', 'Estado', 'Creación', 'Actualización']  // Fila 3 con los encabezados
-    ];
-
+        // Encabezados con una fila de título y espaciado
+        return [
+            ['LISTA DE PRODUCTOS', '', '', '', '', '', '', '', '', '', '', ''], // Fila 1
+            [], // Fila 2 en blanco
+            [
+                'ID', 'Nombre', 'Detalles', 'Categoría', 'Almacén',
+                'Stock', 'Precio Venta', 'Cant. Medida', 'Unidad Medida',
+                'Estado', 'Creación', 'Actualización'
+            ] // Fila 3
+        ];
     }
+
     public function startCell(): string
     {
         return 'A1';
@@ -47,39 +56,34 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     public function styles(Worksheet $sheet)
     {
-        // Estilos para las celdas
-        $sheet->mergeCells('A1:H1');
-        $sheet->getStyle('A1:H1')->applyFromArray([
-            'font' => ['bold' => true,'size' => 14],
+        // Combinar celdas para el título
+        $sheet->mergeCells('A1:L1');
+        $sheet->getStyle('A1:L1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14],
             'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'CFE2F3'], // Color de fondo azul claro para el título
+                'startColor' => ['rgb' => 'CFE2F3'], // Azul claro
             ],
         ]);
 
         // Estilo para los encabezados de la tabla
-        $sheet->getStyle('A3:H3')->applyFromArray([
-        'font' => [
-            'bold' => true,
-        ],
-        'alignment' => [
-            'horizontal' => 'center',
-            'vertical' => 'center',
-        ],
-        'fill' => [
-            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-            'startColor' => ['rgb' => 'D9EAD3'], // Color de fondo para los encabezados
-        ],
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+        $sheet->getStyle('A3:L3')->applyFromArray([
+            'font' => ['bold' => true],
+            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'D9EAD3'], // Verde claro
             ],
-        ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
         ]);
 
         // Estilo para las filas de datos
-        $sheet->getStyle('A4:H' . $sheet->getHighestRow())->applyFromArray([
+        $sheet->getStyle('A4:L' . $sheet->getHighestRow())->applyFromArray([
             'alignment' => [
                 'horizontal' => 'center',
                 'vertical' => 'center',
@@ -90,8 +94,9 @@ class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithS
                 ],
             ],
         ]);
-        // Ajuste de las columnas para darles más espacio
-        foreach (range('A', 'H') as $column) {
+
+        // Ajustar el ancho de columnas automáticamente
+        foreach (range('A', 'L') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
         return [];

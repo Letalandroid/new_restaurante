@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\ReservationExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reservaciones\StoreLReservationRequest;
 use App\Http\Requests\Reservaciones\StoreReservationRequest;
@@ -19,6 +20,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 
 class ReservationController extends Controller
 {
@@ -245,5 +248,9 @@ class ReservationController extends Controller
         } while (Reservation::where('reservation_code', $code)->exists());
 
         return $code;
+    }
+    public function exportCsv()
+    {
+        return Excel::download(new ReservationExport, 'Reservaciones.csv', ExcelFormat::CSV);
     }
 }

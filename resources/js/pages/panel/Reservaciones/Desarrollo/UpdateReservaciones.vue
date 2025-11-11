@@ -149,6 +149,7 @@ const updateReservacion = async (): Promise<void> => {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Todos los campos son obligatorios', life: 3000 });
         return;
     }
+    loading.value = true; //activar el loading
 
     try {
         const reservacionData = {
@@ -187,6 +188,8 @@ const updateReservacion = async (): Promise<void> => {
             });
         }
         console.error(error);
+    } finally {
+        loading.value = false; //desactivar el loading al finalizar
     }
 };
 

@@ -50,10 +50,10 @@ const downloadingText = ref('')
 
 const startDownload = async (type: 'pdf' | 'excel') => {
   const url = type === 'pdf' 
-    ? '/panel/reports/export-pdf-customers' 
-    : '/panel/reports/export-excel-customers'
+    ? '/panel/reports/export-pdf-reservaciones' 
+    : '/panel/reports/export-excel-reservaciones'
 
-  const filename = type === 'pdf' ? 'Clientes.pdf' : 'Clientes.csv'
+  const filename = type === 'pdf' ? 'Reservaciones.pdf' : 'Reservaciones.csv'
 
   try {
     loading.value = true

@@ -58,6 +58,7 @@ use App\Http\Controllers\Api\ProductStockController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ReservationSettingController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Reportes\ReservationPDFController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
 use App\Http\Controllers\Web\CajaWebController;
@@ -493,7 +494,7 @@ Route::get('/export-excel-payrolls', [PayrollController::class, 'exportExcel'])
         Route::post('/import-excel-employeeTypes', [EmployeeTypeController::class, 'importExcel'])->name('import-excel-employeeTypes');
 
         #EXPORTACION Y IMPORTACION CLIENTES
-        Route::get('/export-excel-customers', [CustomerController::class, 'exportExcel'])->name('export-excel-customers');
+        Route::get('/export-excel-customers', [CustomerController::class, 'exportCsv'])->name('export-excel-customers');
         Route::get('/export-pdf-customers', [CustomerPDFController::class, 'exportPDF'])->name('export-pdf-customers');
         // Ruta para importar desde Excel
         Route::post('/import-excel-customers', [CustomerController::class, 'importExcel'])->name('import-excel-customers');
@@ -507,6 +508,10 @@ Route::get('/export-excel-payrolls', [PayrollController::class, 'exportExcel'])
         #EXPORTACION DE REPORTE DE CAJAS
         Route::get('/export-excel-reporteCajas', [ReporteCajaController::class, 'exportExcel'])->name('export-excel-reporteCajas');
         Route::get('/export-pdf-reporteCajas', [ReporteCajaPDFController::class, 'exportPDF'])->name('export-pdf-reporteCajas');
+
+        #EXPORTACION DE REPORTE DE CAJAS
+        Route::get('/export-excel-reservaciones', [ReservationController::class, 'exportCsv'])->name('export-excel-reservaciones');
+        Route::get('/export-pdf-reservaciones', [ReservationPDFController::class, 'exportPDF'])->name('export-pdf-reservaciones');
     
     });
 });
