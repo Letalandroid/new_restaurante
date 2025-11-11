@@ -23,6 +23,7 @@ class Reservation extends Model
         'waiting_hour', //Nuevo campo
         'reservation_code',
         'state',
+        'notification_sent', // ← NUEVO CAMPO
     ];
 
     /**
@@ -32,6 +33,7 @@ class Reservation extends Model
      */
     protected $casts = [
         'state' => 'boolean',
+        'notification_sent' => 'boolean', // ← NUEVO CAST
         'date' => 'date',
         'hour' => 'string',
         'waiting_hour' => 'string', //Nuevo cast

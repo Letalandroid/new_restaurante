@@ -16,6 +16,7 @@ use App\Pipelines\FilterByCodeRyName;
 use App\Pipelines\FilterByDate;
 use App\Pipelines\FilterByState;
 use App\Services\EmailService;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
@@ -125,11 +126,17 @@ class ReservationController extends Controller
             'waiting_hour' => $waitingHour,
             'reservation_code' => $this->generateReservationCode(),
             'state' => true, // ← AGREGAR ESTA LÍNEA
+            'notification_sent' => false, // ← INICIALIZAR COMO FALSE
         ]);
 
         //Enviar correo
         EmailService::enviarCorreoReserva($customer->load('clienteType'), $reservation, $waitingMinutes);
 
+        // Enviar mensaje de confirmación por WhatsApp
+        WhatsAppService::enviarMensaje(
+            $customer->phone,
+            "✅ Su reservación fue registrada correctamente para el día {$validated['date']} a las {$validated['hour']}. ¡Gracias por reservar con nosotros!"
+        );        
         return response()->json([
             'state' => true,
             'message' => 'Reservación creada correctamente y correo enviado.',
