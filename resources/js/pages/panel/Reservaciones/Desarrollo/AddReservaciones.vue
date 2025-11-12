@@ -356,7 +356,7 @@ async function guardarReserva(): Promise<void> {
             toast.add({ 
                 severity: 'success', 
                 summary: 'Éxito', 
-                detail: 'Reservación registrada correctamente y correo enviado.', 
+                detail: 'Reservación registrada correctamente, correo y mensaje enviados.', 
                 life: 3000 
             });
             hideDialog();

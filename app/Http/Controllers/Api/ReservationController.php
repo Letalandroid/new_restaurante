@@ -135,7 +135,7 @@ class ReservationController extends Controller
         // Enviar mensaje de confirmación por WhatsApp
         WhatsAppService::enviarMensaje(
             $customer->phone,
-            "✅ Su reservación fue registrada correctamente para el día {$validated['date']} a las {$validated['hour']}. ¡Gracias por reservar con nosotros!"
+            "✅ Su reservación fue registrada correctamente para el día {$validated['date']} a las {$validated['hour']} pm. ¡Gracias por reservar con nosotros!"
         );        
         return response()->json([
             'state' => true,
@@ -164,9 +164,16 @@ class ReservationController extends Controller
 
         // Enviar correo de confirmación
         EmailService::enviarCorreoReserva($cliente, $reservation, $waitingMinutes);
+
+        //Enviar mensaje de confirmación por WhatsApp
+        if ($cliente && $cliente->phone) {
+            $mensaje = "✅ Su reservación fue registrada correctamente para el día {$reservation->date->format('Y-m-d')} a las {$reservation->hour} pm. ¡Gracias por reservar con nosotros!";
+            WhatsAppService::enviarMensaje($cliente->phone, $mensaje);
+        }
+
         return response()->json([
             'state' => true,
-            'message' => 'Reservación registrada correctamente y correo enviado.',
+            'message' => 'Reservación registrada correctamente, correo y mensaje enviados.',
             'reservation' => new ReservationResource($reservation->load('customer'))
         ]);
     }
@@ -186,15 +193,25 @@ class ReservationController extends Controller
         $validated = $request->validated();
         $cliente = $reservation->customer;
 
-        //Obtener configuración actual
+        // Obtener configuración actual
         $config = ReservationSetting::latest()->first();
         $waitingMinutes = $config?->waiting_minutes ?? 2;
 
-        // Si el campo "hour" está presente en la actualización, recalculamos la hora de espera
-        if (isset($validated['hour'])) {
-            $hour = Carbon::createFromFormat('H:i', $validated['hour']);
-            $waitingHour = $hour->copy()->addMinutes($waitingMinutes)->format('H:i');
-            $validated['waiting_hour'] = $waitingHour;
+        /**
+         * 🧩 Nueva validación:
+         * Si se intenta reactivar una reservación que ya fue desactivada
+         * junto con su cliente, no se permite hacerlo.
+         */
+        if (
+            array_key_exists('state', $validated) &&
+            $validated['state'] === true && // Se intenta activar
+            $reservation->state === false && // Ya estaba inactiva
+            $cliente && $cliente->state === false // Cliente también inactivo
+        ) {
+            return response()->json([
+                'state' => false,
+                'message' => '❌ No se puede reactivar esta reservación. Debe crear una nueva reservación.'
+            ], 400);
         }
 
         // --- CASO 1: Inactivación manual (por el cliente) ---
@@ -203,22 +220,51 @@ class ReservationController extends Controller
                 $cliente->update(['state' => false]);
             }
 
-            // Solo enviar correo si es el cliente quien inactiva (no expiración automática)
+            $reservation->update($validated);
             EmailService::enviarCorreoInactivacionReserva($cliente, $reservation);
 
-            $reservation->update($validated);
+            if ($cliente && $cliente->phone) {
+                WhatsAppService::enviarMensaje(
+                    $cliente->phone,
+                    "⚠️ Estimado/a {$cliente->name}, su reservación ha sido *inactivada* y sus datos fueron eliminados del sistema. 
+    Si desea reservar nuevamente, puede hacerlo desde nuestra web o comunicándose con nosotros. 🍽️"
+                );
+            }
+
             return response()->json([
                 'state' => true,
-                'message' => 'Reservación e información del cliente inactivadas correctamente. Correo enviado.',
+                'message' => 'Reservación e información del cliente inactivadas correctamente. Notificación enviada.',
                 'reservation' => $reservation->refresh()
             ]);
         }
 
         // --- CASO 2: Actualización normal ---
+        $oldDate = $reservation->date;
+        $oldHour = $reservation->hour;
+
+        // Si se cambia la hora, recalcular hora de espera
+        if (isset($validated['hour'])) {
+            $hour = Carbon::createFromFormat('H:i', $validated['hour']);
+            $waitingHour = $hour->copy()->addMinutes($waitingMinutes)->format('H:i');
+            $validated['waiting_hour'] = $waitingHour;
+        }
+
         $reservation->update($validated);
 
-        // Verificar si se modificaron number_people, date o hour
+        // --- Enviar mensajes si se cambia número de personas, fecha u hora ---
         if ($request->hasAny(['number_people', 'date', 'hour'])) {
+
+            // Reactivar recordatorio
+            $reservation->update(['notification_sent' => false]);
+
+            if ($cliente && $cliente->phone) {
+                WhatsAppService::enviarMensaje(
+                    $cliente->phone,
+                    "✅ Estimado/a {$cliente->name}, su actualización de reservación fue registrada correctamente 
+    para el día *{$reservation->date->format('Y-m-d')}* a las *{$reservation->hour}* pm, para *{$reservation->number_people}* persona(s)."
+                );
+            }
+
             EmailService::enviarCorreoActualizacionReserva($cliente, $reservation, $waitingMinutes);
         }
 

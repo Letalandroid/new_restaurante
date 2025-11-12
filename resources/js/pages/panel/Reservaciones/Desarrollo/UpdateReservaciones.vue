@@ -164,7 +164,7 @@ const updateReservacion = async (): Promise<void> => {
         toast.add({
             severity: 'success',
             summary: 'Actualizado',
-            detail: 'Reservación actualizada correctamente y correo enviado con los datos actualizados.', // ← Cambiar este mensaje
+            detail: 'Reservación actualizada correctamente, correo y mensaje enviados con los datos actualizados.', // ← Cambiar este mensaje
             life: 3000
         });
 
@@ -183,7 +183,7 @@ const updateReservacion = async (): Promise<void> => {
             toast.add({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'No se pudo actualizar la reservación',
+                detail: 'No se puede reactivar esta reservación. Debe crear una nueva reservación.',
                 life: 3000
             });
         }
