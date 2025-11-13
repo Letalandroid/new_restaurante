@@ -2,6 +2,7 @@
     <Toolbar class="mb-6">
         <template #start>
             <Button label="Nuevo cliente" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <Button label="Ir a reservas" icon="pi pi-calendar-plus" severity="secondary" class="mr-2" @click="verReservas" />
         </template>
         <template #end>
             <!-- ToolsCustomer para los botones de exportar e importar -->
@@ -131,7 +132,12 @@ import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import Dropdown from 'primevue/dropdown';
 import ToolsCustomer from './toolsCustomer.vue';
+import { router } from '@inertiajs/core';
 
+const verReservas = (): void => {
+    const url = `/reservaciones`;
+    router.visit(url);
+};
 interface Cliente {
     name: string;
     lastname: string;

@@ -2,6 +2,7 @@
     <Toolbar class="mb-6">
         <template #start>
             <Button label="Nueva reservación" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <Button label="Ir a clientes" icon="pi pi-user-plus" severity="secondary" class="mr-2" @click="verClientes" />
         </template>
         <template #end>
             <ConfigTiempoReserva/>  
@@ -177,7 +178,12 @@ import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import ConfigTiempoReserva from './ConfigTiempoReserva.vue';
+import { router } from '@inertiajs/core';
 
+const verClientes = (): void => {
+    const url = `/clientes`;
+    router.visit(url);
+};
 interface Reserva {
     customer_id: number | null;
     number_people: number | null;
