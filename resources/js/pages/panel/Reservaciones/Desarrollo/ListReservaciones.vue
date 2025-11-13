@@ -83,6 +83,16 @@ watch(() => selectedDate.value, () => {
 });
 
 function editReservation(selected: Reservation) {
+    if (!selected.state) { 
+        toast.add({
+            severity: "error",
+            summary: "Reservación inactiva",
+            detail: "No se puede editar esta reservación porque está inactiva. Debe crear una nueva reservación.",
+            life: 4000
+        });
+        return;
+    }
+
     selectedReservationId.value = selected.id;
     updateReservationDialog.value = true;
 }
@@ -283,6 +293,8 @@ onMounted(() => {
                         icon="pi pi-pencil" 
                         outlined 
                         rounded 
+                        severity="warning"
+                        :class="{ 'opacity-40 cursor-not-allowed': !slotProps.data.state }" 
                         class="w-9 h-9 sm:w-10 sm:h-10" 
                         @click="editReservation(slotProps.data)" 
                     />

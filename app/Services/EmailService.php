@@ -56,7 +56,7 @@ class EmailService
 
                         <div style='margin-top: 20px; border: 1px solid #eee; border-radius: 8px; padding: 18px; background-color: #fef8f2;'>
                             <h4 style='color: #d97706; margin-bottom: 10px; font-size: 17px;'>🧍 Datos del Cliente</h4>
-                            <p style='margin: 6px 0; font-size: 15px;'><b>Nombre:</b> {$cliente->name} {$cliente->lastname}</p>
+                            <p style='margin: 6px 0; font-size: 15px;'><b>Nombres y Apellidos:</b> {$cliente->name} {$cliente->lastname}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Teléfono:</b> {$cliente->phone}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Email:</b> {$cliente->email}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Tipo de Cliente:</b> {$tipoCliente}</p>
@@ -66,7 +66,7 @@ class EmailService
                         <div style='margin-top: 20px; border: 1px solid #eee; border-radius: 8px; padding: 18px; background-color: #f3f4f6;'>
                             <h4 style='color: #d97706; margin-bottom: 10px; font-size: 17px;'>📅 Datos de la Reservación</h4>
                             <p style='margin: 6px 0; font-size: 15px;'><b>N° de personas:</b> {$reserva->number_people}</p>
-                            <p style='margin: 6px 0; font-size: 15px;'><b>Fecha:</b> {$reserva->date}</p>
+                            <p style='margin: 6px 0; font-size: 15px;'><b>Fecha:</b> {$reserva->date->format('Y-m-d')}</p>
                             <p style='margin: 6px 0; font-size: 15px;'><b>Hora:</b> {$reserva->hour} pm</p>
 
                             <!-- NUEVAS LÍNEAS -->
@@ -145,7 +145,7 @@ class EmailService
                         <div style='margin-top: 15px; background-color: #fef8f2; border: 1px solid #eee; border-radius: 8px; padding: 15px;'>
                             <h4 style='color:#d97706;'>📅 Nuevos Datos de la Reservación</h4>
                             <p><b>N° de personas:</b> {$reserva->number_people}</p>
-                            <p><b>Fecha:</b> {$reserva->date}</p>
+                            <p><b>Fecha:</b> {$reserva->date->format('Y-m-d')}</p>
                             <p><b>Hora:</b> {$reserva->hour} pm</p>
                             <p><b>Tiempo de espera:</b> {$waitingMinutes} minutos</p>
                             <p><b>Hora límite de espera:</b> {$reserva->waiting_hour} pm</p>
