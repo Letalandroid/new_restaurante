@@ -42,7 +42,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
@@ -55,29 +55,40 @@ import { useToast } from 'primevue/usetoast';
 import { defineEmits } from 'vue';
 import ToolsClientType from './toolsClientType.vue';
 
+interface TipoCliente {
+    name: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    name?: string[];
+    state?: string[];
+}
+
 const toast = useToast();
-const submitted = ref(false);
-const tipoClienteDialog = ref(false);
-const serverErrors = ref({});
+const submitted = ref<boolean>(false);
+const tipoClienteDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 const emit = defineEmits(['tipo-cliente-agregado']);
 
-const tipoCliente = ref({
+const tipoCliente = ref<TipoCliente>({
     name: '',
     state: true
 });
+
 // Método para recargar la lista de tipos de cliente
-const loadTipoCliente = async () => {
+const loadTipoCliente = async (): Promise<void> => {
     try {
-        const response = await axios.get('/tipos_clientes');  // Aquí haces una solicitud GET para obtener los tipos de cliente
+        const response = await axios.get('/tipos_clientes');
         console.log(response.data);
-        // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('tipos_clientes-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('tipo-cliente-agregado');
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los tipos de cliente', life: 3000 });
         console.error(error);
     }
-}
-function resetTipoCliente() {
+};
+
+function resetTipoCliente(): void {
     tipoCliente.value = {
         name: '',
         state: true
@@ -86,37 +97,36 @@ function resetTipoCliente() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetTipoCliente();
     tipoClienteDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     tipoClienteDialog.value = false;
     resetTipoCliente();
 }
 
-function guardarTipoCliente() {
+async function guardarTipoCliente(): Promise<void> {
     submitted.value = true;
     serverErrors.value = {};
 
-    axios.post('/tipo_cliente', tipoCliente.value)
-        .then(() => {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Tipo de cliente registrado', life: 3000 });
-            hideDialog();
-            emit('tipo-cliente-agregado');
-        })
-        .catch(error => {
-            if (error.response && error.response.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
-            } else {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'No se pudo registrar el tipo de cliente',
-                    life: 3000
-                });
-            }
-        });
+    try {
+        await axios.post('/tipo_cliente', tipoCliente.value);
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Tipo de cliente registrado', life: 3000 });
+        hideDialog();
+        emit('tipo-cliente-agregado');
+    } catch (error: any) {
+        if (error.response && error.response.status === 422) {
+            serverErrors.value = error.response.data.errors || {};
+        } else {
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo registrar el tipo de cliente',
+                life: 3000
+            });
+        }
+    }
 }
 </script>

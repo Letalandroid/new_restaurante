@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
@@ -12,25 +12,53 @@ import { debounce } from 'lodash';
 import DeleteProveedor from './DeleteProveedor.vue';
 import UpdateProveedor from './UpdateProveedor.vue';
 import Select from 'primevue/select';
+import { useToast } from 'primevue/usetoast';
+
+// Interfaces
+interface Proveedor {
+    id: number;
+    name: string;
+    ruc: string;
+    address: string;
+    phone: string;
+    creacion?: string;
+    actualizacion?: string;
+    state: boolean | number;
+}
+
+interface EstadoOption {
+    name: string;
+    value: string | number | '';
+}
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface Filters {
+    state: number | null;
+    online: boolean | null;
+}
 
 const dt = ref();
-const proveedores = ref([]);
-const selectedProveedores = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteProveedorDialog = ref(false);
-const proveedor = ref({});
-const selectedProveedorId = ref(null);
-const selectedEstadoProveedor = ref(null);
-const updateProveedorDialog = ref(false);
-const currentPage = ref(1);
+const proveedores = ref<Proveedor[]>([]);
+const selectedProveedores = ref<Proveedor[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteProveedorDialog = ref<boolean>(false);
+const proveedor = ref<Proveedor | null>(null);
+const selectedProveedorId = ref<number | null>(null);
+const selectedEstadoProveedor = ref<EstadoOption | null>(null);
+const updateProveedorDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const props = defineProps<{
+    refresh: number;
+}>();
+
+const toast = useToast();
 
 watch(() => props.refresh, () => {
     loadProveedor();
@@ -41,12 +69,12 @@ watch(() => selectedEstadoProveedor.value, () => {
     loadProveedor();
 });
 
-function editProveedor(proveedor) {
-    selectedProveedorId.value = proveedor.id;
+function editProveedor(prov: Proveedor) {
+    selectedProveedorId.value = prov.id;
     updateProveedorDialog.value = true;
 }
 
-const estadoProveedorOptions = ref([
+const estadoProveedorOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
@@ -56,18 +84,18 @@ function handleProveedorUpdated() {
     loadProveedor();
 }
 
-function confirmDeleteProveedor(selected) {
+function confirmDeleteProveedor(selected: Proveedor) {
     proveedor.value = selected;
     deleteProveedorDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const filters = ref({
+const filters = ref<Filters>({
     state: null,
     online: null
 });
@@ -79,7 +107,7 @@ function handleProveedorDeleted() {
 const loadProveedor = async () => {
     loading.value = true;
     try {
-        const params = {
+        const params: Record<string, any> = {
             page: pagination.value.currentPage,
             per_page: pagination.value.perPage,
             search: globalFilterValue.value,
@@ -94,7 +122,7 @@ const loadProveedor = async () => {
         proveedores.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error al cargar proveedores:', error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los proveedores', life: 3000 });
     } finally {
@@ -102,16 +130,14 @@ const loadProveedor = async () => {
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadProveedor();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number) => {
+    return value ? 'success' : 'danger';
 };
 
 const onGlobalSearch = debounce(() => {
@@ -125,29 +151,64 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedProveedores" :value="proveedores" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <DataTable
+        ref="dt"
+        v-model:selection="selectedProveedores"
+        :value="proveedores"
+        dataKey="id"
+        :paginator="true"
+        :rows="pagination.perPage"
+        :totalRecords="pagination.total"
+        :loading="loading"
+        :lazy="true"
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
+        scrollable
+        :scrollHeight="'auto'"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores">
-
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
+    >
+        <!-- Header con búsqueda y filtros -->
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">PROVEEDORES</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <!-- Búsqueda global -->
+                    <IconField class="flex-1 sm:flex-auto">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar proveedor..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoProveedor" :options="estadoProveedorOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadProveedor" />
+
+                    <!-- Filtro por estado -->
+                    <Select
+                        v-model="selectedEstadoProveedor"
+                        :options="estadoProveedorOptions"
+                        optionLabel="name"
+                        placeholder="Estado"
+                        class="w-full sm:w-auto"
+                    />
+
+                    <!-- Botón refrescar -->
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadProveedor" 
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
         <Column field="name" header="Nombre" sortable style="min-width: 12rem" />
         <Column field="ruc" header="RUC" sortable style="min-width: 10rem" />
@@ -162,14 +223,13 @@ onMounted(() => {
         </Column>
         <Column field="actions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editProveedor(slotProps.data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger"
-                    @click="confirmDeleteProveedor(slotProps.data)" />
+                <Button icon="pi pi-pencil" outlined rounded class="mr-2 mb-2 sm:mb-0" @click="editProveedor(slotProps.data)" />
+                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeleteProveedor(slotProps.data)" />
             </template>
         </Column>
     </DataTable>
 
+    <!-- Modales -->
     <DeleteProveedor v-model:visible="deleteProveedorDialog" :proveedor="proveedor" @deleted="handleProveedorDeleted" />
-    <UpdateProveedor v-model:visible="updateProveedorDialog" :proveedorId="selectedProveedorId"
-        @updated="handleProveedorUpdated" />
+    <UpdateProveedor v-model:visible="updateProveedorDialog" :proveedorId="selectedProveedorId" @updated="handleProveedorUpdated" />
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <Head title="Clientes" />
+    <Head title="Certificado sunat" />
     <AppLayout>
         <div>
             <template v-if="isLoading">
@@ -7,7 +7,7 @@
             </template>
             <template v-else>
                 <div class="card">
-                                    <SubirCertificado :refresh="refreshKey"/>
+                <SubirCertificado :refresh="refreshKey"/>
 
              </div>
             </template>
@@ -25,9 +25,7 @@ import SubirCertificado from './Desarrollo/SubirCertificado.vue';
 const isLoading = ref(true);
 const refreshKey = ref(0);
 
-function refrescarListado() {
-    refreshKey.value++;
-}
+
 onMounted(() => {
     setTimeout(() => {
         isLoading.value = false;

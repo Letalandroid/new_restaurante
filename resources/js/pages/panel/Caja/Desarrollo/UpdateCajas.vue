@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -7,38 +7,59 @@ import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
 import axios from 'axios';
-import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
+import Dropdown from 'primevue/dropdown';
 
-const props = defineProps({
-    visible: Boolean,
-    cajaId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Caja {
+    state: boolean;
+    idVendedor: number | null;
+    numero_cajas?: string;
+}
+
+interface VendedorOption {
+    label: string;
+    value: number;
+}
+
+interface ServerErrors {
+    idVendedor?: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    cajaId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const serverErrors = ref({});
+const serverErrors = ref<ServerErrors>({});
 const submitted = ref(false);
 const loading = ref(false);
 
-const dialogVisible = ref(props.visible); // Mantener la visibilidad del modal controlada por el padre
+const dialogVisible = ref<boolean>(props.visible);
 
-watch(() => props.visible, (val) => dialogVisible.value = val); // Actualizar cuando la propiedad 'visible' cambie desde el componente padre
+watch(() => props.visible, (val) => (dialogVisible.value = val));
+watch(dialogVisible, (val) => emit('update:visible', val));
 
-watch(dialogVisible, (val) => emit('update:visible', val)); // Enviar cambios de visibilidad al componente padre
-
-const caja = ref({
+const caja = ref<Caja>({
     state: false,
     idVendedor: null
 });
 
-const vendedores = ref([]);
+const vendedores = ref<VendedorOption[]>([]);
 
-watch(() => props.visible, async (val) => {
-    if (val && props.cajaId) {
-        await fetchCaja();
-        await fetchVendedores();
+watch(
+    () => props.visible,
+    async (val) => {
+        if (val && props.cajaId) {
+            await fetchCaja();
+            await fetchVendedores();
+        }
     }
-});
+);
 
 const fetchCaja = async () => {
     loading.value = true;
@@ -47,7 +68,7 @@ const fetchCaja = async () => {
         const c = data.caja;
         caja.value = {
             state: c.state,
-            numero_cajas: c.numero_cajas,  // Asignamos el número de caja
+            numero_cajas: c.numero_cajas,
             idVendedor: c.idVendedor,
         };
     } catch (error) {
@@ -57,6 +78,7 @@ const fetchCaja = async () => {
             detail: 'No se pudo cargar la caja',
             life: 3000
         });
+        console.error('Error caja', error)
     } finally {
         loading.value = false;
     }
@@ -65,9 +87,14 @@ const fetchCaja = async () => {
 const fetchVendedores = async () => {
     try {
         const { data } = await axios.get('/usuarios', { params: { status: true } });
-        vendedores.value = data.data.map((c) => ({ label: c.name1, value: c.id }));
+        vendedores.value = data.data.map((c: any) => ({ label: c.name1, value: c.id }));
     } catch (e) {
-        toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'No se pudieron cargar los vendedores' });
+        toast.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar los vendedores'
+        });
+        console.error('Error vendedores', e)
     }
 };
 
@@ -77,11 +104,10 @@ const updateCaja = async () => {
 
     try {
         const dataToSend = {
-            state: caja.value.state === true,  // Mantén el estado correcto
+            state: caja.value.state === true,
             idVendedor: caja.value.idVendedor
         };
 
-        // Realiza la actualización
         await axios.put(`/caja/${props.cajaId}`, dataToSend);
 
         toast.add({
@@ -93,13 +119,12 @@ const updateCaja = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
-        // Si hay un error de validación (por ejemplo, el vendedor ya está asignado)
+    } catch (error: any) {
         if (error.response?.status === 422 && error.response?.data?.message) {
             toast.add({
                 severity: 'error',
                 summary: 'Error',
-                detail: error.response.data.message, // Mostrar el mensaje de error
+                detail: error.response.data.message,
                 life: 3000
             });
         } else {
@@ -115,41 +140,63 @@ const updateCaja = async () => {
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" header="Editar Caja" modal :closable="true" :closeOnEscape="true" :style="{ width: '500px' }">
+  <Dialog 
+    v-model:visible="dialogVisible" 
+    header="Editar Caja" 
+    modal 
+    :closable="true" 
+    :closeOnEscape="true"
+    :style="{ width: '90%', maxWidth: '450px' }"
+  >
     <div class="flex flex-col gap-6">
         <div class="grid grid-cols-12 gap-4">
             <!-- Número de caja -->
-            <div class="col-span-9">
-                <label class="block font-bold mb-2">Número de caja</label>
-                <InputText v-model="caja.numero_cajas" readonly fluid />
+            <div class="col-span-7 sm:col-span-9">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Número de caja</label>
+                <InputText 
+                  v-model="caja.numero_cajas" 
+                  readonly 
+                  fluid 
+                  class="w-full"
+                  disabled
+                />
             </div>
 
             <!-- Estado -->
-            <div class="col-span-2">
-                <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
-                <div class="flex items-center gap-3">
+            <div class="col-span-5 sm:col-span-3">
+                <label class="block font-bold mb-2 text-sm sm:text-base">
+                  Estado <span class="text-red-500">*</span>
+                </label>
+                <div class="flex items-center gap-3 flex-wrap">
                     <Checkbox v-model="caja.state" :binary="true" fluid />
-                    <Tag :value="caja.state ? 'Sin ocupar' : 'Ocupada'"
-                        :severity="caja.state ? 'success' : 'danger'" />
+                    <Tag 
+                      :value="caja.state ? 'Sin ocupar' : 'Ocupada'" 
+                      :severity="caja.state ? 'success' : 'danger'" 
+                    />
                 </div>
             </div>
 
-            <!-- Vendedor (Dropdown con búsqueda) -->
-                <div class="col-span-12">
-                    <label class="block font-bold mb-2">Vendedor <span class="text-red-500">*</span></label>
-                    <Dropdown 
-                        v-model="caja.idVendedor"
-                        :options="vendedores"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Seleccione vendedor"
-                        filter
-                        filterBy="label"
-                        fluid
-                        :class="{ 'p-invalid': serverErrors.idVendedor }" 
-                    />
-                    <small v-if="serverErrors.idVendedor" class="p-error">{{ serverErrors.idVendedor[0] }}</small>
-                </div>
+            <!-- Vendedor -->
+            <div class="col-span-12">
+                <label class="block font-bold mb-2 text-sm sm:text-base">
+                  Vendedor <span class="text-red-500">*</span>
+                </label>
+                <Dropdown 
+                    v-model="caja.idVendedor"
+                    :options="vendedores"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Seleccione vendedor"
+                    filter
+                    filterBy="label"
+                    fluid
+                    class="w-full"
+                    :class="{ 'p-invalid': serverErrors.idVendedor }" 
+                />
+                <small v-if="serverErrors.idVendedor" class="p-error text-xs sm:text-sm">
+                  {{ serverErrors.idVendedor[0] }}
+                </small>
+            </div>
         </div>
     </div>
 
@@ -157,6 +204,5 @@ const updateCaja = async () => {
         <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
         <Button label="Guardar" icon="pi pi-check" @click="updateCaja" :loading="loading" />
     </template>
-</Dialog>
-
+  </Dialog>
 </template>

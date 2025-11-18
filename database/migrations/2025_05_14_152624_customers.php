@@ -14,7 +14,10 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('codigo',11)->unique()->comment('DNI/RUC de 8/11 dígitos numéricos');
+            $table->string('lastname');
+            $table->string('email');
+            $table->string('phone',9);
+            $table->string('codigo',11)->comment('DNI/RUC de 8/11 dígitos numéricos');
             $table->foreignId('client_type_id')->constrained('client_types','id');
             $table->boolean('state')->default(true);
             $table->timestamps();

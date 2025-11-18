@@ -1,5 +1,5 @@
 <template>
-    <Head title="Movimiento de Compra de Insumos" />
+    <Head title="Movimiento de Compra de Items" />
     <AppLayout>
         <div>
             <template v-if="isLoading">

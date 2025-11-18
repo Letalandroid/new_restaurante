@@ -39,7 +39,7 @@ const cancelLogout = () => {
             <Link href="/dashboard" class="layout-topbar-logo flex items-center gap-2">
                 <HomeModernIcon class="h-8 w-8 text-primary" />
                 <span class="text-lg font-sans font-bold uppercase text-gray-800 dark:text-white">
-  Restaurante
+  Rest Sabor Andino
 </span>
 
             </Link>

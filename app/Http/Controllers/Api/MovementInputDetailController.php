@@ -8,6 +8,7 @@ use App\Http\Requests\MovementInputDetails\UpdateMovementInputDetailRequest;
 use App\Http\Resources\MovementInputDetailResource;
 use App\Models\MovementInputDetail;
 use App\Pipelines\FilterByNameInput;
+use App\Pipelines\FilterByNameProduct;
 use Illuminate\Http\Request;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Log;
@@ -26,8 +27,9 @@ public function index(Request $request, $id)
     $movementInputDetails = app(Pipeline::class)
         ->send(MovementInputDetail::query()->where('idMovementInput', $id))  // Filtro por idMovementInput
         ->through([new FilterByNameInput($request->input('search'))])
+        ->through([new FilterByNameProduct($request->input('search'))])  // Puedes agregar más filtros aquí si es necesario
         ->thenReturn()
-        ->with('movementInput', 'input')  // Cargar relaciones necesarias
+        ->with('movementInput', 'input', 'product')  // Cargar relaciones necesarias
         ->paginate($perPage);  // Pagina los resultados
 
     // Si no hay detalles, devolver respuesta vacía
@@ -96,15 +98,20 @@ public function store(StoreMovementInputDetailRequest $request)
 
     $validated = $request->validated(); // Valida los datos según la solicitud
 
-    // Verificar si ya existe un detalle de movimiento con el mismo idInput e idMovementInput
+    // Verificar si se usa idInput o idProduct
+    $idInput = $validated['idInput'] ?? null;
+    $idProduct = $validated['idProduct'] ?? null;
+
+    // Verificar duplicados según el tipo
     $exists = MovementInputDetail::where('idMovementInput', $validated['idMovementInput'])
-                                ->where('idInput', $validated['idInput'])
+                                ->when($idInput, fn($q) => $q->where('idInput', $idInput))
+                                ->when($idProduct, fn($q) => $q->where('idProduct', $idProduct))
                                 ->exists();
 
     if ($exists) {
         return response()->json([
             'state' => false,
-            'message' => 'Ya existe un detalle de movimiento con el mismo insumo para este movimiento.',
+            'message' => 'Ya existe un detalle de movimiento con el mismo insumo o producto para este movimiento.',
         ], 422); // 422 Unprocessable Entity si el registro ya existe
     }
 
@@ -138,6 +145,9 @@ public function store(StoreMovementInputDetailRequest $request)
 
         $validated = $request->validated();
 
+        $idInput = $validated['idInput'] ?? null;
+        $idProduct = $validated['idProduct'] ?? null;
+
         // Check if the MovementInput exists
         $movementInputExists = \App\Models\MovementInput::find($validated['idMovementInput']);
 
@@ -150,8 +160,9 @@ public function store(StoreMovementInputDetailRequest $request)
 
         // Check if this movement input and input combination already exists
         $inputExists = MovementInputDetail::where('idMovementInput', $validated['idMovementInput'])
-            ->where('idInput', $validated['idInput'])
-            ->where('id', '!=', $MovementInputDetail->id)  // Verify for other records with different ID
+            ->when($idInput, fn($q) => $q->where('idInput', $idInput))
+            ->when($idProduct, fn($q) => $q->where('idProduct', $idProduct))
+            ->where('id', '!=', $MovementInputDetail->id)
             ->exists();
 
         if ($inputExists) {

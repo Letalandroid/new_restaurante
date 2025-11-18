@@ -1,19 +1,53 @@
 <template>
+    <!-- Toolbar responsive -->
     <Toolbar class="mb-6">
         <template #start>
-            <Button label="Agregar Cajas" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
+                <Button 
+                    label="Agregar Cajas" 
+                    icon="pi pi-plus" 
+                    severity="secondary" 
+                    class="w-full sm:w-auto" 
+                    @click="openNew" 
+                />
+            </div>
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="cajaDialog" :style="{ width: '500px' }" header="Registro de cajas" :modal="true">
+    <!-- Diálogo responsive -->
+    <Dialog 
+        v-model:visible="cajaDialog" 
+        :style="{ width: '90%', maxWidth: '500px' }" 
+        header="Registro de cajas" 
+        :modal="true"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
                 <!-- Número de cajas -->
                 <div class="col-span-12">
-                    <label class="block font-bold mb-2">Ingresa número de cajas a crear: <span class="text-red-500">*</span></label>
-                    <InputText v-model.trim="caja.numero_cajas" type="number" fluid maxlength="100" />
-                    <small v-if="submitted && !caja.numero_cajas" class="text-red-500">El número de cajas es obligatorio.</small>
-                    <small v-else-if="serverErrors.numero_cajas" class="text-red-500">{{ serverErrors.numero_cajas[0] }}</small>
+                    <label class="block font-bold mb-2 text-sm sm:text-base">
+                        Ingresa número de cajas a crear: 
+                        <span class="text-red-500">*</span>
+                    </label>
+                    <InputText 
+                        v-model.trim="caja.numero_cajas" 
+                        type="number" 
+                        fluid 
+                        maxlength="100"
+                        class="w-full"
+                    />
+                    <small 
+                        v-if="submitted && !caja.numero_cajas" 
+                        class="text-red-500 block mt-1 text-xs sm:text-sm"
+                    >
+                        El número de cajas es obligatorio.
+                    </small>
+                    <small 
+                        v-else-if="serverErrors.numero_cajas" 
+                        class="text-red-500 block mt-1 text-xs sm:text-sm"
+                    >
+                        {{ serverErrors.numero_cajas[0] }}
+                    </small>
                 </div>
             </div>
         </div>
@@ -25,28 +59,38 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
 
-const toast = useToast();
-const submitted = ref(false);
-const cajaDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['caja-agregada']);
+interface Caja {
+    numero_cajas: string;
+}
 
-const caja = ref({
-    numero_cajas: '',  // Solo se ingresa el número de cajas
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const toast = useToast();
+const submitted = ref<boolean>(false);
+const cajaDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'caja-agregada'): void;
+}>();
+
+const caja = ref<Caja>({
+    numero_cajas: '',
 });
 
 function resetCaja() {
     caja.value = {
-        numero_cajas: '', // Inicializar en 1
+        numero_cajas: '',
     };
     serverErrors.value = {};
     submitted.value = false;
@@ -72,9 +116,9 @@ function guardarCaja() {
             hideDialog();
             emit('caja-agregada');
         })
-        .catch(error => {
-            if (error.response?.status === 422) {
-                serverErrors.value = error.response.data.errors || {};
+        .catch((error: AxiosError) => {
+            if (error.response && error.response.status === 422) {
+                serverErrors.value = (error.response.data as any).errors || {};
             } else {
                 toast.add({
                     severity: 'error',

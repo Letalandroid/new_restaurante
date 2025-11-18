@@ -13,6 +13,9 @@ class Customer extends Model
 
     protected $fillable = [
         'name',
+        'lastname',
+        'email',
+        'phone',
         'codigo',
         'client_type_id',
         'state',
@@ -24,5 +27,13 @@ class Customer extends Model
 
     public function clienteType(): BelongsTo{
         return $this->belongsTo(ClientType::class,'client_type_id','id');
+    }
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'customer_id');
+    }
+    public function tieneRelaciones(): bool
+    {
+        return $this->reservations()->exists();
     }
 }

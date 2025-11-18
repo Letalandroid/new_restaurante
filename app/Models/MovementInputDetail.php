@@ -14,6 +14,7 @@ class MovementInputDetail extends Model
     protected $fillable = [
         'idMovementInput',
         'idInput',
+        'idProduct',
         'quantity',
         'totalPrice',
         'priceUnit',
@@ -39,5 +40,10 @@ public function movementInput()
     public function input()
     {
         return $this->belongsTo(Input::class, 'idInput');
+    }
+    // Relación con Product
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'idProduct');
     }
 }

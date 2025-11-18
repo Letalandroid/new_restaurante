@@ -30,9 +30,13 @@ public function index(Request $request)
         $movementsInput->where('idMovementInput', $request->input('idMovementInput'));
     }
 
-    // Filtrar por idInput si está presente
+    // Filtrar por AMBOS si está presente
     if ($request->has('idInput')) {
         $movementsInput->where('idInput', $request->input('idInput'));
+    }
+    
+    if ($request->has('idProduct')) {
+        $movementsInput->where('idProduct', $request->input('idProduct'));
     }
 
     // Filtrar por fechas si están presentes
@@ -95,13 +99,24 @@ public function update(UpdateMovementInputKardexRequest $request, KardexInput $k
 
     try {
         // Buscar el KardexInput usando los parámetros idInput y idMovementInput
-        $kardexInput = KardexInput::where('idMovementInput', $validated['idMovementInput'])
-            ->where('idInput', $validated['idInput'])
-            ->first();
+        $query = KardexInput::where('idMovementInput', $validated['idMovementInput']);
 
-        // Verificar si el KardexInput existe
+        if (isset($validated['idInput'])) {
+            $query->where('idInput', $validated['idInput'])
+                  ->whereNull('idProduct'); // Asegurar que no sea product
+        } elseif (isset($validated['idProduct'])) {
+            $query->where('idProduct', $validated['idProduct'])
+                  ->whereNull('idInput'); // Asegurar que no sea input
+        }
+
+        $kardexInput = $query->first();
+
         if (!$kardexInput) {
-            Log::error("No se encontró el KardexInput con idMovementInput: {$validated['idMovementInput']} y idInput: {$validated['idInput']}");
+            $logData = isset($validated['idInput']) ? 
+                "idInput: {$validated['idInput']}" : 
+                "idProduct: {$validated['idProduct']}";
+                
+            Log::error("No se encontró Kardex con idMovementInput: {$validated['idMovementInput']} y {$logData}");
             return response()->json([
                 'state' => false,
                 'message' => 'Kardex no encontrado.',
@@ -115,12 +130,12 @@ public function update(UpdateMovementInputKardexRequest $request, KardexInput $k
         // Responder con un mensaje de éxito
         return response()->json([
             'state' => true,
-            'message' => 'Kardex Input actualizado correctamente',
+            'message' => 'Kardex actualizado correctamente',
             'kardexInput' => new MovementInputKardexResource($kardexInput),
         ]);
     } catch (\Exception $e) {
         // Registrar cualquier error inesperado
-        Log::error('Error al actualizar KardexInput: ' . $e->getMessage());
+        Log::error('Error al actualizar Kardex: ' . $e->getMessage());
         return response()->json([
             'state' => false,
             'message' => 'Ocurrió un error al actualizar el Kardex.',

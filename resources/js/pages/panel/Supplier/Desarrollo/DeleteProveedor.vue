@@ -1,28 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    proveedor: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Proveedor {
+    id: number;
+    name: string;
+    [key: string]: any;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    proveedor: Proveedor | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
-watch(() => props.visible, (newVal) => {
+watch(() => props.visible, (newVal: boolean) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteProveedor() {
+async function deleteProveedor(): Promise<void> {
+    if (!props.proveedor) return;
     try {
         await axios.delete(`/proveedor/${props.proveedor.id}`);
         emit('deleted');
@@ -33,7 +44,7 @@ async function deleteProveedor() {
             detail: 'Proveedor eliminado correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el proveedor';
         if (error.response) {
@@ -45,7 +56,7 @@ async function deleteProveedor() {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px' }" header="Confirmar" :modal="true"
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />

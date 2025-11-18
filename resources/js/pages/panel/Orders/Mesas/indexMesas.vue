@@ -19,7 +19,8 @@
                 <InputText 
                   :value="username" 
                   class="w-full bg-gray-100" 
-                  readonly 
+                  readonly
+                  disabled 
                 />
               </div>
             </div>
@@ -72,28 +73,41 @@ import AppLayout from '@/layout/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import Espera from '@/components/Espera.vue';
 import ListMesas from './Desarrollo/ListMesas.vue';
-import axios from 'axios'; // Asegúrate de importar axios si no lo has hecho aún
+import axios, { AxiosResponse } from 'axios'; // Asegúrate de importar axios si no lo has hecho aún
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 import Button from 'primevue/button';
+
 const toast = useToast();
 
-const isLoading = ref(true);
-const refreshKey = ref(0);
-const showAperturaCaja = ref(false); // Variable para controlar la visibilidad de la apertura de caja
-const username = ref('');
-const cajaSeleccionada = ref(null);
-const cajasDisponibles = ref([]);
-
-// Función para refrescar el listado de mesas
-function refrescarListado() {
-    refreshKey.value++;
+// Tipos de datos
+interface Caja {
+  id: number;
+  numero_cajas: string;
+  state: boolean;
 }
 
+interface UserResponse {
+  success: boolean;
+  name: string;
+  apellidos: string;
+}
+
+interface CajaActivaResponse {
+  caja: boolean | null;
+}
+
+const isLoading = ref<boolean>(true);
+const refreshKey = ref<number>(0);
+const showAperturaCaja = ref<boolean>(false); // Variable para controlar la visibilidad de la apertura de caja
+const username = ref<string>('');
+const cajaSeleccionada = ref<number | null>(null);
+const cajasDisponibles = ref<Caja[]>([]);
+
 // Función para verificar si el usuario tiene una caja activa y decidir qué mostrar
-const goToApertura = async () => { 
+const goToApertura = async (): Promise<void> => { 
   try {
-    const response = await axios.get('/caja/mi-caja-activa');
+    const response: AxiosResponse<CajaActivaResponse> = await axios.get('/caja/mi-caja-activa');
     
     if (response.data.caja) {
       // Si tiene una caja activa, mostrar el listado de mesas
@@ -111,7 +125,7 @@ const goToApertura = async () => {
 };
 
 // Función para aperturar la caja
-const aperturarCaja = async () => {
+const aperturarCaja = async (): Promise<void> => {
   if (!cajaSeleccionada.value) {
     toast.add({
       severity: 'warn',
@@ -124,7 +138,7 @@ const aperturarCaja = async () => {
 
   const cajaSeleccionadaObj = cajasDisponibles.value.find(caja => caja.id === cajaSeleccionada.value);
 
-  if (cajaSeleccionadaObj.state === false) {
+  if (cajaSeleccionadaObj && cajaSeleccionadaObj.state === false) {
     toast.add({
       severity: 'warn',
       summary: 'Advertencia',
@@ -149,7 +163,7 @@ const aperturarCaja = async () => {
 
     // Después de aperturar, muestra el listado de mesas
     showAperturaCaja.value = false;
-  } catch (error) {
+  } catch (error: any) {
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -160,24 +174,24 @@ const aperturarCaja = async () => {
 };
 
 // Obtener datos al montar el componente
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
   try {
     // Obtener el nombre del vendedor
-    const userResponse = await axios.get('/user-id');
+    const userResponse: AxiosResponse<UserResponse> = await axios.get('/user-id');
     if (userResponse.data.success) {
       username.value = `${userResponse.data.name} ${userResponse.data.apellidos}`;
     }
 
     // Obtener cajas disponibles
-    const cajasResponse = await axios.get('/caja/disponibles');
-    cajasDisponibles.value = cajasResponse.data.map(caja => ({
+    const cajasResponse: AxiosResponse<Caja[]> = await axios.get('/caja/disponibles');
+    cajasDisponibles.value = cajasResponse.data.map((caja: Caja) => ({
       id: caja.id,
       numero_cajas: caja.numero_cajas,
       state: caja.state
     }));
 
     // Realizar la verificación de la caja activa
-    goToApertura();
+    await goToApertura();
   } catch (error) {
     console.error('Error cargando datos:', error);
     isLoading.value = false;

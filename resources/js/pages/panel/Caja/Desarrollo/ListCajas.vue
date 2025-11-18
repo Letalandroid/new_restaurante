@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Button from 'primevue/button';
@@ -9,28 +9,42 @@ import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 import Select from 'primevue/select';
-import { debounce } from 'lodash'
+import { debounce } from 'lodash';
 import DeleteCajas from './DeleteCajas.vue';
 import UpdateCajas from './UpdateCajas.vue';
 
-const cajas = ref([]);
+interface Caja {
+    id: number;
+    numero_cajas: string;
+    state: boolean;
+    vendedorNombre: string;
+}
+
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+const cajas = ref<Caja[]>([]);
 const loading = ref(false);
+const selectedCajas = ref<Caja[] | null>(null);
 const globalFilterValue = ref('');
 const deleteCajaDialog = ref(false);
 const updateCajaDialog = ref(false);
-const selectedCajaId = ref(null);
-const caja = ref({});
+const selectedCajaId = ref<number | null>(null);
+const caja = ref<Caja| null>(null);
 const currentPage = ref(1);
-const selectedVendedor = ref(null);
-const selectedEstadoCaja = ref(null);
+const selectedVendedor = ref<any>(null);
+const selectedEstadoCaja = ref<{ name: string; value: string | number | boolean } | null>(null);
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const estadoCajaOptions = ref([
+const estadoCajaOptions = ref<{ name: string; value: string | number | boolean }[]>([
     { name: 'TODOS', value: '' },
     { name: 'SIN OCUPAR', value: 1 },
     { name: 'OCUPADA', value: 0 },
@@ -57,12 +71,9 @@ const loadCajas = async () => {
     }
 };
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+const props = defineProps<{
+    refresh: number;
+}>();
 
 watch(() => props.refresh, loadCajas);
 watch(() => selectedEstadoCaja.value, () => {
@@ -70,7 +81,7 @@ watch(() => selectedEstadoCaja.value, () => {
     loadCajas();
 });
 
-const onPage = (event) => {
+const onPage = (event: any) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadCajas();
@@ -81,19 +92,18 @@ const onGlobalSearch = debounce(() => {
     loadCajas();
 }, 500);
 
-const getSeverity = (value) => {
+const getSeverity = (value: boolean) => {
     return value ? 'success' : 'danger';
 };
 
-// Cuando haces clic en editar, asegúrate de actualizar el ID de la caja seleccionada y abrir el modal
-const editarCaja = (caja) => {
-    selectedCajaId.value = caja.id; // Asignar el ID de la caja seleccionada
-    updateCajaDialog.value = true;  // Abrir el modal
+const editarCaja = (cajaData: Caja) => {
+    selectedCajaId.value = cajaData.id;
+    updateCajaDialog.value = true;
 };
 
-const confirmarDeleteCaja = (data) => {
-    caja.value = data;  // Aquí estás pasando la caja seleccionada
-    deleteCajaDialog.value = true;  // Mostrar el modal de confirmación
+const confirmarDeleteCaja = (data: Caja) => {
+    caja.value = data;
+    deleteCajaDialog.value = true;
 };
 
 function handleCajaUpdated() {
@@ -109,6 +119,8 @@ onMounted(loadCajas);
 
 <template>
     <DataTable
+        ref="dt"
+        v-model:selection="selectedCajas"
         :value="cajas"
         :paginator="true"
         :rows="pagination.perPage"
@@ -116,23 +128,49 @@ onMounted(loadCajas);
         :loading="loading"
         :lazy="true"
         @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]"
         dataKey="id"
-        scrollable scrollHeight="574px"
+        scrollable
+        scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} cajas"
+        class="w-full overflow-x-auto"
     >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <h4 class="m-0">CAJAS</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
-                    </IconField>
-                    <Select v-model="selectedEstadoCaja" :options="estadoCajaOptions" optionLabel="name" placeholder="Estado" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadCajas" />
+
+                <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-end">
+                    <div class="flex items-center w-full sm:w-auto">
+                        <IconField class="w-full sm:w-64">
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText 
+                                v-model="globalFilterValue" 
+                                @input="onGlobalSearch" 
+                                placeholder="Buscar por n° caja..." 
+                                class="w-full"
+                            />
+                        </IconField>
+                    </div>
+
+                    <Select 
+                        v-model="selectedEstadoCaja" 
+                        :options="estadoCajaOptions" 
+                        optionLabel="name" 
+                        placeholder="Estado" 
+                        class="w-full sm:w-40"
+                    />
+
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        class="w-full sm:w-auto"
+                        @click="loadCajas" 
+                    />
                 </div>
             </div>
         </template>
@@ -141,14 +179,16 @@ onMounted(loadCajas);
         <Column field="numero_cajas" header="N° de caja" sortable style="min-width: 10rem" />
         <Column field="state" header="Estado" sortable>
             <template #body="{ data }">
-                <Tag :value="data.state ?  'Sin ocupar':'Ocupada' " :severity="getSeverity(data.state)" />
+                <Tag :value="data.state ? 'Sin ocupar' : 'Ocupada'" :severity="getSeverity(data.state)" />
             </template>
         </Column>
         <Column field="vendedorNombre" header="Vendedor" sortable style="min-width: 20rem" />
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="{ data }">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarCaja(data)" />
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteCaja(data)" />
+                <div class="flex justify-center sm:justify-start gap-2">
+                    <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editarCaja(data)" />
+                    <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmarDeleteCaja(data)" />
+                </div>
             </template>
         </Column>
     </DataTable>

@@ -17,7 +17,7 @@ use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use App\Pipelines\FilterByCodigo;
-
+use Maatwebsite\Excel\Excel as ExcelFormat;
 
 class CustomerController extends Controller
 {
@@ -73,6 +73,14 @@ class CustomerController extends Controller
     public function destroy(Customer $customer)
     {
         Gate::authorize('delete', $customer);
+        if (
+            $customer->tieneRelaciones()
+        ) {
+            return response()->json([
+                'state' => false,
+                'message' => 'No se puede eliminar este cliente porque está relacionada con otros registros.'
+            ], 400);
+        }
         $customer->delete();
         return response()->json([
             'state' => true,
@@ -80,9 +88,9 @@ class CustomerController extends Controller
         ]);
     }
     #EXPORTACION
-    public function exportExcel()
+    public function exportCsv()
     {
-        return Excel::download(new CustomersExport, 'Clientes.xlsx');
+        return Excel::download(new CustomersExport, 'Clientes.csv', ExcelFormat::CSV);
     }
 
     #IMPORTACION

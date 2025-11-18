@@ -1,5 +1,5 @@
-<script setup>
-import { usePage } from '@inertiajs/vue3'; // Inertia.js hook
+<script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import Button from 'primevue/button';
@@ -12,17 +12,45 @@ import { onMounted, ref, watch } from 'vue';
 import DeleteMovementInput from './DeleteMovementInputDetail.vue';
 import UpdateMovementInput from './UpdateMovementInputDetail.vue';
 
-const movementInputs = ref([]);
+// Tipos de datos para movimientos, insumos y productos
+interface Input {
+    id: number;
+    name: string;
+    quantityUnitMeasure?: string;
+    unitMeasure?: string;
+}
+
+interface Product {
+    id: number;
+    name: string;
+    quantityUnitMeasure?: string;
+    unitMeasure?: string;
+    stock?: number;
+}
+
+interface MovementInput {
+    id: number;
+    idMovementInput: number;
+    quantity: string | number;
+    input: Input | null;
+    product: Product | null;
+    priceUnit: string | number;
+    batch: string;
+    totalPrice: string | number;
+}
+
+const movementInputs = ref<MovementInput[]>([]);
 const loading = ref(false);
 const globalFilterValue = ref('');
 const deleteMovementInputDialog = ref(false);
 const updateMovementInputDialog = ref(false);
-const selectedMovementInputId = ref(null);
-const movementInput = ref({});
+const selectedMovementInputId = ref<number | null>(null);
+const selectedDetailId = ref<number | null>(null);
+const movementInput = ref<any>(null);
 const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedSupplier = ref(null);
-const selectedEstadoMovementInput = ref(null);
+const selectedSupplier = ref<any>(null);
+const selectedMovementInputs = ref<MovementInput[] | null>(null);
+const selectedEstadoMovementInput = ref<any>(null);
 const pagination = ref({
     currentPage: 1,
     perPage: 15,
@@ -33,14 +61,13 @@ const { id } = usePage().props;
 
 const refreshCount = ref(0); // Variable que se incrementa cuando se agrega un movimiento
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some((col) => col.field === fieldName);
-};
+
 
 
 const subtotal = ref(0);
 const igv = ref(0);
 const total = ref(0);
+
 const loadMovementInputs = async () => {
     loading.value = true;
     try {
@@ -53,15 +80,23 @@ const loadMovementInputs = async () => {
         };
 
         // Realizamos la solicitud a la API con el 'id' en la URL
-        const response = await axios.get(`/insumos/movimientos/detalle/${id}`, { params });
+        const response = await axios.get(`/items/movimientos/detalle/${id}`, { params });
 
         // Asignamos los datos de la respuesta a la variable reactiva
         movementInputs.value = response.data.data;
 
-        // Aseguramos que los valores de subtotal, total_igv y total sean números
-        subtotal.value = parseFloat(response.data.subtotal.replace(/,/g, '')); // Remover las comas y convertir a número
-        igv.value = parseFloat(response.data.total_igv.replace(/,/g, ''));
-        total.value = parseFloat(response.data.total.replace(/,/g, ''));
+        // CORRECCIÓN: Verificar si los valores son strings o números
+        subtotal.value = typeof response.data.subtotal === 'string' 
+            ? parseFloat(response.data.subtotal.replace(/,/g, ''))
+            : Number(response.data.subtotal);
+        
+        igv.value = typeof response.data.total_igv === 'string'
+            ? parseFloat(response.data.total_igv.replace(/,/g, ''))
+            : Number(response.data.total_igv);
+        
+        total.value = typeof response.data.total === 'string'
+            ? parseFloat(response.data.total.replace(/,/g, ''))
+            : Number(response.data.total);
 
         // Actualizamos la paginación
         pagination.value.currentPage = response.data.meta.current_page;
@@ -73,7 +108,7 @@ const loadMovementInputs = async () => {
     }
 };
 
-const formatCurrency = (value) => {
+const formatCurrency = (value: number) => {
     if (value != null) {
         // Formatear el número como moneda con 2 decimales y símbolo "S/."
         return 'S/. ' + value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -81,13 +116,9 @@ const formatCurrency = (value) => {
     return '';
 };
 
-
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true,
-    },
-});
+const props = defineProps<{
+    refresh: number;
+}>();
 // Recarga la tabla cuando `refreshCount` cambia
 watch(refreshCount, loadMovementInputs);
 watch(() => props.refresh, loadMovementInputs);
@@ -99,7 +130,7 @@ watch(
     },
 );
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadMovementInputs();
@@ -110,16 +141,13 @@ const onGlobalSearch = debounce(() => {
     loadMovementInputs();
 }, 500);
 
-const getSeverity = (value) => {
-    return value ? 'success' : 'danger';
-};
-
-const editarMovementInput = (movement) => {
-    selectedMovementInputId.value = movement.id;
+const editarMovementInput = (movement: MovementInput) => {
+    selectedMovementInputId.value = movement.idMovementInput;
+    selectedDetailId.value = movement.id; // <-- Nuevo ref para el detalle
     updateMovementInputDialog.value = true;
 };
 
-const confirmarDeleteMovementInput = (movement) => {
+const confirmarDeleteMovementInput = (movement: MovementInput) => {
     movementInput.value = movement;
     console.log(movementInput.value); // Verifica si los datos están correctos
     deleteMovementInputDialog.value = true;
@@ -134,18 +162,11 @@ function handleMovementInputDeleted() {
 }
 
 onMounted(loadMovementInputs);
-const getMovementTypeLabel = (value) => {
-    const movementTypes = {
-        1: 'Factura',
-        2: 'Guía',
-        3: 'Boleta',
-    };
-    return movementTypes[value] || 'Desconocido'; // Valor por defecto si no encuentra el tipo
-};
+
 
 // Función para formatear la cantidad
-function formatQuantity(quantity) {
-    const numericQuantity = parseFloat(quantity); // Asegurarnos de que sea un número
+function formatQuantity(quantity: string | number) {
+    const numericQuantity = parseFloat(quantity as string);
 
     // Si no es un número válido, devolvemos el valor original
     if (isNaN(numericQuantity)) {
@@ -154,10 +175,40 @@ function formatQuantity(quantity) {
 
     // Si la cantidad termina en .00, retorna como entero
     if (numericQuantity % 1 === 0) {
-        return numericQuantity.toFixed(0); // Elimina los decimales
+        return numericQuantity.toFixed(0);
     } else {
-        return numericQuantity.toFixed(2); // Mantiene dos decimales
+        return numericQuantity.toFixed(2);
     }
+}
+
+// Función para obtener el nombre del item (insumo o producto)
+function getItemName(data: MovementInput) {
+    if (data.input) {
+        return data.input.name;
+    } else if (data.product) {
+        return data.product.name;
+    }
+    return 'N/A';
+}
+
+// Función para obtener la unidad de medida del item
+function getItemUnit(data: MovementInput) {
+    if (data.input) {
+        return `${data.input.quantityUnitMeasure || ''} ${data.input.unitMeasure || ''}`.trim();
+    } else if (data.product) {
+        return `${data.product.quantityUnitMeasure || ''} ${data.product.unitMeasure || ''}`.trim();
+    }
+    return '';
+}
+
+// Función para obtener el tipo de item
+function getItemType(data: MovementInput) {
+    if (data.input) {
+        return 'Insumo';
+    } else if (data.product) {
+        return 'Producto';
+    }
+    return 'N/A';
 }
 </script>
 
@@ -165,6 +216,23 @@ function formatQuantity(quantity) {
 /* Personalización de estilos para la tabla */
 .p-datatable-footer .p-datatable-footer-cell {
     text-align: center;
+}
+
+.item-type-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.insumo-badge {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.producto-badge {
+    background-color: #dcfce7;
+    color: #166534;
 }
 </style>
 
@@ -184,17 +252,17 @@ function formatQuantity(quantity) {
         scrollable
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Insumos Comprados"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Items Comprados"
     >
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h4 class="m-0">Movimientos de Insumos</h4>
+                <h4 class="m-0">MOVIMIENTO DE COMPRA DE ITEMS</h4>
                 <div class="flex flex-wrap gap-2">
                     <IconField>
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar item..." />
                     </IconField>
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadMovementInputs" />
                 </div>
@@ -208,17 +276,33 @@ function formatQuantity(quantity) {
         </template>
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
 
+        <!-- Columna para el tipo de item -->
+        <Column field="type" header="Tipo" sortable style="min-width: 6rem">
+            <template #body="{ data }">
+                <span 
+                    class="item-type-badge" 
+                    :class="getItemType(data) === 'Insumo' ? 'insumo-badge' : 'producto-badge'"
+                >
+                    {{ getItemType(data) }}
+                </span>
+            </template>
+        </Column>
+
         <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem">
             <template #body="{ data }">
                 <span>{{ formatQuantity(data.quantity) }}</span>
             </template>
         </Column>
 
-        <Column field="input.name" header="Insumo" sortable style="min-width: 7rem" />
+        <Column field="name" header="Item" sortable style="min-width: 8rem">
+            <template #body="{ data }">
+                <span>{{ getItemName(data) }}</span>
+            </template>
+        </Column>
 
         <Column header="Unidad" sortable style="min-width: 7rem">
             <template #body="{ data }">
-                <span>{{ data.input.quantityUnitMeasure }} {{ data.input.unitMeasure }}</span>
+                <span>{{ getItemUnit(data) }}</span>
             </template>
         </Column>
 
@@ -234,10 +318,18 @@ function formatQuantity(quantity) {
         </Column>
     </DataTable>
 
-    <DeleteMovementInput v-model:visible="deleteMovementInputDialog" :movementInput="movementInput" @deleted="handleMovementInputDeleted" />
+    <!-- Componente para eliminar movimiento de insumo -->
+    <DeleteMovementInput
+        v-model:visible="deleteMovementInputDialog"
+        :movementInput="movementInput"
+        @deleted="handleMovementInputDeleted"
+    />
+
+    <!-- Componente para actualizar movimiento de insumo -->
     <UpdateMovementInput
         v-model:visible="updateMovementInputDialog"
         :movementInputId="selectedMovementInputId"
+        :detailId="selectedDetailId"
         @updated="handleMovementInputUpdated"
     />
 </template>

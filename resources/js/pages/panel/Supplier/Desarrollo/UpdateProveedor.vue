@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -8,19 +8,35 @@ import Tag from 'primevue/tag';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    proveedorId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface Proveedor {
+    name: string;
+    ruc: string;
+    address: string;
+    phone: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const props = defineProps<{
+    visible: boolean;
+    proveedorId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const proveedor = ref({
+const proveedor = ref<Proveedor>({
     name: '',
     ruc: '',
     address: '',
@@ -28,15 +44,15 @@ const proveedor = ref({
     state: false,
 });
 
-watch(() => props.visible, (val) => {
+watch(() => props.visible, (val: boolean) => {
     dialogVisible.value = val;
     if (val && props.proveedorId) {
         fetchProveedor();
     }
 });
-watch(dialogVisible, (val) => emit('update:visible', val));
+watch(dialogVisible, (val: boolean) => emit('update:visible', val));
 
-const fetchProveedor = async () => {
+const fetchProveedor = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/proveedor/${props.proveedorId}`);
@@ -48,7 +64,7 @@ const fetchProveedor = async () => {
             phone: data.phone || '',
             state: data.state
         };
-    } catch (error) {
+    } catch (error: any) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el proveedor', life: 3000 });
         console.error(error);
     } finally {
@@ -56,7 +72,7 @@ const fetchProveedor = async () => {
     }
 };
 
-const updateProveedor = async () => {
+const updateProveedor = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -80,7 +96,7 @@ const updateProveedor = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
@@ -103,27 +119,40 @@ const updateProveedor = async () => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Proveedor" modal :closable="true" :style="{ width: '600px' }">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Proveedor" 
+        modal 
+        :closable="true" 
+        :closeOnEscape="true"
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+                <!-- RUC -->
+                <div class="col-span-8 sm:col-span-10">
                     <label class="block font-bold mb-2">RUC <span class="text-red-500">*</span></label>
                     <InputText
                         v-model="proveedor.ruc"
                         required
                         fluid
                         maxlength="11"
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.ruc }"
                     />
                     <small v-if="serverErrors.ruc" class="text-red-500">{{ serverErrors.ruc[0] }}</small>
                 </div>
-                <div class="col-span-2">
+
+                <!-- Estado -->
+                <div class="col-span-4 sm:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="proveedor.state" :binary="true" />
                         <Tag :value="proveedor.state ? 'Activo' : 'Inactivo'" :severity="proveedor.state ? 'success' : 'danger'" />
                     </div>
                 </div>
+
+                <!-- Nombre -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
                     <InputText
@@ -131,32 +160,41 @@ const updateProveedor = async () => {
                         required
                         maxlength="150"
                         fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.name }"
                     />
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
+
+                <!-- Dirección -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Dirección <span class="text-red-500">*</span></label>
                     <InputText
                         v-model="proveedor.address"
                         maxlength="255"
                         fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.address }"
                     />
                     <small v-if="serverErrors.address" class="text-red-500">{{ serverErrors.address[0] }}</small>
                 </div>
+
+                <!-- Teléfono -->
                 <div class="col-span-12">
                     <label class="block font-bold mb-2">Teléfono <span class="text-red-500">*</span></label>
                     <InputText
                         v-model="proveedor.phone"
                         maxlength="11"
                         fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.phone }"
                     />
                     <small v-if="serverErrors.phone" class="text-red-500">{{ serverErrors.phone[0] }}</small>
                 </div>
             </div>
         </div>
+
+        <!-- Footer con botones -->
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
             <Button label="Guardar" icon="pi pi-check" @click="updateProveedor" :loading="loading" />

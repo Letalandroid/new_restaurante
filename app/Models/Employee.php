@@ -25,4 +25,9 @@ class Employee extends Model
     public function empleadoType(): BelongsTo{
         return $this->belongsTo(EmployeeType::class, 'employee_type_id', 'id');
     }
+    public function attendances()
+{
+    return $this->hasMany(Attendance::class, 'employee_id', 'id');
+}
+
 }

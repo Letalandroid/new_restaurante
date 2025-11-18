@@ -9,94 +9,93 @@ use TCPDF;
 class DishPDFController extends Controller
 {
     public function exportPDF()
-    {
-        // Obtener los datos de los platos y convertirlos en un array para facilitar el manejo
-        $dishes = Dishes::orderBy('id', 'asc')->get();
+{
+    // Obtener los platos con sus insumos
+    $dishes = Dishes::with('insumos', 'category')->orderBy('id', 'asc')->get();
 
-        $dishesArray = $dishes->map(function ($dish) {
-            return [
-                'id' => $dish->id,
-                'name' => $dish->name,
-                'price' => $dish->price,
-                'quantity' => $dish->quantity,
-                'category_name' => $dish->category->name ?? 'Sin Categoria',
-                'state' => $dish->state == 1 ? 'Activo' : 'Inactivo',
-                'created_at' => $dish->created_at,
-                'updated_at' => $dish->updated_at,
-            ];
-        })->toArray();
-        // Crear el objeto TCPDF
-        $pdf = new TCPDF(); // 'L' para orientación horizontal
+    // Crear el objeto TCPDF
+    $pdf = new TCPDF();
+    $pdf->SetCreator('Laravel TCPDF');
+    $pdf->SetAuthor('Laravel');
+    $pdf->SetTitle('Lista de Platos');
+    $pdf->SetSubject('Reporte de Platos');
+    $pdf->SetMargins(10, 10, 10);
+    $pdf->SetAutoPageBreak(true, 10);
+    $pdf->SetHeaderData('', 0, '', '', [0,0,0],[255,255,255]);
+    $pdf->setFooterData([0,0,0],[255,255,255]);
+    $pdf->AddPage();
 
-        $pdf->SetCreator('Laravel TCPDF');
-        $pdf->SetAuthor('Laravel');
-        $pdf->SetTitle('Lista de Platos');
-        $pdf->SetSubject('Reporte de Platos');
+    // Título
+    $pdf->SetFont('helvetica', 'B', 18);
+    $pdf->Cell(0, 20, 'Lista de Platos', 0, 1, 'C');
 
-        // Configuración de márgenes
-        $pdf->SetMargins(10, 10, 10);
-        $pdf->SetAutoPageBreak(true, 10); // Asegura que haya espacio entre las filas y el pie de la página
+    // Encabezados de la tabla
+    $header = ['ID','Nombre','Precio','Cantidad','Categoria','Insumos','Estado','Creación'];
+    $widths = [7, 35, 20, 18, 27, 50, 15, 25];
+    $pdf->SetFont('helvetica', 'B', 9);
+    $pdf->SetFillColor(242,242,242);
 
-        // Eliminar la línea de encabezado (borde superior)
-        $pdf->SetHeaderData('', 0, '', '', [0, 0, 0], [255, 255, 255]);
+    foreach ($header as $i => $col) {
+        $pdf->MultiCell($widths[$i], 7, $col, 1, 'C', 1, 0);
+    }
+    $pdf->Ln();
 
-        // Personalizar el pie de página (eliminar línea predeterminada)
-        $pdf->setFooterData(array(0, 0, 0), array(255, 255, 255));
+    // Datos
+    $pdf->SetFont('helvetica', '', 7);
 
-        // Agregar la primera página
-        $pdf->AddPage();
+    foreach ($dishes as $dish) {
+        $insumos = $dish->insumos;
+        $first = true;
 
-        // Encabezado del PDF
-        $pdf->SetFont('helvetica', 'B', 18);
-        $pdf->Cell(0, 20, 'Lista de Platos', 0, 1, 'C');
-
-        // Encabezados de la tabla
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(242, 242, 242);  // Color de fondo para los encabezados
-
-        $header = ['ID', 'Nombre', 'Precio', 'Cantidad', 'Categoria', 'Estado', 'Creación', 'Actualización'];
-        $widths = [7, 40, 23, 20, 27, 15, 30, 30]; // Tamaños adecuados para las celdas
-        // Establecer los encabezados de la tabla en la primera página
-        foreach ($header as $i => $col) {
-            $pdf->MultiCell($widths[$i], 9, $col, 1, 'C', 1, 0);
+        if ($insumos->isEmpty()) {
+            $insumos = collect([ (object)['name' => 'No tiene insumos', 'quantityUnitMeasure' => '', 'unitMeasure' => ''] ]);
         }
-        $pdf->Ln();  // Salto de línea después del encabezado
 
-        // Imprimir los datos de los platos
-        $pdf->SetFont('helvetica', '', 7);
-
-        foreach ($dishesArray as $dish) {
-            // Si la posición Y está cerca del final de la página, añadir una nueva página y repetir los encabezados
+        foreach ($insumos as $insumo) {
             if ($pdf->GetY() > 250) {
-                $pdf->AddPage(); // Añadir una nueva página
-                // Repetir los encabezados en la nueva página
+                $pdf->AddPage();
+                // Repetir encabezados
                 $pdf->SetFont('helvetica', 'B', 7);
-                $pdf->SetFillColor(242, 242, 242);
+                $pdf->SetFillColor(242,242,242);
                 foreach ($header as $i => $col) {
                     $pdf->MultiCell($widths[$i], 7, $col, 1, 'C', 1, 0);
                 }
                 $pdf->Ln();
+                $pdf->SetFont('helvetica', '', 7);
             }
 
-            // Asegurarse de que las celdas no se sobrepasen
-            $pdf->SetFont('helvetica', '', 7);
-            $pdf->MultiCell($widths[0], 7, $dish['id'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[1], 7, $dish['name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[2], 7, 'S/. ' . number_format($dish['price'], 2), 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[3], 7, $dish['quantity'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[4], 7, $dish['category_name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[5], 7, $dish['state'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[6], 7, $dish['created_at'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[7], 7, $dish['updated_at'], 1, 'C', 0, 0);
-            $pdf->Ln();  // Salto de línea después de cada fila
-        }
-        // Detenemos cualquier salida previa si la hay
-        if (ob_get_length()) {
-            ob_end_clean();
-        }
+            // Columnas del plato solo en la primera fila de insumos
+            if ($first) {
+                $pdf->MultiCell($widths[0], 7, $dish->id, 1, 'C', 0, 0);
+                $pdf->MultiCell($widths[1], 7, $dish->name, 1, 'C', 0, 0);
+                $pdf->MultiCell($widths[2], 7, 'S/. ' . number_format($dish->price,2), 1, 'C', 0, 0);
+                $pdf->MultiCell($widths[3], 7, $dish->quantity, 1, 'C', 0, 0);
+                $pdf->MultiCell($widths[4], 7, $dish->category->name ?? 'Sin Categoria', 1, 'C', 0, 0);
+                $first = false;
+            } else {
+                // Dejar las columnas del plato en blanco para los insumos adicionales
+                for ($i = 0; $i < 5; $i++) {
+                    $pdf->MultiCell($widths[$i], 7, '', 1, 'C', 0, 0);
+                }
+            }
 
-        // Generar el PDF y devolverlo al navegador
-        $pdfOutput = $pdf->Output('Platos.pdf', 'S'); // "S" = string, no lo imprime directamente
-        return response($pdfOutput)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'attachment; filename="Platos.pdf"');
+            // Columna insumos
+            $pdf->MultiCell($widths[5], 7, "{$insumo->name} ({$insumo->quantityUnitMeasure} {$insumo->unitMeasure})", 1, 'L', 0, 0);
+
+            // Columnas restantes
+            $pdf->MultiCell($widths[6], 7, $dish->state == 1 ? 'Activo' : 'Inactivo', 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[7], 7, $dish->created_at->format('d-m-Y H:i:s'), 1, 'C', 0, 0);
+            $pdf->Ln();
+        }
     }
+
+    if (ob_get_length()) {
+        ob_end_clean();
+    }
+
+    $pdfOutput = $pdf->Output('Platos.pdf', 'S');
+    return response($pdfOutput)
+        ->header('Content-Type','application/pdf')
+        ->header('Content-Disposition','attachment; filename="Platos.pdf"');
+}
 }

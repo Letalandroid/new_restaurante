@@ -79,8 +79,8 @@ const model = computed<MenuItem[]>(() => [
         label: 'Movimientos',
         icon: 'pi pi-fw pi-box layout-menuitem-icon',
         items: [
-          hasPermission('ver facturas insumos') && { label: 'Compras de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/movimientos' },
-                    hasPermission('ver kardex insumos') && { label: 'Kardex de Insumos', icon: 'pi pi-fw pi-users', to: '/insumos/kardex' },
+          hasPermission('ver facturas items') && { label: 'Compras de Items', icon: 'pi pi-fw pi-users', to: '/items/movimientos' },
+                    hasPermission('ver kardex items') && { label: 'Kardex de Items', icon: 'pi pi-fw pi-users', to: '/items/kardex' },
 
         ].filter(Boolean) as MenuItem[],
       },
@@ -107,6 +107,15 @@ const model = computed<MenuItem[]>(() => [
         hasPermission('ver tipos_empleados') && { label: 'Tipo de empleados', icon: 'pi pi-fw pi-sitemap', to: '/tipo_empleados' },
       ].filter(Boolean) as MenuItem[],
     },
+    (hasPermission('ver asistencias')) && {
+      label: 'Asistencias',
+      icon: 'pi pi-fw pi-clock',
+      items: [
+     hasPermission('ver asistencias') && { label: 'Lista de Asistencia', icon: 'pi pi-fw pi-list', to: '/asistencias' },
+        hasPermission('ver asistencias') && { label: 'Lista de Feriados', icon: 'pi pi-fw pi-sitemap', to: '/asistencias/feriados' },
+      ].filter(Boolean) as MenuItem[],
+    },
+     hasPermission('ver nominas') && { label: 'Nominas', icon: 'pi pi-fw pi-list', to: '/nominas' },
     hasPermission('ver presentaciones') && { label: 'Presentaciones', icon: 'pi pi-fw pi-check-square', to: '/presentaciones' },
   ].filter(Boolean) as MenuItem[],
 },
@@ -114,6 +123,7 @@ const model = computed<MenuItem[]>(() => [
   label: 'Reportes y Finanzas',
   items: [
     hasPermission('ver reporte_cajas') && { label: 'Reporte de Caja', icon: 'pi pi-fw pi-file', to: '/reporte-cajas' },
+    hasPermission('ver reservaciones') && { label: 'Reservaciones', icon: 'pi pi-calendar', to: '/reservaciones' },
     // ...otros reportes/finanzas
   ].filter(Boolean) as MenuItem[],
 }

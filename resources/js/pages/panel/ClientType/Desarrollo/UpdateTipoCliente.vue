@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -8,37 +8,53 @@ import { useToast } from 'primevue/usetoast';
 import Tag from 'primevue/tag';
 import Checkbox from 'primevue/checkbox';
 
-const props = defineProps({
-    visible: Boolean,
-    tipoClienteId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+interface TipoCliente {
+    name: string;
+    state: boolean;
+}
 
-const serverErrors = ref({});
-const submitted = ref(false);
+interface ServerErrors {
+    [key: string]: string[] | undefined;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    tipoClienteId: number | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
+
+const serverErrors = ref<ServerErrors>({});
+const submitted = ref<boolean>(false);
 const toast = useToast();
-const loading = ref(false);
+const loading = ref<boolean>(false);
 
-const dialogVisible = ref(props.visible);
-watch(() => props.visible, (val) => dialogVisible.value = val);
+const dialogVisible = ref<boolean>(props.visible);
+watch(() => props.visible, (val) => (dialogVisible.value = val));
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-watch(() => props.visible, (newVal) => {
-    if (newVal && props.tipoClienteId) {
-        fetchTipoCliente();
+watch(
+    () => props.visible,
+    (newVal) => {
+        if (newVal && props.tipoClienteId) {
+            fetchTipoCliente();
+        }
     }
-});
+);
 
-const tipoCliente = ref({
+const tipoCliente = ref<TipoCliente>({
     name: '',
-    state: false
+    state: false,
 });
 
-const fetchTipoCliente = async () => {
+const fetchTipoCliente = async (): Promise<void> => {
     loading.value = true;
     try {
         const response = await axios.get(`/tipo_cliente/${props.tipoClienteId}`);
-        const data = response.data.clientType;
+        const data = response.data.clientType as TipoCliente;
 
         tipoCliente.value.name = data.name;
         tipoCliente.value.state = data.state;
@@ -47,7 +63,7 @@ const fetchTipoCliente = async () => {
             severity: 'error',
             summary: 'Error',
             detail: 'No se pudo cargar el tipo de cliente',
-            life: 3000
+            life: 3000,
         });
         console.error(error);
     } finally {
@@ -55,7 +71,7 @@ const fetchTipoCliente = async () => {
     }
 };
 
-const updateTipoCliente = async () => {
+const updateTipoCliente = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -71,26 +87,26 @@ const updateTipoCliente = async () => {
             severity: 'success',
             summary: 'Actualizado',
             detail: 'Tipo de cliente actualizado correctamente',
-            life: 3000
+            life: 3000,
         });
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
                 severity: 'error',
                 summary: 'Error de validación',
                 detail: 'Revisa los campos e intenta nuevamente.',
-                life: 5000
+                life: 5000,
             });
         } else {
             toast.add({
                 severity: 'error',
                 summary: 'Error',
                 detail: 'No se pudo actualizar el tipo de cliente',
-                life: 3000
+                life: 3000,
             });
         }
         console.error(error);
@@ -99,8 +115,14 @@ const updateTipoCliente = async () => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Tipo de Cliente" modal :closable="true" :closeOnEscape="true"
-        :style="{ width: '600px' }">
+    <Dialog
+        v-model:visible="dialogVisible"
+        header="Editar Tipo de Cliente"
+        modal
+        :closable="true"
+        :closeOnEscape="true"
+        :style="{ width: '600px' }"
+    >
         <div class="flex flex-col gap-6">
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-9">
@@ -119,7 +141,11 @@ const updateTipoCliente = async () => {
                     <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="tipoCliente.state" fluid :binary="true" inputId="state" />
-                        <Tag :value="tipoCliente.state ? 'Activo' : 'Inactivo'" fluid :severity="tipoCliente.state ? 'success' : 'danger'" />
+                        <Tag
+                            :value="tipoCliente.state ? 'Activo' : 'Inactivo'"
+                            fluid
+                            :severity="tipoCliente.state ? 'success' : 'danger'"
+                        />
                     </div>
                 </div>
             </div>

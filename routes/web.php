@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\CajaController;
 use App\Http\Controllers\Api\ReporteCajaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CrearPemController;
+use App\Http\Controllers\Api\AttendanceController;
 
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SupplierController;
@@ -44,14 +45,20 @@ use App\Http\Controllers\Api\EmployeeTypeController;
 use App\Http\Controllers\Api\SunatController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\FloorController;
 use App\Http\Controllers\Api\SalesOrderController;
 use App\Http\Controllers\Api\MovementInputKardexController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\GeneralHolidayController;
 use App\Http\Controllers\Web\CertificadoWebController;
 use App\Http\Controllers\Api\CertificadoController;
 use App\Http\Controllers\Api\MovementInputDetailController;
+use App\Http\Controllers\Api\ProductStockController;
+use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\ReservationSettingController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Reportes\ReservationPDFController;
 use App\Http\Controllers\Web\AlmacenWebController;
 use App\Http\Controllers\Web\AreasWebController;
 use App\Http\Controllers\Web\CajaWebController;
@@ -75,7 +82,10 @@ use App\Http\Controllers\Web\UsuarioWebController;
 use App\Http\Controllers\Web\OrdersTablesWebController;
 use App\Http\Controllers\Web\MovementInputKardexWebController;
 use App\Http\Controllers\Web\MovementInputDetailWebController;
-
+use App\Http\Controllers\Web\ReservationWebController;
+use App\Http\Controllers\Web\AttendancesWebController;
+use App\Http\Controllers\Web\GeneralHolidayWebController;
+use App\Http\Controllers\Web\PayrollWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -94,10 +104,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     #VISTAS DEL FRONTEND
     Route::get('/almacenes', [AlmacenWebController::class, 'index'])->name('index.view');
+    Route::get('/nominas', [PayrollWebController::class, 'index'])->name('index.view');
     Route::get('/categorias', [CategoryWebController::class, 'index'])->name('index.view');
     Route::get('/proveedores', [SupplierWebController::class, 'index'])->name('index.view');
     Route::get('/presentaciones', [PresentationWebController::class, 'index'])->name('index.view');
+    Route::get('/reservaciones', [ReservationWebController::class, 'index'])->name('index.view');
     Route::get('/clientes', [CustomerWebController::class, 'index'])->name('index.view');
+    Route::get('/asistencias', [AttendancesWebController::class, 'index'])->name('index.view');
     Route::get('/empleados', [EmployeeWebController::class, 'index'])->name('index.view');
     Route::get('/tipo_clientes', [ClientTypeWebController::class, 'index'])->name('index.view');
     Route::get('/tipo_empleados', [EmployeeTypeWebController::class, 'index'])->name('index.view');
@@ -111,10 +124,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/platos', [DishesWebController::class, 'index'])->name('index.view');
     Route::get('/mesas', [TableWebController::class, 'index'])->name('index.view');
     Route::get('/insumos', [InputWebController::class, 'index'])->name('index.view');
-    Route::get('/insumos/movimientos', action: [MovementInputsWebController::class, 'index'])->name('index.view');
+    Route::get('/items/movimientos', action: [MovementInputsWebController::class, 'index'])->name('index.view');
     Route::get('/roles', [UsuarioWebController::class, 'roles'])->name('roles.view');
-    Route::get(uri: '/insumos/movimientos/detalles/{id}', action: [MovementInputDetailWebController::class, 'index'])->name('index.view');
-    Route::get('/insumos/kardex', [MovementInputKardexWebController::class, 'index'])->name('index.view');
+    Route::get(uri: '/items/movimientos/detalles/{id}', action: [MovementInputDetailWebController::class, 'index'])->name('index.view');
+    Route::get('/items/kardex', [MovementInputKardexWebController::class, 'index'])->name('index.view');
     Route::get('/ordenes', [OrdersWebController::class, 'index'])->name('index.view');
     Route::get('/ordenes/mesas', [OrdersTablesWebController::class, 'index'])->name('index.view');
     Route::get('/caja/aperturar', [CajaWebController::class, 'aperturar'])->name('caja.aperturar');
@@ -129,6 +142,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/certificado', [CertificadoWebController::class, 'index'])->name('index.view');
     Route::post('/enviar-certificado', [CertificadoController::class, 'subircertificado'])->name('subir.certificado');
     Route::get('/crear-certificado', [CrearPemController::class, 'crear']);
+    Route::get('/asistencias/feriados', [GeneralHolidayWebController::class, 'index'])->name('index.view');
+    
+Route::get('/nominas/generate', [PayrollController::class, 'generateEmployeePayroll']);
 
     #CONSULTA  => BACKEND
     Route::get('/consulta/{dni}', [ConsultasDni::class, 'consultar'])->name('consultar.dni');
@@ -205,16 +221,16 @@ Route::prefix('insumos')->group(function () {
 });
 
 
-    // INSUMOS -> MOVIMIENTOS (BACKEND)
-    Route::prefix('insumos/movimiento')->group(function () {
+    // ITEMS -> MOVIMIENTOS (BACKEND)
+    Route::prefix('items/movimiento')->group(function () {
         Route::get('/', [MovementInputController::class, 'index'])->name('movimientos.index');
         Route::post('/', [MovementInputController::class, 'store'])->name('movimientos.store');
         Route::get('{movementInput}', [MovementInputController::class, 'show'])->name('movimientos.show');
         Route::put('{movementInput}', [MovementInputController::class, 'update'])->name('movimientos.update');
         Route::delete('{movementInput}', [MovementInputController::class, 'destroy'])->name('movimientos.destroy');
     });
-    // INSUMOS -> MOVIMIENTOS -> DETALLES (BACKEND)
-    Route::prefix('insumos/movimientos/detalle')->group(function () {
+    // ITEMS -> MOVIMIENTOS -> DETALLES (BACKEND)
+    Route::prefix('items/movimientos/detalle')->group(function () {
         Route::get('{id}', [MovementInputDetailController::class, 'index'])->name('movimientosinput.index');
         Route::delete('{id}', [MovementInputDetailController::class, 'destroy'])->name('movimientosinput.destroy');
         Route::put('{MovementInputDetail}', [MovementInputDetailController::class, 'update'])->name('movimientosinput.update');
@@ -222,7 +238,7 @@ Route::prefix('insumos')->group(function () {
     });
 
   // INSUMOS -> KARDEX  (BACKEND)
-    Route::prefix('insumos/karde')->group(function () {
+    Route::prefix('items/karde')->group(function () {
         Route::get('/', [MovementInputKardexController::class, 'index'])->name('kardexinput.index');
         Route::post('/', [MovementInputKardexController::class, 'store'])->name('kardexinput.store');
         Route::get('{kardexInput}', action: [MovementInputKardexController::class, 'show'])->name('kardexinput.show');
@@ -248,6 +264,24 @@ Route::prefix('insumos')->group(function () {
         Route::put('{customer}', [CustomerController::class, 'update'])->name('clientes.update');
         Route::delete('{customer}', [CustomerController::class, 'destroy'])->name('clientes.destroy');
     });
+    #FERIADOS => BACKEND
+    Route::prefix('asistencias/feriado')->group(function () {
+        Route::get('/', [GeneralHolidayController::class, 'index'])->name('feriados.index');
+        Route::post('/', [GeneralHolidayController::class, 'store'])->name('feriados.store');
+        Route::get('{generalHoliday}', [GeneralHolidayController::class, 'show'])->name('feriados.show');
+        Route::put('{generalHoliday}', [GeneralHolidayController::class, 'update'])->name('feriados.update');
+        Route::delete('{generalHoliday}', [GeneralHolidayController::class, 'destroy'])->name('feriados.destroy');
+    });
+    #NOMINA => BACKEND
+    Route::prefix('nomina')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('nomina.index');
+        Route::post('/', [PayrollController::class, 'store'])->name('nomina.store');
+        Route::get('{payroll}', [PayrollController::class, 'show'])->name('nomina.show');
+        Route::put('{payroll}', [PayrollController::class, 'update'])->name('nomina.update');
+        Route::delete('{payroll}', [PayrollController::class, 'destroy'])->name('nomina.destroy');
+    });
+
+
 
     // PROVEEDOR -> BACKEND
     Route::prefix('proveedor')->group(function () {
@@ -293,14 +327,30 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{category}', [CategoryController::class, 'update'])->name('Categoria.update');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('Categoria.destroy');
     });
+        #ASISTENCIA -> BACKEND
+    Route::prefix('asistencia')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('asistencia.index');
+        Route::post('/', [AttendanceController::class, 'store'])->name('asistencia.store');
+        Route::get('/{asistencia}', [AttendanceController::class, 'show'])->name('asistencia.show');
+        Route::put('/{asistencia}', [AttendanceController::class, 'update'])->name('asistencia.update');
+        Route::delete('/{asistencia}', [AttendanceController::class, 'destroy'])->name('asistencia.destroy');
+    });
 
     #TIPOS DE CLIENTES -> BACKEND
     Route::prefix('tipo_cliente')->group(function () {
-        Route::get('/', [ClientTypeController::class, 'index'])->name('Tipos_Clientes.index');
         Route::post('/', [ClientTypeController::class, 'store'])->name('Tipos_Clientes.store');
         Route::get('/{clientType}', [ClientTypeController::class, 'show'])->name('Tipos_Clientes.show');
         Route::put('/{clientType}', [ClientTypeController::class, 'update'])->name('Tipos_Clientes.update');
         Route::delete('/{clientType}', [ClientTypeController::class, 'destroy'])->name('Tipos_Clientes.destroy');
+    });
+
+        #RESERVACIONES -> BACKEND
+    Route::prefix('reservacion')->group(function () {
+        Route::get('/', [ReservationController::class, 'index'])->name('reservaciones.index');
+        Route::post('/', [ReservationController::class, 'store'])->name('reservaciones.store');
+        Route::get('/{reservation}', [ReservationController::class, 'show'])->name('reservaciones.show');
+        Route::put('/{reservation}', [ReservationController::class, 'update'])->name('reservaciones.update');
+        Route::delete('/{reservation}', [ReservationController::class, 'destroy'])->name('reservaciones.destroy');
     });
 
     #TIPOS DE EMPLEADOS -> BACKEND
@@ -329,7 +379,9 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{product}', [ProductController::class, 'update'])->name('Productos.update');
         Route::delete('/{product}', [ProductController::class, 'destroy'])->name('Productos.destroy');
     });
-
+    Route::prefix('productos')->group(function () {
+        Route::get('/con-stock', [ProductStockController::class, 'index'])->name('products.withStock');
+    });
     #CAJAS -> BACKEND
     Route::prefix('caja')->group(function () {
         Route::get('/', [CajaController::class, 'index'])->name('Cajas.index');
@@ -347,6 +399,8 @@ Route::prefix('insumos')->group(function () {
         Route::put('/{user}', [UsuariosController::class, 'update'])->name('usuarios.update');
         Route::delete('/{user}', [UsuariosController::class, 'destroy'])->name('usuarios.destroy');
     });
+
+    
 
 
 
@@ -367,6 +421,12 @@ Route::prefix('insumos')->group(function () {
         // Ruta para importar desde Excel
         Route::post('/import-excel-categories', [CategoryController::class, 'importExcel'])->name('import-excel-categories');
 
+        #EXPORTACION Y IMPORTACION ASISTENCIAS
+        Route::get('/export-excel-attendances', [AttendanceController::class, 'exportExcel'])->name('export-excel-attendances');
+
+        #EXPORTACION Y IMPORTACION NOMINAS
+Route::get('/export-excel-payrolls', [PayrollController::class, 'exportExcel'])
+    ->name('export-excel-payrolls');
         #EXPORTACION Y IMPORTACION ALMACENES
         Route::get('/export-excel-almacenes', [AlmacenController::class, 'exportExcel'])->name('export-excel-almacenes');
         Route::get('/export-pdf-almacenes', [AlmacenPDFController::class, 'exportPDF'])->name('export-pdf-almacenes');
@@ -434,7 +494,7 @@ Route::prefix('insumos')->group(function () {
         Route::post('/import-excel-employeeTypes', [EmployeeTypeController::class, 'importExcel'])->name('import-excel-employeeTypes');
 
         #EXPORTACION Y IMPORTACION CLIENTES
-        Route::get('/export-excel-customers', [CustomerController::class, 'exportExcel'])->name('export-excel-customers');
+        Route::get('/export-excel-customers', [CustomerController::class, 'exportCsv'])->name('export-excel-customers');
         Route::get('/export-pdf-customers', [CustomerPDFController::class, 'exportPDF'])->name('export-pdf-customers');
         // Ruta para importar desde Excel
         Route::post('/import-excel-customers', [CustomerController::class, 'importExcel'])->name('import-excel-customers');
@@ -448,6 +508,10 @@ Route::prefix('insumos')->group(function () {
         #EXPORTACION DE REPORTE DE CAJAS
         Route::get('/export-excel-reporteCajas', [ReporteCajaController::class, 'exportExcel'])->name('export-excel-reporteCajas');
         Route::get('/export-pdf-reporteCajas', [ReporteCajaPDFController::class, 'exportPDF'])->name('export-pdf-reporteCajas');
+
+        #EXPORTACION DE REPORTE DE CAJAS
+        Route::get('/export-excel-reservaciones', [ReservationController::class, 'exportCsv'])->name('export-excel-reservaciones');
+        Route::get('/export-pdf-reservaciones', [ReservationPDFController::class, 'exportPDF'])->name('export-pdf-reservaciones');
     
     });
 });
@@ -458,6 +522,16 @@ Route::prefix('insumos')->group(function () {
 
         Route::post('/register', [RegisteredUserController::class, 'store'])
             ->middleware('guest');
+        Route::get('/tipo_cliente', [ClientTypeController::class, 'index'])->name('Tipos_Clientes.index');
+        Route::post('/reservacionL', [ReservationController::class, 'storeLanding'])->name('reservacionL.storeLanding');
+
+        // Mostrar la configuración actual
+        Route::get('/reservation-settings', [ReservationSettingController::class, 'index'])
+            ->name('reservation-settings.index');
+
+        // Crear o actualizar una nueva configuración
+        Route::post('/reservation-settings', [ReservationSettingController::class, 'store'])
+            ->name('reservation-settings.store');
 // Archivos de configuración adicionales
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

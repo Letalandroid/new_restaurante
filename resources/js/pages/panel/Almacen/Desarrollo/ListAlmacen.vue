@@ -1,5 +1,5 @@
-<script setup>
-import { ref, onMounted,watch } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -13,37 +13,56 @@ import DeleteAlmacen from './DeleteAlmacen.vue';
 import UpdateAlmacen from './UpdateAlmacen.vue';
 import Select from 'primevue/select';
 
-const dt = ref();
-const almacenes = ref([]);
-const selectedalmacenes = ref();
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteAlmacenDialog = ref(false);
-const almacen = ref({});
-const selectedAlmacenId = ref(null);
-const selectedEstadoAlmacen = ref(null);
-const updateAlmacenDialog = ref(false);
-const currentPage = ref(1);
+interface Almacen {
+    id: number;
+    name?: string;
+    creacion?: string;
+    actualizacion?: string;
+    state?: boolean | number | string;
+}
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true
-    }
-});
+interface Pagination {
+    currentPage: number;
+    perPage: number;
+    total: number;
+}
+
+interface Filter {
+    state: any;
+    online: any;
+}
+
+const dt = ref<any>(null);
+const almacenes = ref<Almacen[]>([]);
+const selectedalmacenes = ref<Almacen[] | null>(null);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteAlmacenDialog = ref<boolean>(false);
+const almacen = ref<Almacen | null>(null);
+const selectedAlmacenId = ref<number | null>(null);
+const selectedEstadoAlmacen = ref<{ name: string; value: any } | null>(null);
+const updateAlmacenDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
+
+const props = defineProps<{
+    refresh: number;
+}>();
+
 watch(() => props.refresh, () => {
     loadAlmacen();
 });
+
 watch(() => selectedEstadoAlmacen.value, () => {
     currentPage.value = 1;
     loadAlmacen();
 });
-function editalmacen(almacen) {
-    selectedAlmacenId.value = almacen.id;
+
+function editalmacen(a: Almacen) {
+    selectedAlmacenId.value = a.id;
     updateAlmacenDialog.value = true;
 }
 
-const estadoAlmacenOptions = ref([
+const estadoAlmacenOptions = ref<{ name: string; value: any }[]>([
     { name: 'TODOS', value: '' },
     { name: 'ACTIVOS', value: 1 },
     { name: 'INACTIVOS', value: 0 },
@@ -53,21 +72,22 @@ function handleAlmacenUpdated() {
     loadAlmacen();
 }
 
-function confirmDeletealmacen(selected) {
+function confirmDeletealmacen(selected: Almacen) {
     almacen.value = selected;
     deleteAlmacenDialog.value = true;
 }
 
-const pagination = ref({
+const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
 
-const filters = ref({
+const filters = ref<Filter>({
     state: null,
     online: null
 });
+
 function handleUserDeleted() {
     loadAlmacen();
 }
@@ -75,11 +95,11 @@ function handleUserDeleted() {
 const loadAlmacen = async () => {
     loading.value = true;
     try {
-        const params = {
+        const params: any = {
             page: pagination.value.currentPage,
-                per_page: pagination.value.perPage,
-                search: globalFilterValue.value,
-                state: filters.value.state,
+            per_page: pagination.value.perPage,
+            search: globalFilterValue.value,
+            state: filters.value.state,
         };
         if (selectedEstadoAlmacen.value !== null && selectedEstadoAlmacen.value.value !== '') {
             params.state = selectedEstadoAlmacen.value.value;
@@ -92,22 +112,20 @@ const loadAlmacen = async () => {
         pagination.value.total = response.data.meta.total;
     } catch (error) {
         console.error('Error al cargar almacen:', error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los almacen', life: 3000 });
     } finally {
         loading.value = false;
     }
 };
 
-const onPage = (event) => {
+const onPage = (event: any) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadAlmacen();
 };
 
-const getSeverity = (value) => {
-    if (value === true || value === '1') return 'success';
-    if (value === false || value === '0') return 'danger';
-    return null;
+const getSeverity = (value: boolean | number): 'success' | 'danger' | undefined => {
+    const boolValue = value === true || value === 1 ;
+    return boolValue ? 'success' : value === false || value === 0 ? 'danger' : undefined;
 };
 
 const onGlobalSearch = debounce(() => {
@@ -121,45 +139,94 @@ onMounted(() => {
 </script>
 
 <template>
-    <DataTable ref="dt" v-model:selection="selectedalmacenes" :value="almacenes" dataKey="id" :paginator="true"
-        :rows="pagination.perPage" :totalRecords="pagination.total" :loading="loading" :lazy="true" @page="onPage"
-        :rowsPerPageOptions="[15, 20, 25]" scrollable scrollHeight="574px"
+    <!-- Tabla de almacenes -->
+    <DataTable 
+        ref="dt" 
+        v-model:selection="selectedalmacenes" 
+        :value="almacenes" 
+        dataKey="id" 
+        :paginator="true"
+        :rows="pagination.perPage" 
+        :totalRecords="pagination.total" 
+        :loading="loading" 
+        :lazy="true" 
+        @page="onPage"
+        :rowsPerPageOptions="[15, 20, 25]" 
+        scrollable 
+        :scrollHeight="'50vh'"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} almacen">
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} almacen"
+    >
 
+        <!-- Header con búsqueda y filtros -->
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 justify-between w-full">
                 <h4 class="m-0">ALMACEN</h4>
-                <div class="flex flex-wrap gap-2">
-                    <IconField>
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <IconField class="flex-1">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText 
+                            v-model="globalFilterValue" 
+                            @input="onGlobalSearch" 
+                            placeholder="Buscar almacen..." 
+                            class="w-full sm:w-auto"
+                        />
                     </IconField>
-                    <Select v-model="selectedEstadoAlmacen" :options="estadoAlmacenOptions" optionLabel="name"
-                        placeholder="Estado" class="w-full md:w-auto" />
-                    <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadAlmacen" />
+                    <Select 
+                        v-model="selectedEstadoAlmacen" 
+                        :options="estadoAlmacenOptions" 
+                        optionLabel="name"
+                        placeholder="Estado" 
+                        class="w-full sm:w-auto"
+                    />
+                    <Button 
+                        icon="pi pi-refresh" 
+                        outlined 
+                        rounded 
+                        aria-label="Refresh" 
+                        @click="loadAlmacen" 
+                        class="w-full sm:w-auto"
+                    />
                 </div>
             </div>
         </template>
 
+        <!-- Columnas -->
         <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-        <Column field="name" header="Nombre" sortable style="min-width: 13rem"></Column>
-        <Column field="creacion" header="Creacion" sortable style="min-width: 13rem"></Column>
-        <Column field="actualizacion" header="Actualizacion" sortable style="min-width: 13rem"></Column>
-        <Column field="state" header="Estado" sortable style="min-width: 4rem">
+        <Column field="name" header="Nombre" sortable style="min-width: 10rem"></Column>
+        <Column field="creacion" header="Creacion" sortable style="min-width: 10rem"></Column>
+        <Column field="actualizacion" header="Actualizacion" sortable style="min-width: 10rem"></Column>
+        <Column field="state" header="Estado" sortable style="min-width: 5rem">
             <template #body="{ data }">
                 <Tag :value="data.state ? 'Activo' : 'Inactivo'" :severity="getSeverity(data.state)" />
             </template>
         </Column>
         <Column field="accions" header="Acciones" :exportable="false" style="min-width: 8rem">
             <template #body="slotProps">
-                <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editalmacen(slotProps.data)"/>
-                <Button icon="pi pi-trash" outlined rounded severity="danger" @click="confirmDeletealmacen(slotProps.data)" />
+                <div class="flex flex-wrap gap-1">
+                    <Button 
+                        icon="pi pi-pencil" 
+                        outlined 
+                        rounded 
+                        class="mr-2 mb-1 sm:mb-0" 
+                        @click="editalmacen(slotProps.data)"
+                    />
+                    <Button 
+                        icon="pi pi-trash" 
+                        outlined 
+                        rounded 
+                        severity="danger" 
+                        class="mb-1 sm:mb-0" 
+                        @click="confirmDeletealmacen(slotProps.data)" 
+                    />
+                </div>
             </template>
         </Column>
     </DataTable>
+
+    <!-- Modales de eliminación y actualización -->
     <DeleteAlmacen
         v-model:visible="deleteAlmacenDialog"
         :almacen="almacen"

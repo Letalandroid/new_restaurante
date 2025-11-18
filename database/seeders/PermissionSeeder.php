@@ -6,26 +6,28 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 
-class PermissionSeeder extends Seeder{
+class PermissionSeeder extends Seeder
+{
     /**
      * Run the database seeds.
      */
-    public function run(): void{
+    public function run(): void
+    {
         #User
         Permission::create(['name' => 'crear usuarios']);
         Permission::create(['name' => 'editar usuarios']);
         Permission::create(['name' => 'eliminar usuarios']);
         Permission::create(['name' => 'ver usuarios']);
         # Roles
-        Permission::create(['name' =>'crear roles']);
-        Permission::create(['name' =>'editar roles']);
-        Permission::create(['name' =>'eliminar roles']);
-        Permission::create(['name' =>'ver roles']);
+        Permission::create(['name' => 'crear roles']);
+        Permission::create(['name' => 'editar roles']);
+        Permission::create(['name' => 'eliminar roles']);
+        Permission::create(['name' => 'ver roles']);
         # Permisos
-        Permission::create(['name' =>'crear permisos']);
-        Permission::create(['name' =>'editar permisos']);
-        Permission::create(['name' =>'eliminar permisos']);
-        Permission::create(['name' =>'ver permisos']);
+        Permission::create(['name' => 'crear permisos']);
+        Permission::create(['name' => 'editar permisos']);
+        Permission::create(['name' => 'eliminar permisos']);
+        Permission::create(['name' => 'ver permisos']);
         #Pisos
         Permission::create(['name' => 'crear pisos']);
         Permission::create(['name' => 'editar pisos']);
@@ -71,6 +73,11 @@ class PermissionSeeder extends Seeder{
         Permission::create(['name' => 'editar tipos_clientes']);
         Permission::create(['name' => 'eliminar tipos_clientes']);
         Permission::create(['name' => 'ver tipos_clientes']);
+        #Reservaciones
+        Permission::create(['name' => 'crear reservaciones']);
+        Permission::create(['name' => 'editar reservaciones']);
+        Permission::create(['name' => 'eliminar reservaciones']);
+        Permission::create(['name' => 'ver reservaciones']);
         #Areas
         Permission::create(['name' => 'crear areas']);
         Permission::create(['name' => 'editar areas']);
@@ -109,31 +116,51 @@ class PermissionSeeder extends Seeder{
         Permission::create(['name' => 'ver movimientos']);
 
         #Movimientos de insumos
-        Permission::create(['name' => 'crear facturas insumos']);
-        Permission::create(['name' => 'editar facturas insumos']);
-        Permission::create(['name' => 'eliminar facturas insumos']);
-        Permission::create(['name' => 'ver facturas insumos']);
-        
-        #Kardex de insumos
-        Permission::create(['name' => 'crear kardex insumos']);
-        Permission::create(['name' => 'editar kardex insumos']);
-        Permission::create(['name' => 'eliminar kardex insumos']);
-        Permission::create(['name' => 'ver kardex insumos']);
-    
-            #seccion de ordenes
+        Permission::create(['name' => 'crear facturas items']);
+        Permission::create(['name' => 'editar facturas items']);
+        Permission::create(['name' => 'eliminar facturas items']);
+        Permission::create(['name' => 'ver facturas items']);
+
+        #Kardex de items
+        Permission::create(['name' => 'crear kardex items']);
+        Permission::create(['name' => 'editar kardex items']);
+        Permission::create(['name' => 'eliminar kardex items']);
+        Permission::create(['name' => 'ver kardex items']);
+
+        #seccion de ordenes
         Permission::create(['name' => 'crear ordenes']);
         Permission::create(['name' => 'editar ordenes']);
         Permission::create(['name' => 'eliminar ordenes']);
         Permission::create(['name' => 'ver ordenes']);
-                #seccion de Ventas
+        #seccion de Ventas
         Permission::create(['name' => 'crear ventas']);
         Permission::create(['name' => 'editar ventas']);
         Permission::create(['name' => 'eliminar ventas']);
         Permission::create(['name' => 'ver ventas']);
 
-                # Reporte de Caja
+        # Reporte de Caja
         Permission::create(['name' => 'ver reporte_cajas']);
         Permission::create(['name' => 'editar reporte_cajas']);
 
+        #seccion de Ventas
+        Permission::create(['name' => 'crear asistencias']);
+        Permission::create(['name' => 'editar asistencias']);
+        Permission::create(['name' => 'eliminar asistencias']);
+        Permission::create(['name' => 'ver asistencias']);
+        #seccion de Feriados
+        Permission::create(['name' => 'crear feriados']);
+        Permission::create(['name' => 'editar feriados']);
+        Permission::create(['name' => 'eliminar feriados']);
+        Permission::create(['name' => 'ver feriados']);
+        #seccion de Nominas
+        Permission::create(['name' => 'crear nominas']);
+        Permission::create(['name' => 'editar nominas']);
+        Permission::create(['name' => 'eliminar nominas']);
+        Permission::create(['name' => 'ver nominas']);
+        #seccion detalles Nominas
+        Permission::create(['name' => 'crear detalles nominas']);
+        Permission::create(['name' => 'editar detalles nominas']);
+        Permission::create(['name' => 'eliminar detalles nominas']);
+        Permission::create(['name' => 'ver detalles nominas']);
     }
 }

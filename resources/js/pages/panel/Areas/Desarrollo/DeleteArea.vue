@@ -1,28 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    area: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Area {
+    id: number;
+    name: string;
+    [key: string]: any;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    area: Area | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
 });
 
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteArea() {
+async function deleteArea(): Promise<void> {
+    if (!props.area) return;
     try {
         await axios.delete(`/area/${props.area.id}`);
         emit('deleted');
@@ -33,11 +44,11 @@ async function deleteArea() {
             detail: 'Área eliminada correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el área';
-        if (error.response) {
-            errorMessage = error.response.data.message || errorMessage;
+        if ((error as AxiosError).response) {
+            errorMessage = ((error as AxiosError).response?.data as any)?.message || errorMessage;
         }
         toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
     }
@@ -45,7 +56,7 @@ async function deleteArea() {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px' }" header="Confirmar" :modal="true"
+    <Dialog v-model:visible="localVisible" :style="{ width: '90%', maxWidth: '450px' }" header="Confirmar" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />

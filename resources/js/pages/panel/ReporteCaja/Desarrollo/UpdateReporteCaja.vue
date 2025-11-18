@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+// Importaciones
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -7,27 +8,46 @@ import { useToast } from 'primevue/usetoast';
 import axios from 'axios';
 import InputNumber from 'primevue/inputnumber';
 
-const props = defineProps({
-    visible: Boolean,
-    reporteId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+// Tipado de Props
+interface Props {
+    visible: boolean;
+    reporteId: number | null;
+}
 
+// Tipado de Reporte
+interface Reporte {
+    monto_efectivo: number | null;
+    monto_tarjeta: number | null;
+    monto_yape: number | null;
+    monto_transferencia: number | null;
+    vendedorNombre: string;
+    numero_cajas: string;
+}
+
+// Props y Emits
+const props = defineProps<Props>();
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
+
+// Variables reactivas
 const toast = useToast();
-const serverErrors = ref({});
+const serverErrors = ref<Record<string, string>>({});
 const submitted = ref(false);
 const loading = ref(false);
 
-const dialogVisible = ref(props.visible);
+const dialogVisible = ref<boolean>(props.visible);
 
+// Watchers
 watch(() => props.visible, (val) => dialogVisible.value = val);
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const reporte = ref({
-    monto_efectivo: '',
-    monto_tarjeta: '',
-    monto_yape: '',
-    monto_transferencia: '',
+const reporte = ref<Reporte>({
+    monto_efectivo: null,
+    monto_tarjeta: null,
+    monto_yape: null,
+    monto_transferencia: null,
     vendedorNombre: '',
     numero_cajas: ''
 });
@@ -38,7 +58,8 @@ watch(() => props.visible, async (val) => {
     }
 });
 
-const fetchReporte = async () => {
+// Función para obtener el reporte
+const fetchReporte = async (): Promise<void> => {
     loading.value = true;
     try {
         const { data } = await axios.get(`/reporte_caja/${props.reporteId}`);
@@ -51,19 +72,21 @@ const fetchReporte = async () => {
             vendedorNombre: r.vendedorNombre,
             numero_cajas: r.numero_cajas,
         };
-    } catch (error) {
+    } catch (error: any) {
         toast.add({
             severity: 'error',
             summary: 'Error',
             detail: 'No se pudo cargar el reporte',
             life: 3000
         });
+        console.error(error);
     } finally {
         loading.value = false;
     }
 };
 
-const updateReporte = async () => {
+// Función para actualizar el reporte
+const updateReporte = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -86,7 +109,7 @@ const updateReporte = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (error: any) {
         if (error.response?.status === 422 && error.response?.data?.message) {
             toast.add({
                 severity: 'error',
@@ -107,19 +130,27 @@ const updateReporte = async () => {
 </script>
 
 <template>
-  <Dialog v-model:visible="dialogVisible" header="Editar Reporte de Caja" modal :closable="true" :closeOnEscape="true" :style="{ width: '500px' }">
+  <Dialog 
+    v-model:visible="dialogVisible" 
+    header="Editar Reporte de Caja" 
+    modal 
+    :closable="true" 
+    :closeOnEscape="true" 
+    :style="{ width: '85vw', maxWidth: '500px' }" 
+    class="max-w-full"
+  >
     <div class="flex flex-col gap-6">
         <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12">
-                <label class="block font-bold mb-2">Vendedor</label>
-                <InputText v-model="reporte.vendedorNombre" readonly fluid />
+                <label class="block font-bold mb-2 text-sm sm:text-base">Vendedor</label>
+                <InputText v-model="reporte.vendedorNombre" readonly fluid disabled class="w-full"/>
             </div>
             <div class="col-span-12">
-                <label class="block font-bold mb-2">N° Caja</label>
-                <InputText v-model="reporte.numero_cajas" readonly fluid />
+                <label class="block font-bold mb-2 text-sm sm:text-base">N° Caja</label>
+                <InputText v-model="reporte.numero_cajas" readonly fluid disabled class="w-full"/>
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Efectivo</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Efectivo</label>
                 <InputNumber
                     v-model="reporte.monto_efectivo"
                     :minFractionDigits="2"
@@ -127,10 +158,11 @@ const updateReporte = async () => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Tarjeta</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Tarjeta</label>
                 <InputNumber
                     v-model="reporte.monto_tarjeta"
                     :minFractionDigits="2"
@@ -138,10 +170,11 @@ const updateReporte = async () => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Yape/Plin</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Yape/Plin</label>
                 <InputNumber
                     v-model="reporte.monto_yape"
                     :minFractionDigits="2"
@@ -149,10 +182,11 @@ const updateReporte = async () => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
-            <div class="col-span-6">
-                <label class="block font-bold mb-2">Transferencia</label>
+            <div class="col-span-12 sm:col-span-6">
+                <label class="block font-bold mb-2 text-sm sm:text-base">Transferencia</label>
                 <InputNumber
                     v-model="reporte.monto_transferencia"
                     :minFractionDigits="2"
@@ -160,7 +194,8 @@ const updateReporte = async () => {
                     mode="currency"
                     currency="PEN"
                     locale="es-PE"
-                    fluid />
+                    fluid
+                    class="w-full" />
             </div>
         </div>
     </div>

@@ -9,64 +9,82 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="platoDialog" :style="{ width: '600px' }" header="Registro de Platos" :modal="true">
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
-                    <label for="name" class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
-                    <InputText id="name" v-model.trim="plato.name" required maxlength="100" fluid />
+    <Dialog 
+        v-model:visible="platoDialog" 
+        header="Registro de Platos" 
+        :modal="true" 
+        :closable="true"
+        :style="{ width: '90%', maxWidth: '600px' }"
+    >
+        <div class="flex flex-col gap-6 w-full">
+            <div class="grid grid-cols-12 gap-4 w-full">
+                <div class="col-span-8 sm:col-span-10">
+                    <label for="name" class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
+                    <InputText id="name" v-model.trim="plato.name" required maxlength="100" fluid class="w-full" />
                     <small v-if="submitted && !plato.name" class="text-red-500">El nombre es obligatorio.</small>
                     <small v-else-if="submitted && plato.name.length < 2" class="text-red-500">El nombre debe tener al menos 2 caracteres.</small>
                     <small v-else-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                <div class="col-span-2">
-                    <label for="state" class="block font-bold mb-3">Estado <span class="text-red-500">*</span></label>
-                    <div class="flex items-center gap-3">
+
+                <div class="col-span-4 sm:col-span-2">
+                    <label for="state" class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
+                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                         <Checkbox v-model="plato.state" :binary="true" inputId="state" />
                         <Tag :value="plato.state ? 'Activo' : 'Inactivo'" :severity="plato.state ? 'success' : 'danger'" />
-                        <small v-if="submitted && plato.state === null" class="text-red-500">El estado es obligatorio.</small>
+                        <small v-if="submitted && plato.state === null" class="text-red-500 w-full sm:w-auto">El estado es obligatorio.</small>
                         <small v-else-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                     </div>
                 </div>
-                <div class="col-span-6">
-                    <label for="price" class="block font-bold mb-3">Precio <span class="text-red-500">*</span></label>
+
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="price" class="block font-bold mb-2">Precio <span class="text-red-500">*</span></label>
                     <InputNumber id="price" v-model="plato.price" mode="currency" currency="PEN" locale="es-PE" class="w-full" />
                     <small v-if="submitted && (!plato.price || plato.price <= 0)" class="text-red-500">El precio debe ser mayor que 0.</small>
                     <small v-else-if="serverErrors.price" class="text-red-500">{{ serverErrors.price[0] }}</small>
                 </div>
 
-                <div class="col-span-6">
-                    <label for="quantity" class="block font-bold mb-3">Cantidad <span class="text-red-500">*</span></label>
+                <div class="col-span-12 sm:col-span-6">
+                    <label for="quantity" class="block font-bold mb-2">Cantidad <span class="text-red-500">*</span></label>
                     <InputNumber id="quantity" v-model="plato.quantity" :min="0" class="w-full" />
                     <small v-if="submitted && plato.quantity < 0" class="text-red-500">La cantidad no puede ser negativa.</small>
                     <small v-else-if="serverErrors.quantity" class="text-red-500">{{ serverErrors.quantity[0] }}</small>
                 </div>
 
                 <!-- Categoría (Dropdown con búsqueda) -->
-                    <div class="col-span-12">
-                        <label for="category" class="block font-bold mb-3">Categoría <span class="text-red-500">*</span></label>
-                        <Dropdown
-                            id="category"
-                            v-model="plato.idCategory"
-                            :options="categories"
-                            optionLabel="label"
-                            optionValue="value"
-                            fluid
-                            placeholder="Seleccionar categoría"
-                            filter
-                            filterBy="label"
-                            filterPlaceholder="Buscar categoria..."
-                            class="w-full"
-                            :loading="loadingCategories"
-                        />
-                        <small v-if="submitted && !plato.idCategory" class="text-red-500">La categoría es obligatoria.</small>
-                        <small v-else-if="serverErrors.idCategory" class="text-red-500">{{ serverErrors.idCategory[0] }}</small>
-                    </div>
-
-                <!-- Campo para seleccionar insumos -->
                 <div class="col-span-12">
-                    <label for="insumos" class="block font-bold mb-3">Insumos</label>
-                    <MultiSelect v-model="plato.insumos" :options="insumos" optionLabel="name" optionValue="id" placeholder="Seleccionar insumos" :loading="loadingInsumos" display="chip" class="w-full" />
+                    <label for="category" class="block font-bold mb-2">Categoría <span class="text-red-500">*</span></label>
+                    <Dropdown
+                        id="category"
+                        v-model="plato.idCategory"
+                        :options="categories"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Seleccionar categoría"
+                        filter
+                        filterBy="label"
+                        filterPlaceholder="Buscar categoría..."
+                        class="w-full"
+                        :loading="loadingCategories"
+                    />
+                    <small v-if="submitted && !plato.idCategory" class="text-red-500">La categoría es obligatoria.</small>
+                    <small v-else-if="serverErrors.idCategory" class="text-red-500">{{ serverErrors.idCategory[0] }}</small>
+                </div>
+
+                <!-- Campo para seleccionar insumos CON BÚSQUEDA -->
+                <div class="col-span-12">
+                    <label for="insumos" class="block font-bold mb-2">Insumos</label>
+                    <MultiSelect 
+                        v-model="plato.insumos" 
+                        :options="insumos" 
+                        optionLabel="name" 
+                        optionValue="id" 
+                        placeholder="Seleccionar insumos" 
+                        display="chip" 
+                        filter
+                        filterPlaceholder="Buscar insumos..."
+                        class="w-full"
+                        :loading="loadingInsumos" 
+                    />
                     <small v-if="submitted && plato.insumos.length === 0" class="text-red-500">Debe seleccionar al menos un insumo.</small>
                     <small v-else-if="serverErrors.insumos" class="text-red-500">{{ serverErrors.insumos[0] }}</small>
                 </div>
@@ -80,7 +98,7 @@
     </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Toolbar from 'primevue/toolbar';
@@ -96,17 +114,41 @@ import MultiSelect from 'primevue/multiselect'; // Importar MultiSelect de Prime
 import ToolsDish from './toolsDish.vue';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 
+interface Category {
+    value: number;
+    label: string;
+}
+
+interface Insumo {
+    id: number;
+    name: string;
+    stock: number;
+}
+
+interface Plato {
+    name: string;
+    price: number;
+    quantity: number;
+    idCategory: number | null;
+    state: boolean;
+    insumos: number[];
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
 const toast = useToast();
 const emit = defineEmits(['plato-agregado']);
 const submitted = ref(false);
 const platoDialog = ref(false);
 const loadingCategories = ref(false);
 const loadingInsumos = ref(false);
-const serverErrors = ref({});
-const categories = ref([]);
-const insumos = ref([]); // Array para almacenar los insumos disponibles
+const serverErrors = ref<ServerErrors>({});
+const categories = ref<Category[]>([]);
+const insumos = ref<Insumo[]>([]);
 
-const plato = ref({
+const plato = ref<Plato>({
     name: '',
     price: 0,
     quantity: 0,
@@ -116,18 +158,18 @@ const plato = ref({
 });
 
 // Método para recargar la lista de platos
-const loadPlato = async () => {
+const loadPlato = async (): Promise<void> => {
     try {
         const response = await axios.get('/plato');  // Aquí haces una solicitud GET para obtener los platos
         console.log(response.data);
-        emit('plato-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('plato-agregado');  // Si quieres que un componente padre reciba la notificación de la actualización
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los platos', life: 3000 });
         console.error(error);
     }
 };
 
-function resetPlato() {
+function resetPlato(): void {
     plato.value = {
         name: '',
         price: 0,
@@ -140,17 +182,17 @@ function resetPlato() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetPlato();
     platoDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     platoDialog.value = false;
     resetPlato();
 }
 
-function guardarPlato() {
+function guardarPlato(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -160,7 +202,7 @@ function guardarPlato() {
             hideDialog();
             emit('plato-agregado');
         })
-        .catch(error => {
+        .catch((error) => {
             if (error.response && error.response.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {
@@ -174,12 +216,12 @@ function guardarPlato() {
         });
 }
 
-function cargarCategorias() {
+function cargarCategorias(): void {
     loadingCategories.value = true;
     axios.get('/categoria', { params: { state: 1 } })
-        .then(response => {
+        .then((response) => {
             if (response.data && response.data.data) {
-                categories.value = response.data.data.map(cat => ({
+                categories.value = response.data.data.map((cat: any) => ({
                     value: cat.id,
                     label: cat.name
                 }));
@@ -193,12 +235,12 @@ function cargarCategorias() {
         });
 }
 
-function cargarInsumos() {
+function cargarInsumos(): void {
     loadingInsumos.value = true;
     axios.get('/insumos/con-stock')
-        .then(response => {
+        .then((response) => {
             if (response.data && response.data.inputs) {
-                insumos.value = response.data.inputs.map(insumo => ({
+                insumos.value = response.data.inputs.map((insumo: any) => ({
                     id: insumo.id,
                     name: `${insumo.name} - ${insumo.quantityUnitMeasure} ${insumo.unitMeasure}`,
                     stock: insumo.stock  // Incluimos el stock en el objeto

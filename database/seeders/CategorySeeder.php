@@ -27,6 +27,22 @@ class CategorySeeder extends Seeder{
             'name' => 'Especialidades',
             'state' => true,
         ]);
+        Category::create([
+            'name' => 'Licores',
+            'state' => true,
+        ]);
+        Category::create([
+            'name' => 'Souvenirs',
+            'state' => true,
+        ]);
+        Category::create([
+            'name' => 'Snacks',
+            'state' => true,
+        ]);
+        Category::create([
+            'name' => 'Recuerdos',
+            'state' => true,
+        ]);
         //Category::factory(500)->create();
     }
 }

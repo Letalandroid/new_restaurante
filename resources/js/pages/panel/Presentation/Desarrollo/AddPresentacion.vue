@@ -9,34 +9,51 @@
         </template>
     </Toolbar>
 
-    <Dialog v-model:visible="presentacionDialog" :style="{ width: '600px' }" header="Registro de presentación" :modal="true">
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+    <Dialog 
+        v-model:visible="presentacionDialog" 
+        :style="{ width: '85%', maxWidth: '600px' }" 
+        header="Registro de presentación" 
+        :modal="true"
+    >
+        <div class="flex flex-col gap-6 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div class="col-span-8 sm:col-span-10">
                     <label class="block font-bold mb-3">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         v-model.trim="presentacion.name"
                         required
                         maxlength="150"
                         fluid
+                        class="w-full"
                     />
                     <small v-if="submitted && !presentacion.name" class="text-red-500">El nombre es obligatorio.</small>
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                <div class="col-span-2">
+
+                <div class="col-span-4 sm:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="presentacion.state" :binary="true" />
-                        <Tag :value="presentacion.state ? 'Activo' : 'Inactivo'" :severity="presentacion.state ? 'success' : 'danger'" />
+                        <Tag 
+                            :value="presentacion.state ? 'Activo' : 'Inactivo'" 
+                            :severity="presentacion.state ? 'success' : 'danger'" 
+                        />
                     </div>
                     <small v-if="serverErrors.state" class="text-red-500">{{ serverErrors.state[0] }}</small>
                 </div>
+
                 <div class="col-span-12">
                     <label class="block font-bold mb-3">Descripción</label>
-                    <Textarea fluid v-model="presentacion.description" maxlength="255" rows="4" autoResize
-                        :class="{ 'p-invalid': serverErrors.description }" />
-                    <small v-if="serverErrors.description" class="text-red-500">{{ serverErrors.description[0]
-                        }}</small>
+                    <Textarea 
+                        fluid 
+                        v-model="presentacion.description" 
+                        maxlength="255" 
+                        rows="4" 
+                        autoResize
+                        class="w-full"
+                        :class="{ 'p-invalid': serverErrors.description }" 
+                    />
+                    <small v-if="serverErrors.description" class="text-red-500">{{ serverErrors.description[0] }}</small>
                 </div>
             </div>
         </div>
@@ -48,9 +65,10 @@
     </Dialog>
 </template>
 
-<script setup>
+
+<script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
@@ -62,20 +80,35 @@ import { useToast } from 'primevue/usetoast';
 import ToolsPresentation from './toolsPresentation.vue';
 
 const toast = useToast();
-const submitted = ref(false);
-const presentacionDialog = ref(false);
-const serverErrors = ref({});
-const emit = defineEmits(['presentacion-agregada']);
+const submitted = ref<boolean>(false);
+const presentacionDialog = ref<boolean>(false);
 
-const presentacion = ref({
+// Tipos
+interface Presentacion {
+    name: string;
+    description: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+const serverErrors = ref<ServerErrors>({});
+const emit = defineEmits<{
+    (e: 'presentacion-agregada'): void;
+}>();
+
+const presentacion = ref<Presentacion>({
     name: '',
     description: '',
     state: true
 });
+
 // Método para recargar la lista de presentaciones
-const loadPresentacion = async () => {
+const loadPresentacion = async (): Promise<void> => {
     try {
-        const response = await axios.get('/presentacion');  // Aquí haces una solicitud GET para obtener las presentaciones
+        const response: AxiosResponse = await axios.get('/presentacion');  // Aquí haces una solicitud GET para obtener las presentaciones
         console.log(response.data);
         // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
         emit('presentacion-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
@@ -83,8 +116,9 @@ const loadPresentacion = async () => {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar las presentaciones', life: 3000 });
         console.error(error);
     }
-}
-function resetPresentacion() {
+};
+
+function resetPresentacion(): void {
     presentacion.value = {
         name: '',
         description: '',
@@ -94,17 +128,17 @@ function resetPresentacion() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetPresentacion();
     presentacionDialog.value = true;
 }
 
-function hideDialog() {
+function hideDialog(): void {
     presentacionDialog.value = false;
     resetPresentacion();
 }
 
-function guardarPresentacion() {
+function guardarPresentacion(): void {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -116,7 +150,7 @@ function guardarPresentacion() {
             hideDialog();
             emit('presentacion-agregada');
         })
-        .catch(error => {
+        .catch((error: AxiosError<any>) => {
             if (error.response && error.response.status === 422) {
                 serverErrors.value = error.response.data.errors || {};
             } else {

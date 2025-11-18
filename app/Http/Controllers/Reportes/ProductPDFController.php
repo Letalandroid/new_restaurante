@@ -18,15 +18,19 @@ class ProductPDFController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'details' => $product->details,
-                'category_name' => $product->category->name,
-                'almacen_name' => $product->almacen->name,
+                'category_name' => $product->category->name ?? 'Sin categoría',
+                'almacen_name' => $product->almacen->name ?? 'Sin almacén',
+                'stock' => $product->stock_quantity,
+                'priceSale' => number_format($product->priceSale, 2),
+                'quantityUnitMeasure' => $product->quantityUnitMeasure,
+                'unitMeasure' => $product->unitMeasure,
                 'state' => $product->state == 1 ? 'Activo' : 'Inactivo',
-                'created_at' => $product->created_at,
-                'updated_at' => $product->updated_at,
+                'foto' => $product->foto,
             ];
         })->toArray();
+
         // Crear el objeto TCPDF
-        $pdf = new TCPDF(); // 'L' para orientación horizontal
+        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
 
         $pdf->SetCreator('Laravel TCPDF');
         $pdf->SetAuthor('Laravel');
@@ -35,68 +39,93 @@ class ProductPDFController extends Controller
 
         // Configuración de márgenes
         $pdf->SetMargins(10, 10, 10);
-        $pdf->SetAutoPageBreak(true, 10); // Asegura que haya espacio entre las filas y el pie de la página
+        $pdf->SetAutoPageBreak(true, 10);
 
-        // Eliminar la línea de encabezado (borde superior)
+        // Quitar encabezado y pie de página predeterminados
         $pdf->SetHeaderData('', 0, '', '', [0, 0, 0], [255, 255, 255]);
-
-        // Personalizar el pie de página (eliminar línea predeterminada)
         $pdf->setFooterData(array(0, 0, 0), array(255, 255, 255));
 
-        // Agregar la primera página
+        // Agregar una página
         $pdf->AddPage();
 
-        // Encabezado del PDF
+        // Título
         $pdf->SetFont('helvetica', 'B', 18);
-        $pdf->Cell(0, 20, 'Lista de Productos', 0, 1, 'C');
+        $pdf->Cell(0, 15, 'Lista de Productos', 0, 1, 'C');
+        $pdf->Ln(5);
 
         // Encabezados de la tabla
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(242, 242, 242);  // Color de fondo para los encabezados
+        $pdf->SetFillColor(230, 240, 255); // Azul claro para encabezados
 
-        $header = ['ID', 'Nombre', 'Detalles', 'Categoria', 'Almacen', 'Estado', 'Creación', 'Actualización'];
-        $widths = [7, 40, 30, 20, 20, 15, 30, 30]; // Tamaños adecuados para las celdas
-        // Establecer los encabezados de la tabla en la primera página
+        $header = [
+            'ID', 'Nombre', 'Detalles', 'Categoría', 'Almacén',
+            'Stock', 'Precio Venta', 'Cant. Medida', 'Unidad', 'Estado', 'Foto'
+        ];
+
+        $widths = [10, 35, 60, 25, 30, 15, 20, 20, 20, 18, 25];
+
         foreach ($header as $i => $col) {
             $pdf->MultiCell($widths[$i], 9, $col, 1, 'C', 1, 0);
         }
-        $pdf->Ln();  // Salto de línea después del encabezado
+        $pdf->Ln();
 
-        // Imprimir los datos de los productos
-        $pdf->SetFont('helvetica', '', 7);
+        // Filas
+        $pdf->SetFont('helvetica', '', 8);
+        $rowHeight = 18;
 
         foreach ($productsArray as $product) {
-            // Si la posición Y está cerca del final de la página, añadir una nueva página y repetir los encabezados
-            if ($pdf->GetY() > 250) {
-                $pdf->AddPage(); // Añadir una nueva página
-                // Repetir los encabezados en la nueva página
-                $pdf->SetFont('helvetica', 'B', 7);
-                $pdf->SetFillColor(242, 242, 242);
+            // Si llega al final de la página, agrega una nueva con encabezado
+            if ($pdf->GetY() > 180) {
+                $pdf->AddPage();
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->SetFillColor(230, 240, 255);
                 foreach ($header as $i => $col) {
-                    $pdf->MultiCell($widths[$i], 7, $col, 1, 'C', 1, 0);
+                    $pdf->MultiCell($widths[$i], 9, $col, 1, 'C', 1, 0);
                 }
                 $pdf->Ln();
+                $pdf->SetFont('helvetica', '', 8);
             }
 
-            // Asegurarse de que las celdas no se sobrepasen
-            $pdf->SetFont('helvetica', '', 7);
-            $pdf->MultiCell($widths[0], 7, $product['id'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[1], 7, $product['name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[2], 7, $product['details'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[3], 7, $product['category_name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[4], 7, $product['almacen_name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[5], 7, $product['state'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[6], 7, $product['created_at'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[7], 7, $product['updated_at'], 1, 'C', 0, 0);
-            $pdf->Ln();  // Salto de línea después de cada fila
+            $pdf->MultiCell($widths[0], $rowHeight, $product['id'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[1], $rowHeight, $product['name'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[2], $rowHeight, $product['details'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[3], $rowHeight, $product['category_name'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[4], $rowHeight, $product['almacen_name'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[5], $rowHeight, $product['stock'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[6], $rowHeight, 'S/ ' . $product['priceSale'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[7], $rowHeight, $product['quantityUnitMeasure'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[8], $rowHeight, $product['unitMeasure'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[9], $rowHeight, $product['state'], 1, 'C', 0, 0);
+
+            // Foto
+            $imgPath = public_path('storage/uploads/fotos/productos/' . $product['foto']);
+            $x = $pdf->GetX();
+            $y = $pdf->GetY();
+
+            $pdf->MultiCell($widths[10], $rowHeight, '', 1, 'C', 0, 0);
+
+            if (file_exists($imgPath) && $product['foto'] !== 'sin imagen') {
+                $imgWidth = 14;
+                $imgHeight = $rowHeight - 4;
+                $centerX = $x + ($widths[10] - $imgWidth) / 2;
+                $pdf->Image($imgPath, $centerX, $y + 2, $imgWidth, $imgHeight, '', '', '', false, 300);
+            } else {
+                $pdf->SetXY($x, $y);
+                $pdf->MultiCell($widths[10], $rowHeight, 'Sin foto de producto', 1, 'C', 0, 0);
+            }
+
+            $pdf->Ln($rowHeight);
         }
-        // Detenemos cualquier salida previa si la hay
+
+        // Limpiar buffer si hay salida previa
         if (ob_get_length()) {
             ob_end_clean();
         }
 
         // Generar el PDF y devolverlo al navegador
-        $pdfOutput = $pdf->Output('Productos.pdf', 'S'); // "S" = string, no lo imprime directamente
-        return response($pdfOutput)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'attachment; filename="Productos.pdf"');
+        $pdfOutput = $pdf->Output('Productos.pdf', 'S');
+        return response($pdfOutput)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="Productos.pdf"');
     }
 }

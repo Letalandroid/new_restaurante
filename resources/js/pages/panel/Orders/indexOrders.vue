@@ -9,7 +9,7 @@
             <template v-else>
                 <div class="card">
                     <AddOrders @plato-agregado="refrescarListado"/>
-                    <ListPedidos @plato-agregado="refrescarListado"/>
+                    <ListPedidos :refresh="refreshKey" @plato-agregado="refrescarListado"/>
                 </div>
             </template>
         </div>

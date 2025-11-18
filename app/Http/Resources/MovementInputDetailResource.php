@@ -14,6 +14,7 @@ class MovementInputDetailResource extends JsonResource
             'id' => $this->id,
             'idMovementInput' => $this->idMovementInput,
             'idInput' => $this->idInput,
+            'idProduct' => $this->idProduct,
             'quantity' => $this->quantity,
             'totalPrice' => $this->totalPrice,
             'priceUnit' => $this->priceUnit,
@@ -21,6 +22,7 @@ class MovementInputDetailResource extends JsonResource
             'expirationDate' => Carbon::parse($this->expirationDate)->format('d-m-Y'),
             'movementInput' => new MovementInputResource($this->whenLoaded('movementInput')), // Relación con MovementInput
             'input' => new InputResource($this->whenLoaded('input')), // Relación con Input
+            'product' => new ProductResource($this->whenLoaded('product')), // Nueva relación
             'creacion' => Carbon::parse($this->created_at)->format('d-m-Y H:i:s A'),
             'actualizacion' => Carbon::parse($this->updated_at)->format('d-m-Y H:i:s A'),
         ];

@@ -51,7 +51,7 @@
   </AppLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import AppLayout from '@/layout/AppLayout.vue';
@@ -61,16 +61,27 @@ import Select from 'primevue/dropdown';
 import Button from 'primevue/button';
 import axios from 'axios';
 
+interface Caja {
+  id: number;
+  numero_cajas: string;
+  state: boolean;
+}
+
+interface UserResponse {
+  success: boolean;
+  name: string;
+  apellidos: string;
+}
+
 const toast = useToast();
-const username = ref('');  // Variable para almacenar el nombre completo del usuario autenticado
-const cajaSeleccionada = ref(null);
-const cajasDisponibles = ref([]);
+const username = ref<string>('');
+const cajaSeleccionada = ref<number | null>(null);
+const cajasDisponibles = ref<Caja[]>([]);
 
 // Obtener el nombre del vendedor y las cajas disponibles cuando se monta el componente
 onMounted(async () => {
   try {
-    // Obtener el user_id, name y apellidos desde la API
-    const userResponse = await axios.get('/user-id');  // Solicitud a la API /user-id
+    const userResponse = await axios.get<UserResponse>('/user-id');
 
     if (userResponse.data.success) {
       // Guardamos el nombre completo (name + apellidos) en la variable username
@@ -78,14 +89,13 @@ onMounted(async () => {
       console.log('Nombre del usuario:', username.value);  // Imprimir en la consola el nombre completo
     }
 
-    // Obtener cajas disponibles (sin ocupar)
-    const cajasResponse = await axios.get('/caja/disponibles');
-    cajasDisponibles.value = cajasResponse.data.map(caja => ({
+    const cajasResponse = await axios.get<Caja[]>('/caja/disponibles');
+    cajasDisponibles.value = cajasResponse.data.map((caja: Caja) => ({
       id: caja.id,
       numero_cajas: caja.numero_cajas,
       state: caja.state
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error cargando datos:', error);
     toast.add({
       severity: 'error',
@@ -96,8 +106,7 @@ onMounted(async () => {
   }
 });
 
-// Aperturar caja
-const aperturarCaja = async () => {
+const aperturarCaja = async (): Promise<void> => {
   if (!cajaSeleccionada.value) {
     toast.add({
       severity: 'warn',
@@ -108,9 +117,11 @@ const aperturarCaja = async () => {
     return;
   }
 
-  const cajaSeleccionadaObj = cajasDisponibles.value.find(caja => caja.id === cajaSeleccionada.value);
+  const cajaSeleccionadaObj = cajasDisponibles.value.find(
+    (caja) => caja.id === cajaSeleccionada.value
+  );
 
-  if (cajaSeleccionadaObj.state === false) {
+  if (cajaSeleccionadaObj && cajaSeleccionadaObj.state === false) {
     toast.add({
       severity: 'warn',
       summary: 'Advertencia',
@@ -135,7 +146,7 @@ const aperturarCaja = async () => {
 
    // Redirigir a la vista de cajas
     window.location.href = '/cajas';
-  } catch (error) {
+  } catch (error: any) {
     toast.add({
       severity: 'error',
       summary: 'Error',

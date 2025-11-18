@@ -16,7 +16,9 @@ class CustomerPDFController extends Controller
         $customersArray = $customers->map(function ($customer) {
             return [
                 'id' => $customer->id,
-                'name' => $customer->name,
+                'nombre_completo' => $customer->name . ' ' . $customer->lastname,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
                 'codigo' => $customer->codigo,
                 'clienteTipo_name' => $customer->clienteType->name,
                 'state' => $customer->state == 1 ? 'Activo' : 'Inactivo',
@@ -51,11 +53,22 @@ class CustomerPDFController extends Controller
 
         // Encabezados de la tabla
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(242, 242, 242);  // Color de fondo para los encabezados
+        $pdf->SetFillColor(242, 242, 242);
 
-        $header = ['ID', 'Nombre', 'Código', 'Tipo de cliente', 'Estado', 'Creación', 'Actualización'];
-        $widths = [10, 40, 30, 30, 18, 30, 30]; // Tamaños adecuados para las celdas
-        // Establecer los encabezados de la tabla en la primera página
+        $header = [
+            'ID',
+            'Nombre y Apellido',
+            'Correo electrónico',
+            'Teléfono',
+            'Código',
+            'Tipo de Cliente',
+            'Estado',
+            'Creación',
+            'Actualización'
+        ];
+
+        $widths = [6, 35, 35, 16, 18, 20, 13, 26, 26]; // Ajuste de anchos
+
         foreach ($header as $i => $col) {
             $pdf->MultiCell($widths[$i], 9, $col, 1, 'C', 1, 0);
         }
@@ -80,13 +93,15 @@ class CustomerPDFController extends Controller
             // Asegurarse de que las celdas no se sobrepasen
             $pdf->SetFont('helvetica', '', 7);
             $pdf->MultiCell($widths[0], 7, $customer['id'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[1], 7, $customer['name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[2], 7, $customer['codigo'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[3], 7, $customer['clienteTipo_name'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[4], 7, $customer['state'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[5], 7, $customer['created_at'], 1, 'C', 0, 0);
-            $pdf->MultiCell($widths[6], 7, $customer['updated_at'], 1, 'C', 0, 0);
-            $pdf->Ln();  // Salto de línea después de cada fila
+            $pdf->MultiCell($widths[1], 7, $customer['nombre_completo'], 1, 'L', 0, 0);
+            $pdf->MultiCell($widths[2], 7, $customer['email'], 1, 'L', 0, 0);
+            $pdf->MultiCell($widths[3], 7, $customer['phone'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[4], 7, $customer['codigo'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[5], 7, $customer['clienteTipo_name'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[6], 7, $customer['state'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[7], 7, $customer['created_at'], 1, 'C', 0, 0);
+            $pdf->MultiCell($widths[8], 7, $customer['updated_at'], 1, 'C', 0, 0);
+            $pdf->Ln();
         }
         // Detenemos cualquier salida previa si la hay
         if (ob_get_length()) {

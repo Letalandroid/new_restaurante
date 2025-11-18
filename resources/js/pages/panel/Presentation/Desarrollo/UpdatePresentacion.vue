@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
@@ -6,22 +6,39 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Tag from 'primevue/tag';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    presentacionId: Number
-});
-const emit = defineEmits(['update:visible', 'updated']);
+// Tipos
+interface Presentacion {
+    name: string;
+    description: string;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+interface Props {
+    visible: boolean;
+    presentacionId: number | null;
+}
+
+// Props y Emits
+const props = defineProps<Props>();
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'updated'): void;
+}>();
 
 const toast = useToast();
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
-const submitted = ref(false);
-const serverErrors = ref({});
+const dialogVisible = ref<boolean>(props.visible);
+const loading = ref<boolean>(false);
+const submitted = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
 
-const presentacion = ref({
+const presentacion = ref<Presentacion>({
     name: '',
     description: '',
     state: false,
@@ -35,11 +52,11 @@ watch(() => props.visible, (val) => {
 });
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const fetchPresentacion = async () => {
+const fetchPresentacion = async (): Promise<void> => {
     try {
         loading.value = true;
         const res = await axios.get(`/presentacion/${props.presentacionId}`);
-        const data = res.data.presentation;
+        const data = res.data.presentation as Presentacion;
         presentacion.value = {
             name: data.name,
             description: data.description || '',
@@ -53,7 +70,7 @@ const fetchPresentacion = async () => {
     }
 };
 
-const updatePresentacion = async () => {
+const updatePresentacion = async (): Promise<void> => {
     submitted.value = true;
     serverErrors.value = {};
 
@@ -75,7 +92,8 @@ const updatePresentacion = async () => {
 
         dialogVisible.value = false;
         emit('updated');
-    } catch (error) {
+    } catch (err) {
+        const error = err as AxiosError<any>;
         if (error.response && error.response.data?.errors) {
             serverErrors.value = error.response.data.errors;
             toast.add({
@@ -98,10 +116,17 @@ const updatePresentacion = async () => {
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" header="Editar Presentación" modal :closable="true" :style="{ width: '600px' }">
-        <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-10">
+    <Dialog 
+        v-model:visible="dialogVisible" 
+        header="Editar Presentación" 
+        modal 
+        :closable="true" 
+        :style="{ width: '85%', maxWidth: '600px' }"
+        class="w-full sm:w-auto"
+    >
+        <div class="flex flex-col gap-6 w-full">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                <div class="col-span-8 sm:col-span-10">
                     <label class="block font-bold mb-2">Nombre <span class="text-red-500">*</span></label>
                     <InputText
                         v-model="presentacion.name"
@@ -109,28 +134,38 @@ const updatePresentacion = async () => {
                         maxlength="150"
                         fluid
                         :class="{ 'p-invalid': serverErrors.name }"
+                        class="w-full"
                     />
                     <small v-if="serverErrors.name" class="text-red-500">{{ serverErrors.name[0] }}</small>
                 </div>
-                 <div class="col-span-2">
+
+                <div class="col-span-4 sm:col-span-2">
                     <label class="block font-bold mb-2">Estado <span class="text-red-500">*</span></label>
                     <div class="flex items-center gap-3">
                         <Checkbox v-model="presentacion.state" :binary="true" />
-                        <Tag :value="presentacion.state ? 'Activo' : 'Inactivo'" :severity="presentacion.state ? 'success' : 'danger'" />
+                        <Tag 
+                            :value="presentacion.state ? 'Activo' : 'Inactivo'" 
+                            :severity="presentacion.state ? 'success' : 'danger'" 
+                        />
                     </div>
                 </div>
+
                 <div class="col-span-12">
                     <label class="block font-bold mb-3">Descripción</label>
                     <Textarea
                         v-model="presentacion.description"
                         maxlength="255"
-                        rows="4" autoResize fluid
+                        rows="4" 
+                        autoResize 
+                        fluid
+                        class="w-full"
                         :class="{ 'p-invalid': serverErrors.description }" 
                     />
                     <small v-if="serverErrors.description" class="text-red-500">{{ serverErrors.description[0] }}</small>
                 </div>
             </div>
         </div>
+
         <template #footer>
             <Button label="Cancelar" icon="pi pi-times" text @click="dialogVisible = false" />
             <Button label="Guardar" icon="pi pi-check" @click="updatePresentacion" :loading="loading" />

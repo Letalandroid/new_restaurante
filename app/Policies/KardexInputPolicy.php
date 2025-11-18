@@ -13,7 +13,7 @@ class KardexInputPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('ver kardex insumos');     
+        return $user->can('ver kardex items');     
     }
 
     /**
@@ -21,7 +21,7 @@ class KardexInputPolicy
      */
     public function view(User $user, KardexInput $kardexinput): bool
     {
-        return $user->can('ver kardex insumos');
+        return $user->can('ver kardex items');
     }
 
     /**
@@ -29,7 +29,7 @@ class KardexInputPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('crear kardex insumos');
+        return $user->can('crear kardex items');
     }
 
     /**
@@ -37,7 +37,7 @@ class KardexInputPolicy
      */
     public function update(User $user, KardexInput $kardexinput): bool
     {
-        return $user->can('editar kardex insumos');
+        return $user->can('editar kardex items');
     }
 
     /**
@@ -45,7 +45,7 @@ class KardexInputPolicy
      */
     public function delete(User $user, KardexInput $kardexinput): bool
     {
-        return $user->can('eliminar kardex insumos');
+        return $user->can('eliminar kardex items');
     }
 
     /**

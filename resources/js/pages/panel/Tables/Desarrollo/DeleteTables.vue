@@ -1,32 +1,46 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    table: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+// Tipos para props
+interface Table {
+    id: number;
+    tablenum: string;
+    [key: string]: any; // Permite otros campos adicionales sin error
+}
+
+const props = defineProps<{
+    visible: boolean;
+    table: Table | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(props.visible);
+const localVisible = ref<boolean>(props.visible);
 
 // Sincroniza localVisible con el prop visible
 watch(() => props.visible, (val) => {
     localVisible.value = val;
 });
+
 // Cuando localVisible cambie, emite el cambio para actualizar el v-model del padre
 watch(localVisible, (val) => {
     emit('update:visible', val);
 });
-function closeDialog() {
+
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deleteTable() {
+async function deleteTable(): Promise<void> {
+    if (!props.table) return;
     try {
         await axios.delete(`/mesa/${props.table.id}`);
         emit('deleted');
@@ -37,7 +51,7 @@ async function deleteTable() {
             detail: 'Mesa eliminada correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando la mesa';
         if (error.response?.data?.message) {
@@ -49,7 +63,7 @@ async function deleteTable() {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px', 'z-index': 9999 }" header="Confirmar" :modal="true">
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar" :modal="true">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span v-if="table">¿Estás seguro de eliminar la mesa <b>{{ table.tablenum }}</b>?</span>

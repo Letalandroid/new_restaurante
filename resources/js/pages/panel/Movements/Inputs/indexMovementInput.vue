@@ -1,5 +1,5 @@
 <template>
-    <Head title="Facturas de Compras de Insumos" />
+    <Head title="Facturas de Compras de Items" />
     <AppLayout>
         <div>
             <template v-if="isLoading">

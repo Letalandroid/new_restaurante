@@ -15,7 +15,8 @@ class StoreMovementInputDetailRequest extends FormRequest
     {
         return [
             'idMovementInput' => 'nullable|exists:movementsInput,id', // Permite que sea nulo
-            'idInput' => 'required|exists:inputs,id', // Asegura que el insumo exista y no sea nulo
+            'idInput' => 'nullable|exists:inputs,id', // Ahora puede ser nulo
+            'idProduct' => 'nullable|exists:products,id', // Nuevo campo
             'quantity' => 'required|numeric|min:0', // Asegura que la cantidad sea un número positivo y obligatorio
             'totalPrice' => 'nullable|numeric|min:0', // Precio total puede ser nulo
             'priceUnit' => 'nullable|numeric|min:0', // Precio unitario puede ser nulo
@@ -29,8 +30,8 @@ class StoreMovementInputDetailRequest extends FormRequest
         return [
             'idMovementInput.nullable' => 'El movimiento de insumo puede ser nulo.',
             'idMovementInput.exists' => 'El movimiento de insumo seleccionado no existe.',
-            'idInput.required' => 'El insumo es obligatorio.',
             'idInput.exists' => 'El insumo seleccionado no existe.',
+            'idProduct.exists' => 'El producto seleccionado no existe.',
             'quantity.required' => 'La cantidad es obligatoria.',
             'quantity.numeric' => 'La cantidad debe ser un número.',
             'quantity.min' => 'La cantidad no puede ser negativa.',
@@ -47,5 +48,23 @@ class StoreMovementInputDetailRequest extends FormRequest
             'expirationDate.date' => 'La fecha de vencimiento debe ser una fecha válida.',
             'expirationDate.after_or_equal' => 'La fecha de vencimiento no puede ser una fecha pasada.',
         ];
+    }
+    protected function prepareForValidation()
+    {
+        if ($this->idInput && $this->idProduct) {
+            $this->merge(['idProduct' => null]); // Forzar a uno solo
+        }
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if (empty($this->idInput) && empty($this->idProduct)) {
+                $validator->errors()->add('idInput', 'Debe seleccionar un insumo o un producto.');
+            }
+            if (!empty($this->idInput) && !empty($this->idProduct)) {
+                $validator->errors()->add('idProduct', 'No puede seleccionar ambos, solo uno.');
+            }
+        });
     }
 }

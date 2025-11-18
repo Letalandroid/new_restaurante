@@ -1,31 +1,42 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    plato: {
-        type: Object,
-        default: () => ({})
-    }
-});
+interface Plato {
+    id: number;
+    name?: string;
+    [key: string]: any;
+}
 
-const emit = defineEmits(['update:visible', 'deleted']);
+const props = defineProps<{
+    visible: boolean;
+    plato: Plato | null;
+}>();
 
-const dialogVisible = ref(props.visible);
-const loading = ref(false);
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
+
+const dialogVisible = ref<boolean>(false);
+const loading = ref<boolean>(false);
 const toast = useToast();
 
 // Sync dialog visibility with prop
 watch(() => props.visible, (val) => dialogVisible.value = val);
 watch(dialogVisible, (val) => emit('update:visible', val));
 
-const deletePlato = async () => {
+// Cierra el diálogo
+function closeDialog(): void {
+    emit('update:visible', false);
+}
+
+const deletePlato = async (): Promise<void> => {
     loading.value = true;
-    
+    if (!props.plato) return;
     try {
         await axios.delete(`/plato/${props.plato.id}`);
         
@@ -56,7 +67,7 @@ const deletePlato = async () => {
 <template>
  
 
-  <Dialog v-model:visible="dialogVisible" :style="{ width: '450px' }" header="Confirmar Eliminacion" :modal="true"
+  <Dialog v-model:visible="dialogVisible" :style="{ width: '90vw', maxWidth: '450px' }" header="Confirmar Eliminacion" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
@@ -67,5 +78,4 @@ const deletePlato = async () => {
             <Button label="Sí" icon="pi pi-check" @click="deletePlato" />
         </template>
     </Dialog>
-    
 </template>

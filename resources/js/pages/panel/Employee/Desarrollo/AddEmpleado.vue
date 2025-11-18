@@ -73,8 +73,8 @@
     </Dialog>
 </template>
 
-<script setup>
-import { ref} from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Toolbar from 'primevue/toolbar';
@@ -86,27 +86,45 @@ import { useToast } from 'primevue/usetoast';
 import Dropdown from 'primevue/dropdown';  // Importamos Dropdown
 import ToolsEmployee from './toolsEmployee.vue';
 
+interface Empleado {
+    name: string;
+    codigo: string;
+    employee_type_id: number | null;
+    state: boolean;
+}
+
+interface ServerErrors {
+    [key: string]: string[];
+}
+
+interface TipoEmpleado {
+    id: number;
+    name: string;
+}
+
 const toast = useToast();
-const submitted = ref(false);
-const empleadoDialog = ref(false);
-const serverErrors = ref({});
-const tiposEmpleado = ref([]);
+const submitted = ref<boolean>(false);
+const empleadoDialog = ref<boolean>(false);
+const serverErrors = ref<ServerErrors>({});
+const tiposEmpleado = ref<TipoEmpleado[]>([]);
 
-const emit = defineEmits(['empleado-agregado']);
+const emit = defineEmits<{
+    (e: 'empleado-agregado'): void;
+}>();
 
-const empleado = ref({
+const empleado = ref<Empleado>({
     name: '',
     codigo: '',
     employee_type_id: null,
     state: true
 });
 // Método para recargar la lista de empleados
-const loadEmpleado = async () => {
+const loadEmpleado = async (): Promise<void> => {
     try {
         const response = await axios.get('/empleado');  // Aquí haces una solicitud GET para obtener los empleados
         console.log(response.data);
         // Realiza lo que necesites con la respuesta, como actualizar el listado en un componente superior
-        emit('empleado-agregada');  // Si quieres que un componente padre reciba la notificación de la actualización
+        emit('empleado-agregado');  // Si quieres que un componente padre reciba la notificación de la actualización
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar los empleados', life: 3000 });
         console.error(error);
@@ -123,18 +141,18 @@ function resetEmpleado() {
     submitted.value = false;
 }
 
-function openNew() {
+function openNew(): void {
     resetEmpleado();
     empleadoDialog.value = true;
     fetchTiposEmpleado();
 }
 
-function hideDialog() {
+function hideDialog(): void {
     empleadoDialog.value = false;
     resetEmpleado();
 }
 
-function fetchTiposEmpleado() {
+function fetchTiposEmpleado(): void {
     axios.get('/tipo_empleado', { params: { state: 1 } })
         .then(res => {
             tiposEmpleado.value = res.data.data;
@@ -144,7 +162,7 @@ function fetchTiposEmpleado() {
         });
 }
 
-function guardarEmpleado() {
+function guardarEmpleado(): void {
     submitted.value = true;
     serverErrors.value = {};
 

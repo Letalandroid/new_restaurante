@@ -1,5 +1,5 @@
 <template>
-    <Head title="Kardex de Insumos" />
+    <Head title="Kardex de Items" />
     <AppLayout>
         <div>
             <template v-if="isLoading">
@@ -25,9 +25,7 @@ import ListKardexInputs from './Desarrollo/ListKardexInputs.vue';
 const isLoading = ref(true);
 const refreshKey = ref(0);
 
-function refrescarListado() {
-    refreshKey.value++;
-}
+
 onMounted(() => {
     setTimeout(() => {
         isLoading.value = false;

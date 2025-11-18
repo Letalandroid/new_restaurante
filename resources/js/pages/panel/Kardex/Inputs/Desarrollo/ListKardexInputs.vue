@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import { debounce } from 'lodash';
 import Button from 'primevue/button';
@@ -11,55 +11,33 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Dialog from 'primevue/dialog';
 import { onMounted, ref, watch } from 'vue';
-
-const SYSTEM_URL = "https://restauranttj-main-rwzwgj.laravel.cloud/";
-// Variables para la vista previa
-const showPdfDialog = ref(false);
-const pdfUrl = ref(null);
-const inputs = ref([]);
-const loading = ref(false);
-const globalFilterValue = ref('');
-const deleteInputDialog = ref(false);
-const updateInputDialog = ref(false);
-const selectedInputId = ref(null);
-const input = ref({});
-const currentPage = ref(1);
-const selectedColumns = ref([]);
-const selectedAlmacen = ref(null);
-const selectedEstadoInput = ref(null);
 import Calendar from 'primevue/calendar';  
 
+const SYSTEM_URL = "https://restauranttj-main-rwzwgj.laravel.cloud/";
+
+// Variables para la vista previa
+const showPdfDialog = ref<boolean>(false);
+const pdfUrl = ref<string | null>(null);
+const inputs = ref<any[]>([]);
+const loading = ref<boolean>(false);
+const globalFilterValue = ref<string>('');
+const deleteInputDialog = ref<boolean>(false);
+const currentPage = ref<number>(1);
+const selectedEstadoInput = ref<any>(null);
+const selectedInputs = ref<null>(null);
 const pagination = ref({
     currentPage: 1,
     perPage: 15,
     total: 0,
 });
-const refreshCount = ref(0); // Variable que se incrementa cuando se agrega un insumo
+
+const refreshCount = ref<number>(0); // Variable que se incrementa cuando se agrega un insumo
+
 // Rango de fechas
-const dateRange = ref(null); // Variable para el rango de fechas seleccionado
-const today = ref(new Date()); // Fecha máxima permitida
+const dateRange = ref<Date[] | null>(null); // Variable para el rango de fechas seleccionado
+const today = ref<Date>(new Date()); // Fecha máxima permitida
 
-const estadoInputOptions = ref([
-    { name: 'TODOS', value: '' },
-    { name: 'ACTIVOS', value: 1 },
-    { name: 'INACTIVOS', value: 0 },
-]);
 
-const isColumnSelected = (fieldName) => {
-    return selectedColumns.value.some((col) => col.field === fieldName);
-};
-
-const optionalColumns = ref([
-    { field: 'tablenum', header: 'Numero' },
-    { field: 'capacity', header: 'Capacidad' },
-]);
-
-const formatCurrency = (value) => {
-    if (value != null) {
-        return 'S/. ' + parseFloat(value).toFixed(2);
-    }
-    return '';
-};
 // Cargar los datos de los kardex
 const loadKardexInputs = async () => {
     loading.value = true;
@@ -72,7 +50,7 @@ const loadKardexInputs = async () => {
             end_date: dateRange.value && dateRange.value[1] ? dateRange.value[1].toISOString().split('T')[0] : null,  // Fecha de fin
         };
 
-        const response = await axios.get('/insumos/karde', { params });
+        const response = await axios.get('/items/karde', { params });
         inputs.value = response.data.data;
         pagination.value.currentPage = response.data.meta.current_page;
         pagination.value.total = response.data.meta.total;
@@ -83,13 +61,10 @@ const loadKardexInputs = async () => {
     }
 };
 
+const props = defineProps<{
+    refresh: number;
+}>();
 
-const props = defineProps({
-    refresh: {
-        type: Number,
-        required: true,
-    },
-});
 // Recarga la tabla cuando `refreshCount` cambia
 watch(refreshCount, loadKardexInputs);
 watch(() => props.refresh, loadKardexInputs);
@@ -104,7 +79,7 @@ watch(deleteInputDialog, (val) => {
     console.log('Dialogo eliminar visible:', val);
 });
 
-const onPage = (event) => {
+const onPage = (event: { page: number; rows: number }) => {
     pagination.value.currentPage = event.page + 1;
     pagination.value.perPage = event.rows;
     loadKardexInputs();
@@ -114,28 +89,6 @@ const onGlobalSearch = debounce(() => {
     pagination.value.currentPage = 1;
     loadKardexInputs();
 }, 500);
-
-const getSeverity = (value) => {
-    return value ? 'success' : 'danger';
-};
-
-const editarInput = (prod) => {
-    selectedInputId.value = prod.id;
-    updateInputDialog.value = true;
-};
-
-const confirmarDeleteInput = (prod) => {
-    input.value = prod;
-    deleteInputDialog.value = true;
-};
-
-function handleInputUpdated() {
-    loadKardexInputs();
-}
-
-function handleInputDeleted() {
-    loadKardexInputs();
-}
 
 onMounted(loadKardexInputs);
 
@@ -147,21 +100,26 @@ watch(dateRange, () => {
         loadKardexInputs();  // Realizar la búsqueda automáticamente cuando ambos valores estén seleccionados
     }
 });
-let lastDoc = null; // Variable global
 
-const generatePDF = (row) => {
+let lastDoc: jsPDF | null = null; // Variable global
+
+const generatePDF = (row: any) => {
     const doc = new jsPDF();
 
     // Hora y fecha actual
     const now = new Date();
-    const formatTime = (date) => date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const formatDate = (date) => date.toLocaleDateString('es-PE');
+    const formatTime = (date: Date) => date.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const formatDate = (date: Date) => date.toLocaleDateString('es-PE');
     const currentDate = formatDate(now);
     const currentTime = formatTime(now);
 
     // Verificar si hay código y precio total
     const hasCode = row.code !== undefined && row.code !== null && row.code !== '';
     const hasTotalPrice = row.totalPrice !== undefined && row.totalPrice !== null && row.totalPrice !== '';
+
+    const isInput = row.idInput !== null && row.idInput !== undefined;
+    const itemType = isInput ? 'INSUMO' : 'PRODUCTO';
+    const itemName = isInput ? row.nameInput : row.nameProduct;
 
     // Nombre empresa centrado
     doc.setFontSize(15);
@@ -182,6 +140,8 @@ const generatePDF = (row) => {
     // Datos a la izquierda
     doc.setFontSize(10);
     let yStart = 42;
+    doc.text(`Tipo de Item: ${itemType}`, 13, yStart);
+    yStart += 6;
     if (hasCode) {
         doc.text(`Código: ${row.code}`, 13, yStart);
         yStart += 6;
@@ -190,8 +150,8 @@ const generatePDF = (row) => {
     yStart += 6;
     doc.text(`Tipo de movimiento: ${row.movement_type || ''}`, 13, yStart);
     yStart += 6;
-    doc.text(`Insumo: ${row.nameInput || ''}`, 13, yStart);
-
+    doc.text(`${isInput ? 'Insumo' : 'Producto'}: ${itemName || ''}`, 13, yStart);
+    yStart += 6;
     // Fecha (de la fila) a la derecha
     doc.text(`Fecha: ${row.created_at || ''}`, 150, 42);
 
@@ -199,8 +159,8 @@ const generatePDF = (row) => {
     doc.line(10, yStart + 5, 200, yStart + 5);
 
     // Construir columnas y valores de la tabla
-    let tableHead = [['Cantidad', 'Unidad']];
-    let tableBody = [[
+    const tableHead: string[][] = [['Cantidad', 'Unidad']];
+    const tableBody: (string | number)[][] = [[
         row.quantity !== undefined && row.quantity !== null && row.quantity !== '' ? row.quantity : '0.00',
         `${row.quantityUnitMeasure ?? ''} ${row.unitMeasure ?? ''}`,
     ]];
@@ -228,20 +188,20 @@ const generatePDF = (row) => {
     });
 
     // Línea horizontal después de la tabla
-    const tableEndY = doc.lastAutoTable.finalY + 5;
+    const tableEndY = (doc as any).lastAutoTable?.finalY ?? yStart + 20;
     doc.line(10, tableEndY, 200, tableEndY);
 
     // Mostrar Total Movimiento solo si hay precio total
     if (hasTotalPrice) {
         doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text(
             `Total Movimiento: S/. ${row.totalPrice}`,
             200,
             tableEndY + 10,
             { align: 'right' }
         );
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
     }
 
     // Pie de página
@@ -266,6 +226,7 @@ const closePdfDialog = () => {
         pdfUrl.value = null;
     }
 };
+
 const downloadPDF = () => {
     if (lastDoc) {
         // Usa lo que quieras como nombre dinámico:
@@ -290,11 +251,11 @@ const downloadPDF = () => {
         scrollable
         scrollHeight="574px"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Kardexes de Insumos"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Kardexes de Items"
     >
         <template #header>
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h4 class="m-0">Kardex de Insumos</h4>
+                <h4 class="m-0">Kardex de Items</h4>
                 <div class="flex flex-wrap gap-2">
                     <div class="flex gap-2">
                         <Calendar 
@@ -311,7 +272,7 @@ const downloadPDF = () => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar..." />
+                        <InputText v-model="globalFilterValue" @input="onGlobalSearch" placeholder="Buscar por código..." />
                     </IconField>
 
                     <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadKardexInputs" />
@@ -325,7 +286,19 @@ const downloadPDF = () => {
 <Column field="username" header="Usuario" sortable style="min-width: 7rem;" />
      
               <Column field="movement_type" header="Movimiento" sortable style="min-width: 7rem" />
-             
+            <Column field="item_type" header="Tipo" sortable style="min-width: 6rem">
+                <template #body="{ data }">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                        :class="data.idInput ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'">
+                        {{ data.idInput ? 'INSUMO' : 'PRODUCTO' }}
+                    </span>
+                </template>
+            </Column>
+            <Column field="name" header="Item" sortable style="min-width: 12rem">
+                <template #body="{ data }">
+                    <span>{{ data.nameInput || data.nameProduct || 'N/A' }}</span>
+                </template>
+            </Column>
 <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem" />
               <Column header="Unidad" sortable style="min-width: 7rem">
             <template #body="{ data }">
@@ -341,7 +314,7 @@ const downloadPDF = () => {
             </template>
         </Column>
     </DataTable>
-<Dialog v-model:visible="showPdfDialog" header="Vista previa del comprobante" :style="{ width: '800px' }" modal :closable="true" @hide="closePdfDialog">
+<Dialog v-model:visible="showPdfDialog" header="Vista previa del comprobante" :style="{ width: '95vw', maxWidth: '800px' }" modal :closable="true" @hide="closePdfDialog">
     <template #default>
         <iframe
             v-if="pdfUrl"

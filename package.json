@@ -25,6 +25,9 @@
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.19",
+        "@fullcalendar/daygrid": "^6.1.19",
+        "@fullcalendar/vue3": "^6.1.19",
         "@headlessui/vue": "^1.7.23",
         "@heroicons/react": "^2.2.0",
         "@heroicons/vue": "^2.2.0",
@@ -47,7 +50,7 @@
         "lucide": "^0.468.0",
         "lucide-vue-next": "^0.468.0",
         "primeicons": "^7.0.0",
-        "primevue": "^4.3.6",
+        "primevue": "^4.4.1",
         "radix-vue": "^1.9.11",
         "reka-ui": "^2.2.0",
         "shadcn-vue": "^2.3.1",

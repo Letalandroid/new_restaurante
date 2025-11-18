@@ -1,91 +1,43 @@
 <template>
-
-
- <Panel header="DETALLE DE MOVIMIENTO" class="p-mt-3">
-    <div class="p-grid p-fluid">
-        <!-- Código y Fecha de Emisión -->
-        <div class="p-col-12 p-md-2 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Código:</strong></label>
-                {{ movement.code }}
-            </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Fecha de Emisión:</strong></label>
-                {{ movement.issue_date }}
-            </div>
-        </div>
-
-        <!-- Proveedor y Fecha de Ejecución -->
-        <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Proveedor:</strong></label>
-                {{ movement.supplier_name }}
-            </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Fecha de Ejecución:</strong></label>
-                {{ movement.execution_date }}
-            </div>
-        </div>
-
-        <!-- Tipo de Movimiento y Tipo de Pago -->
-        <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Tipo de Movimiento:</strong></label>
-                {{ getMovementType(movement.movement_type) }}
-            </div>
-            <div class="p-field p-d-flex p-ai-center">
-                <label class="p-mr-2"><strong>Tipo de Pago:</strong></label>
-                {{ movement.payment_type }}
-            </div>
-        </div>
-    </div>
-</Panel>
-    <Card class="p-4  mr-4">
-        <template #content>
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg">DETALLE DE {{ data.tipoMovimiento }} N°: {{ data.codigo }}</h3>
-                <div class="flex space-x-3">
-                    <Button label="Nuevo" icon="pi pi-plus" severity="contrast" @click="openNewModal"
-                        class="px-4 py-2" />
-                    <Button label="Volver" severity="secondary" @click="goBack" class="px-4 py-2" />
+    <Panel header="DETALLE DE MOVIMIENTO" class="p-mt-3 w-full">
+        <div class="grid grid-cols-12 gap-4">
+            <!-- Código y Fecha de Emisión -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Código:</strong></label>
+                    <span class="break-words">{{ movement.code }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Fecha de Emisión:</strong></label>
+                    <span class="break-words">{{ movement.issue_date }}</span>
                 </div>
             </div>
-        </template>
-        <template #footer>
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="font-bold">CODIGO:</span>
-                            <pre class="ml-2">{{ data.codigo }}</pre>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-bold">FECHA DE EMISION:</span>
-                            <pre class="ml-2">{{ data.fechaEmision }}</pre>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="font-bold">PROVEEDOR:</span>
-                            <pre class="ml-2">{{ data.name }}</pre>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="font-bold">FECHA DE EJECUCION:</span>
-                            <pre class="ml-2">{{ data.fechaEjecucion }}</pre>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <div v-if="data.fechaCredito !== '00-00-0000'" class="flex items-center">
-                            <span class="font-bold">FECHA DE CREDITO:</span>
-                            <pre class="ml-2">{{ data.fechaCredito }}</pre>
-                        </div>
-                    </div>
+
+            <!-- Proveedor y Fecha de Ejecución -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Proveedor:</strong></label>
+                    <span class="break-words">{{ movement.supplier_name }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Fecha de Ejecución:</strong></label>
+                    <span class="break-words">{{ movement.execution_date }}</span>
                 </div>
             </div>
-        </template>
 
-    </Card>
-
+            <!-- Tipo de Movimiento y Tipo de Pago -->
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
+                <div class="flex items-center flex-wrap mb-2">
+                    <label class="mr-2 font-bold"><strong>Tipo de Movimiento:</strong></label>
+                    <span class="break-words">{{ getMovementType(movement.movement_type) }}</span>
+                </div>
+                <div class="flex items-center flex-wrap">
+                    <label class="mr-2 font-bold"><strong>Tipo de Pago:</strong></label>
+                    <span class="break-words">{{ movement.payment_type }}</span>
+                </div>
+            </div>
+        </div>
+    </Panel>
 </template>
 
 <script setup lang="ts">
@@ -93,8 +45,6 @@ import { ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3'; 
 const { id } = usePage().props;
 import Panel from 'primevue/panel';
-import Button from 'primevue/button';
-import Toolbar from 'primevue/toolbar';
 import axios from 'axios';
 import { useToast } from 'primevue/usetoast';
 const toast = useToast();
@@ -126,28 +76,20 @@ function getMovementType(type: number) {
 // Función para cargar los datos del movimiento desde la API
 async function loadMovementDetails() {
     try {
-        const response = await axios.get(`/insumos/movimiento/${id}`);
+        const response = await axios.get(`/items/movimiento/${id}`);
         if (response.data.state) {
             movement.value = response.data.movement;
         } else {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Movimiento no encontrado.' });
-                        window.location.href = '/insumos/movimientos/';
+                        window.location.href = '/items/movimientos/';
 
         }
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar los datos del movimiento.' });
-                    window.location.href = '/insumos/movimientos/';
+                    window.location.href = '/items/movimientos/';
+        console.error(error);
 
     }
-}
-
-// Funciones para el comportamiento de los botones
-function openNew() {
-    inputDialog.value = true;
-}
-function back() {
-                    window.location.href = '/insumos/movimientos/';
-
 }
 
 // Cargar los detalles al montar el componente

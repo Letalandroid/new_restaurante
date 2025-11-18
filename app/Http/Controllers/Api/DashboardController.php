@@ -9,6 +9,8 @@ use App\Models\Customer;
 use App\Models\SalesOrder;
 use App\Models\Sale; 
 use App\Models\Table; // Asegúrate de incluir el modelo Table
+use App\Models\Employee; // Agregar modelo Employee
+use App\Models\Product; // Agregar modelo Product
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use DB;
@@ -149,6 +151,38 @@ class DashboardController extends Controller
 
         $countInRangeDishes = $queryDishes->sum('quantity');
 
+        // ---- TOTAL DE EMPLEADOS ----
+        $totalEmployees = Employee::count();
+        $queryEmployees = Employee::query();
+
+        if ($startDate) {
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $queryEmployees->where('created_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $endDate = Carbon::parse($endDate)->endOfDay();
+            $queryEmployees->where('created_at', '<=', $endDate);
+        }
+
+        $countInRangeEmployees = $queryEmployees->count();
+
+        // ---- TOTAL DE PRODUCTOS ----
+        $totalProducts = Product::count();
+        $queryProducts = Product::query();
+
+        if ($startDate) {
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $queryProducts->where('created_at', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $endDate = Carbon::parse($endDate)->endOfDay();
+            $queryProducts->where('created_at', '<=', $endDate);
+        }
+
+        $countInRangeProducts = $queryProducts->count();
+
         // Retornar todos los totales como una respuesta JSON
         return response()->json([
             'totales' => [
@@ -156,14 +190,16 @@ class DashboardController extends Controller
                 'total_orders' => $totalOrders,
                 'total_income' => $totalIncome,
                                 'total_dishes' => $totalDishes,
-
+                'total_employees' => $totalEmployees,
+                'total_products' => $totalProducts,
             ],
             'total_in_range' => [
                 'total_customers' => $countInRangeCustomers,
                 'total_orders' => $countInRangeOrders,
                 'total_income' => $countInRangeIncome,
                                 'total_dishes' => $countInRangeDishes,
-
+                'total_employees' => $countInRangeEmployees,
+                'total_products' => $countInRangeProducts,
             ],
             'frequent_tables' => $frequentTableNums, // Incluir las mesas más frecuentes
             'payment_method_stats' => $paymentMethodStats

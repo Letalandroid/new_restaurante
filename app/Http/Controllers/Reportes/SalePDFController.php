@@ -27,7 +27,7 @@ class SalePDFController extends Controller
 
         // Obtener los datos de la venta, filtrando los platos completados y calculando el subtotal
         $saleData = [
-            'customer' => $saleOrder->sale->customer->name,
+            'customer' => $saleOrder->sale->customer->name . ' ' . $saleOrder->sale->customer->lastname,
             'codeCustomer' => $saleOrder->sale->customer->codigo,
             'typeCustomer' => $saleOrder->sale->customer->Cliente_Tipo,
             'documentType' => $saleOrder->sale->documentType,

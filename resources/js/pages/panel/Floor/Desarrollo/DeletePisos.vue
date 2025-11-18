@@ -1,29 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    piso: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Piso {
+    id: number;
+    name: string;
+}
+
+const props = defineProps<{
+    visible: boolean;
+    piso: Piso | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
+const localVisible = ref<boolean>(false);
 
-const localVisible = ref(false);
+watch(
+    () => props.visible,
+    (newVal) => {
+        localVisible.value = newVal;
+    }
+);
 
-watch(() => props.visible, (newVal) => {
-    localVisible.value = newVal;
-});
-
-function closeDialog() {
+function closeDialog(): void {
     emit('update:visible', false);
 }
 
-async function deletePiso() {
+async function deletePiso(): Promise<void> {
+    if (!props.piso) return;
     try {
         await axios.delete(`/piso/${props.piso.id}`);
         emit('deleted');
@@ -34,20 +46,30 @@ async function deletePiso() {
             detail: 'Piso eliminado correctamente',
             life: 3000
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando el piso';
         if (error.response) {
             errorMessage = error.response.data.message || errorMessage;
         }
-        toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+            life: 3000
+        });
     }
 }
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '450px' }" header="Confirmar" :modal="true"
-        @update:visible="closeDialog">
+    <Dialog
+        v-model:visible="localVisible"
+        :style="{ width: '90vw', maxWidth: '450px' }"
+        header="Confirmar"
+        :modal="true"
+        @update:visible="closeDialog"
+    >
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span v-if="piso">¿Estás seguro de eliminar este piso <b>{{ piso.name }}</b>?</span>

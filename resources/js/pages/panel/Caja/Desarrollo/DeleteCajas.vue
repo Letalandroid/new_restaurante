@@ -1,18 +1,33 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
-const props = defineProps({
-    visible: Boolean,
-    caja: Object,
-});
-const emit = defineEmits(['update:visible', 'deleted']);
+interface Caja {
+    id: number | string;
+    numero_cajas?: string | number;
+    [key: string]: any;
+}
+
+/*interface DeleteResponse {
+    state: boolean;
+    message: string;
+}*/
+
+const props = defineProps<{
+    visible: boolean;
+    caja: Caja | null;
+}>();
+
+const emit = defineEmits<{
+    (e: 'update:visible', value: boolean): void;
+    (e: 'deleted'): void;
+}>();
 
 const toast = useToast();
-const localVisible = ref(false);
+const localVisible = ref<boolean>(false);
 
 watch(() => props.visible, (newVal) => {
     localVisible.value = newVal;
@@ -22,12 +37,10 @@ function closeDialog() {
     emit('update:visible', false);
 }
 
-async function deleteCaja() {
+async function deleteCaja(): Promise<void> {
+    if (!props.caja) return;
     try {
-        const response = await axios.delete(`/caja/${props.caja.id}`);
-
-        // Si la caja se elimina correctamente, cierra el modal y muestra el mensaje de éxito
-        if (response.data.state) {
+        await axios.delete(`/caja/${props.caja.id}`);
             emit('deleted');
             closeDialog();
             toast.add({
@@ -36,21 +49,11 @@ async function deleteCaja() {
                 detail: 'Caja eliminada correctamente',
                 life: 3000
             });
-        } else {
-            // Si la respuesta del backend es un error (estado false), muestra el mensaje de error
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: response.data.message,
-                life: 3000
-            });
-            // No cerrar el modal aquí, solo mostrar el mensaje de error
-        }
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         let errorMessage = 'Error eliminando la caja';
-        if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+        if ((error as AxiosError).response) {
+            errorMessage = ((error as AxiosError).response?.data as any)?.message || errorMessage;
         }
         toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
     }
@@ -59,7 +62,7 @@ async function deleteCaja() {
 </script>
 
 <template>
-    <Dialog v-model:visible="localVisible" :style="{ width: '380px' }" header="Confirmar" :modal="true"
+    <Dialog v-model:visible="localVisible" :style="{ width: '90vw', maxWidth: '350px' }" header="Confirmar" :modal="true"
         @update:visible="closeDialog">
         <div class="flex items-center gap-5">
             <i class="pi pi-exclamation-triangle !text-7xl" />
