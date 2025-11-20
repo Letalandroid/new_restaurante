@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
 import { router } from '@inertiajs/core';
 import axios from 'axios';
