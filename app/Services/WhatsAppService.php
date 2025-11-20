@@ -10,14 +10,16 @@ class WhatsAppService
     {
         $instance = env('ULTRAMSG_INSTANCE_ID');
         $token = env('ULTRAMSG_TOKEN');
-        $apiUrl = env('ULTRAMSG_API_URL');
+        $apiUrl = rtrim(env('ULTRAMSG_API_URL'), '/'); // 🔥 elimina barra final si existe
 
         // Asegurar formato internacional (+51 para Perú)
         if (!str_starts_with($telefono, '+')) {
             $telefono = '+51' . $telefono;
         }
 
-        $response = Http::post("$apiUrl/$instance/messages/chat", [
+        $endpoint = "$apiUrl/$instance/messages/chat";
+
+        $response = Http::post($endpoint, [
             'token' => $token,
             'to' => $telefono,
             'body' => $mensaje,
