@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/block-lang -->
 <script setup>
 import axios from 'axios';
 import { debounce } from 'lodash';
