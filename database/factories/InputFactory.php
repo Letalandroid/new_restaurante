@@ -36,7 +36,8 @@ class InputFactory extends Factory
     protected static $unitMeasures = [
         'kg', 'g', 'litros', 'ml', 'unidad'
     ];
-    public function definition()
+
+    public function definition(): array
     {
         $priceBuy = $this->faker->randomFloat(2, 1, 5); 
         $priceSale = $this->faker->randomFloat(2, $priceBuy + 1.00, 10); 
