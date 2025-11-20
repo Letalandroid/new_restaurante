@@ -102,7 +102,7 @@ import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Toolbar from 'primevue/toolbar';
 import { useToast } from 'primevue/usetoast';
-import ToolsPayroll from './ToolsPayroll.vue'; 
+import ToolsPayroll from './toolsPayroll.vue';
 const toast = useToast();
 const props = defineProps<{
   filtros: {
@@ -135,7 +135,7 @@ const monthOptions = ref([
     { name: 'Diciembre', value: 12 },
 ]);
 const selectedMonth = ref<number | null>(new Date().getMonth() + 1);
-const selectedYear = ref<number>(new Date().getFullYear());
+const selectedYear = ref<string>(new Date().getFullYear().toString());
 
 // Emit para actualizar la tabla padre
 const emit = defineEmits<{
@@ -169,7 +169,7 @@ function hideDialog() {
     showGenerateDialog.value = false;
     selectedEmployee.value = null;
     selectedMonth.value = new Date().getMonth() + 1;
-    selectedYear.value = new Date().getFullYear();
+    selectedYear.value = new Date().getFullYear().toString();
 }
 
 // Generar nómina
@@ -181,7 +181,7 @@ const generatePayroll = async () => {
             params: {
                 employee_id: selectedEmployee.value,
                 month: selectedMonth.value,
-                year: selectedYear.value,
+                year: parseInt(selectedYear.value),
             },
         });
 
@@ -208,9 +208,11 @@ const generatePayroll = async () => {
             toast.add({ severity: 'warn', summary: 'Atención', detail: message, life: 4000 });
         }
     } catch (error) {
-        const err = error as AxiosError;
+        const err = error as AxiosError<{ message?: string }>;
         let detailMessage = 'No se pudo conectar con el servidor';
-        if (err.response) detailMessage = err.response.data?.message || detailMessage;
+        if (err.response && err.response.data?.message) {
+            detailMessage = err.response.data.message;
+        }
 
         toast.add({ severity: 'error', summary: 'Error', detail: detailMessage, life: 4000 });
         console.error(err);

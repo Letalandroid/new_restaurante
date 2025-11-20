@@ -123,17 +123,11 @@ interface Employee {
     name: string;
 }
 
-interface Status {
-    id: number;
-    name: string;
-}
-
 const toast = useToast();
 const submitted = ref(false);
 const attendanceDialog = ref(false);
 const serverErrors = ref<ServerErrors>({});
 const employees = ref<Employee[]>([]);
-const statuses = ref<Status[]>([]);
 const emit = defineEmits<{
     (e: 'attendance-registered'): void;
 }>();
@@ -144,6 +138,7 @@ const loadEmployees = async () => {
         const response = await axios.get('/empleado');
         employees.value = response.data.data || [];
     } catch (error) {
+        console.error(error);
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los empleados', life: 3000 });
     }
 };
@@ -160,7 +155,6 @@ function resetAttendance() {
         employee_id: null,
         work_date: null,
         check_in: null,
-        check_out: null,
         status_id: null,
         justification: null
     };
@@ -195,7 +189,7 @@ const statusOptions = ref<{ name: string; value: number | null }[]>([
 
 interface Attendance {
     employee_id: number | null;
-    work_date: string | null;
+    work_date: Date | null;
     check_in: string | null;
     status_id: number | null;
     justification: string | null;
