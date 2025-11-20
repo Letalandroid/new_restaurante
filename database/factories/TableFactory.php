@@ -2,13 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\Table;
 use App\Models\Areas;
 use App\Models\Floor;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TableFactory extends Factory
 {
-    protected static int $counter = 1; // Contador estático para numerar las mesas
+    protected $model = Table::class;   // ← Agregar esto
+
+    protected static int $counter = 1;
 
     public function definition(): array
     {
