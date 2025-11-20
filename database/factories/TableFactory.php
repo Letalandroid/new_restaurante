@@ -23,8 +23,11 @@ class TableFactory extends Factory
         return [
             'name'      => 'Mesa ' . self::$counter++, // Genera Mesa 1, Mesa 2, etc.
             'tablenum'  => 'TBL-' . $this->faker->unique()->numberBetween(1, 999),
-            'idArea'    => Areas::inRandomOrder()->first()->id,
-            'idFloor'   => Floor::inRandomOrder()->first()->id,
+            
+            //CORREGIDO: usar closure para evitar inicialización temprana
+            'idArea'    => fn() => Areas::inRandomOrder()->value('id'),
+            'idFloor'   => fn() => Floor::inRandomOrder()->value('id'),
+
             'capacity'  => $this->faker->numberBetween(2, 10),
             'state'     => $this->faker->boolean(70), // 80% activo
         ];
