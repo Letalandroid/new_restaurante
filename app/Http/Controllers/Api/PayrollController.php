@@ -7,7 +7,7 @@ use App\Http\Requests\Payroll\StorePayrollRequest;
 use App\Http\Requests\Payroll\UpdatePayrollRequest;
 use App\Http\Resources\PayrollResource;
 use App\Models\Payroll;
-use App\Models\settingPayroll;
+use App\Models\SettingPayroll;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Pipeline\Pipeline;
