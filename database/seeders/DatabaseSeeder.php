@@ -21,12 +21,12 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             FloorSeeder::class,
             AreasSeeder::class,
-            TableSeeder::class,
             SupplierSeeder::class,
             CustomerSeeder::class,
             //development
             PresentationSeeder::class,
             InputSeeder::class,
+            TableSeeder::class,
             //development
         ]);
     }
