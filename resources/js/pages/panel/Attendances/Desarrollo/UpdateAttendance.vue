@@ -86,6 +86,7 @@ const loadEmployees = async () => {
 };
 
 // Cargar asistencia existente
+// Cargar asistencia existente (versión robusta y con debug)
 const fetchAttendance = async () => {
     if (!props.attendanceId) return;
     loading.value = true;
@@ -93,8 +94,54 @@ const fetchAttendance = async () => {
         const response = await axios.get(`/asistencia/${props.attendanceId}`);
         const data = response.data.attendance;
 
+        console.log('[fetchAttendance] raw data.attendance:', data);
+        console.log('[fetchAttendance] raw work_date value:', data.work_date, 'type:', typeof data.work_date);
+
         attendance.value.employee_id = data.employee_id;
-        attendance.value.work_date = data.work_date;
+
+        // --- PARSEO ROBUSTO DE FECHA ---
+        let parsedDate: Date | null = null;
+        const wd = data.work_date;
+
+        if (wd === null || wd === undefined || wd === '') {
+            parsedDate = null;
+            console.warn('[fetchAttendance] work_date is empty/null.');
+        } else if (wd instanceof Date) {
+            parsedDate = wd;
+            console.log('[fetchAttendance] work_date is already a Date.');
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(wd)) {
+            // formato 2025-11-20
+            parsedDate = new Date(wd + 'T00:00:00');
+            console.log('[fetchAttendance] parsed as YYYY-MM-DD ->', parsedDate);
+        } else if (/^\d{2}-\d{2}-\d{4}$/.test(wd)) {
+            // formato 20-11-2025
+            const [d, m, y] = wd.split('-').map((s: string) => parseInt(s, 10));
+            parsedDate = new Date(y, m - 1, d);
+            console.log('[fetchAttendance] parsed as DD-MM-YYYY ->', parsedDate);
+        } else if (/^\d{4}\/\d{2}\/\d{2}$/.test(wd)) {
+            // formato 2025/11/20
+            parsedDate = new Date(wd.replace(/\//g, '-') + 'T00:00:00');
+            console.log('[fetchAttendance] parsed as YYYY/MM/DD ->', parsedDate);
+        } else {
+            // intento final: Date.parse
+            const tryIso = Date.parse(wd);
+            if (!isNaN(tryIso)) {
+                parsedDate = new Date(tryIso);
+                console.log('[fetchAttendance] parsed by Date.parse ->', parsedDate);
+            } else {
+                console.error('[fetchAttendance] No se pudo parsear work_date:', wd);
+                parsedDate = null;
+            }
+        }
+
+        // Si sigue siendo inválido, prueba con fecha por defecto para test
+        if (parsedDate && isNaN(parsedDate.getTime())) {
+            console.error('[fetchAttendance] parsedDate es NaN ->', parsedDate);
+            parsedDate = null;
+        }
+
+        attendance.value.work_date = parsedDate;
+
         attendance.value.check_in = data.check_in;
         attendance.value.check_out = data.check_out;
         attendance.value.status_id = data.status_id;
@@ -102,6 +149,8 @@ const fetchAttendance = async () => {
 
         // Evaluar si se deben ocultar horas
         hideHours.value = data.status_id === 3 || data.status_id === 5;
+
+        console.log('[fetchAttendance] final attendance.work_date:', attendance.value.work_date);
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la asistencia', life: 3000 });
         console.error(error);
@@ -109,6 +158,7 @@ const fetchAttendance = async () => {
         loading.value = false;
     }
 };
+
 
 watch(
   () => [props.visible, props.attendanceId],
@@ -129,14 +179,17 @@ const updateAttendance = async (): Promise<void> => {
     if (!props.attendanceId) return;
 
     try {
-        const payload = {
+                const payload = {
             employee_id: attendance.value.employee_id,
-            work_date: attendance.value.work_date,
+            work_date: attendance.value.work_date
+                ? attendance.value.work_date.toISOString().split('T')[0]
+                : null,
             check_in: hideHours.value ? null : attendance.value.check_in,
             check_out: hideHours.value ? null : attendance.value.check_out,
             status_id: attendance.value.status_id,
             justification: attendance.value.justification,
         };
+
 
         await axios.put(`/asistencia/${props.attendanceId}`, payload);
 
