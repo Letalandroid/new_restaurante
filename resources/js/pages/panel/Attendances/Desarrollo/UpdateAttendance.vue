@@ -120,6 +120,27 @@ watch(
   },
   { immediate: true }
 );
+const formatDateToYMD = (date: Date | string | null) => {
+    if (!date) return null;
+
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+};
+const normalizeTime = (time: string | null) => {
+    if (!time) return null;
+
+    // Si viene con segundos (13:00:00), lo dejamos así
+    if (time.match(/^\d{2}:\d{2}:\d{2}$/)) return time;
+
+    // Si viene sin segundos (13:00), añadimos :00
+    if (time.match(/^\d{2}:\d{2}$/)) return time + ':00';
+
+    return null; // evita enviar cualquier formato inválido
+};
 
 // Actualizar asistencia
 const updateAttendance = async (): Promise<void> => {
@@ -129,14 +150,16 @@ const updateAttendance = async (): Promise<void> => {
     if (!props.attendanceId) return;
 
     try {
-        const payload = {
-            employee_id: attendance.value.employee_id,
-            work_date: attendance.value.work_date,
-            check_in: hideHours.value ? null : attendance.value.check_in,
-            check_out: hideHours.value ? null : attendance.value.check_out,
-            status_id: attendance.value.status_id,
-            justification: attendance.value.justification,
-        };
+const payload = {
+    employee_id: attendance.value.employee_id,
+    work_date: formatDateToYMD(attendance.value.work_date),
+    check_in: hideHours.value ? null : normalizeTime(attendance.value.check_in),
+    check_out: hideHours.value ? null : normalizeTime(attendance.value.check_out),
+    status_id: attendance.value.status_id,
+    justification: attendance.value.justification,
+};
+
+
 
         await axios.put(`/asistencia/${props.attendanceId}`, payload);
 
@@ -170,6 +193,8 @@ const updateAttendance = async (): Promise<void> => {
         console.error(error);
     }
 };
+
+
 </script>
 
 <template>
