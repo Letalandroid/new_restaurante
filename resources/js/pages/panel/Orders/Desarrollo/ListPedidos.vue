@@ -9,9 +9,11 @@ import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 import { useToast } from 'primevue/usetoast';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import Dropdown from 'primevue/dropdown';
-import Dialog  from 'primevue/dialog';
+import Dialog from 'primevue/dialog';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 
 // Initialize toast
 const toast = useToast();
@@ -25,6 +27,9 @@ interface Orden {
     state?: string;
     creacion?: string;
     orderDishes?: any[];
+    idDish?: number | null;
+    idProduct?: number | null;
+    productName?: string | null;
 }
 
 // Tipos para los insumos
@@ -58,6 +63,24 @@ const stateOptions = ref([
 
 const selectedOrder = ref<Partial<Orden>>({});
 const showActionsDialog = ref<boolean>(false);
+
+// Computed properties para separar platillos y productos
+const platillos = computed(() => {
+    return ordenes.value.filter(orden => orden.idDish !== null && orden.idDish !== undefined);
+});
+
+const productos = computed(() => {
+    return ordenes.value.filter(orden => orden.idProduct !== null && orden.idProduct !== undefined);
+});
+
+// Computed para determinar si es platillo o producto
+const isPlatillo = computed(() => {
+    return selectedOrder.value.idDish !== null && selectedOrder.value.idDish !== undefined;
+});
+
+const isProducto = computed(() => {
+    return selectedOrder.value.idProduct !== null && selectedOrder.value.idProduct !== undefined;
+});
 
 function showActionMenu(order: Orden) {
     selectedOrder.value = order;
@@ -165,8 +188,7 @@ async function updateOrderState(newState: string) {
     try {
         await axios.put(`/order-dishes/${id}`, { state: newState });
 
-        // Si el nuevo estado es "completado", obtenemos los insumos
-        if (newState === 'completado') {
+        if (newState === 'completado' && isPlatillo.value) {
             await obtenerInsumosPorPedido(id);
         }
 
@@ -276,119 +298,135 @@ onMounted(() => {
 
 <template>
     <div class="w-full overflow-x-auto">
-        <DataTable
-            ref="dt"
-            v-model:selection="selectedOrdenes"
-            :value="ordenes"
-            dataKey="id"
-            :paginator="true"
-            :rows="pagination.perPage"
-            :totalRecords="pagination.total"
-            :loading="loading"
-            :lazy="true"
-            @page="onPage"
-            :rowsPerPageOptions="[15, 20, 25]"
-            scrollable
-            scrollHeight="574px"
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} de Pedidos"
-            class="min-w-full"
-        >
-            <template #header>
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
-                <h4 class="m-0">Lista de Pedidos</h4>
+        <TabView>
+            <!-- Tab para Platillos -->
+            <TabPanel header="Platillos">
+                <DataTable ref="dt" v-model:selection="selectedOrdenes" :value="platillos" dataKey="id"
+                    :paginator="true" :rows="pagination.perPage" @page="onPage" :rowsPerPageOptions="[15, 20, 25]"
+                    :totalRecords="platillos.length" :loading="loading" scrollable scrollHeight="574px"
+                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Platillos"
+                    class="min-w-full">
+                    <template #header>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
+                            <h4 class="m-0">Lista de Platillos</h4>
+                            <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                                <IconField class="flex-1 sm:flex-initial w-full sm:w-auto">
+                                    <InputIcon>
+                                        <i class="pi pi-search" />
+                                    </InputIcon>
+                                    <InputText v-model="globalFilterValue" @input="onGlobalSearch"
+                                        placeholder="Buscar por platillo..." class="w-full sm:w-60" />
+                                </IconField>
+                                <Dropdown v-model="selectedState" :options="stateOptions" option-label="label"
+                                    option-value="value" placeholder="Selecciona un Estado" class="w-full sm:w-56"
+                                    @change="onStateChange" />
+                                <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadOrdenes"
+                                    class="w-full sm:w-auto" />
+                            </div>
+                        </div>
+                    </template>
 
-                    <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
-                        <IconField class="flex-1 sm:flex-initial w-full sm:w-auto">
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText
-                                v-model="globalFilterValue"
-                                @input="onGlobalSearch"
-                                placeholder="Buscar por platillo..."
-                                class="w-full sm:w-60"
-                            />
-                        </IconField>
+                    <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
+                    <Column field="id" header="Nº Orden" sortable style="min-width: 5rem"></Column>
+                    <Column field="numeroMesa" header="Nº Mesa" sortable style="min-width: 7rem"></Column>
+                    <Column field="name" header="Platillo" sortable style="min-width: 7rem"></Column>
+                    <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem"></Column>
+                    <Column field="state" header="Estado" sortable style="min-width: 8rem">
+                        <template #body="{ data }">
+                            <Tag :value="data.state" :severity="getSeverity(data.state)" />
+                        </template>
+                    </Column>
+                    <Column field="creacion" header="Creación" sortable style="min-width: 10rem"></Column>
+                    <Column header="Acciones" style="min-width: 8rem">
+                        <template #body="{ data }">
+                            <Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-text"
+                                @click="showActionMenu(data)" />
+                        </template>
+                    </Column>
+                </DataTable>
+            </TabPanel>
 
-                        <Dropdown
-                            v-model="selectedState"
-                            :options="stateOptions"
-                            option-label="label"
-                            option-value="value"
-                            placeholder="Selecciona un Estado"
-                            class="w-full sm:w-56"
-                            @change="onStateChange"
-                        />
+            <!-- Tab para Productos -->
+            <TabPanel header="Productos">
+                <DataTable ref="dt" v-model:selection="selectedOrdenes" :value="productos" dataKey="id"
+                    :paginator="true" @page="onPage" :rowsPerPageOptions="[15, 20, 25]" :rows="pagination.perPage"
+                    :totalRecords="productos.length" :loading="loading" scrollable scrollHeight="574px"
+                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Productos"
+                    class="min-w-full">
+                    <template #header>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2">
+                            <h4 class="m-0">Lista de Productos</h4>
+                            <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+                                <IconField class="flex-1 sm:flex-initial w-full sm:w-auto">
+                                    <InputIcon>
+                                        <i class="pi pi-search" />
+                                    </InputIcon>
+                                    <InputText v-model="globalFilterValue" @input="onGlobalSearch"
+                                        placeholder="Buscar por producto..." class="w-full sm:w-60" />
+                                </IconField>
+                                <Dropdown v-model="selectedState" :options="stateOptions" option-label="label"
+                                    option-value="value" placeholder="Selecciona un Estado" class="w-full sm:w-56"
+                                    @change="onStateChange" />
+                                <Button icon="pi pi-refresh" outlined rounded aria-label="Refresh" @click="loadOrdenes"
+                                    class="w-full sm:w-auto" />
+                            </div>
+                        </div>
+                    </template>
 
-                        <Button
-                            icon="pi pi-refresh"
-                            outlined
-                            rounded
-                            aria-label="Refresh"
-                            @click="loadOrdenes"
-                            class="w-full sm:w-auto"
-                        />
-                    </div>
-                </div>
-            </template>
-
-            <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
-            <Column field="id" header="Nº Orden" sortable style="min-width: 5rem"></Column>
-            <Column field="numeroMesa" header="Nº Mesa" sortable style="min-width: 7rem"></Column>
-            <Column field="name" header="Platillo" sortable style="min-width: 7rem"></Column>
-            <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem"></Column>
-            <Column field="state" header="Estado" sortable style="min-width: 8rem">
-                <template #body="{ data }">
-                    <Tag :value="data.state" :severity="getSeverity(data.state)" />
-                </template>
-            </Column>
-            <Column field="creacion" header="Creación" sortable style="min-width: 10rem"></Column>
-            <Column header="Acciones" style="min-width: 8rem">
-                <template #body="{ data }">
-                    <Button 
-                        icon="pi pi-ellipsis-v" 
-                        class="p-button-rounded p-button-text" 
-                        @click="showActionMenu(data)"
-                    />
-                </template>
-            </Column>
-        </DataTable>
+                    <Column selectionMode="multiple" style="width: 1rem" :exportable="false"></Column>
+                    <Column field="id" header="Nº Orden" sortable style="min-width: 5rem"></Column>
+                    <Column field="numeroMesa" header="Nº Mesa" sortable style="min-width: 7rem"></Column>
+                    <Column field="productName" header="Producto" sortable style="min-width: 7rem"></Column>
+                    <Column field="quantity" header="Cantidad" sortable style="min-width: 7rem"></Column>
+                    <Column field="state" header="Estado" sortable style="min-width: 8rem">
+                        <template #body="{ data }">
+                            <Tag :value="data.state" :severity="getSeverity(data.state)" />
+                        </template>
+                    </Column>
+                    <Column field="creacion" header="Creación" sortable style="min-width: 10rem"></Column>
+                    <Column header="Acciones" style="min-width: 8rem">
+                        <template #body="{ data }">
+                            <Button icon="pi pi-ellipsis-v" class="p-button-rounded p-button-text"
+                                @click="showActionMenu(data)" />
+                        </template>
+                    </Column>
+                </DataTable>
+            </TabPanel>
+        </TabView>
     </div>
 
     <!-- Menú de acciones -->
-    <Dialog 
-        v-model:visible="showActionsDialog" 
-        header="Acciones" 
-        :style="{ width: '70%', maxWidth: '300px' }"
-        class="sm:w-[400px] w-[90%] mx-auto"
-    >
+    <Dialog v-model:visible="showActionsDialog" header="Acciones" :style="{ width: '70%', maxWidth: '300px' }"
+        class="sm:w-[400px] w-[90%] mx-auto">
         <div class="flex flex-col gap-3">
-            <Button 
-                label="Preparar Pedido" 
-                v-if="selectedOrder.state === 'pendiente'" 
-                @click="updateOrderState('en preparación')" 
-                class="w-full"
-            />
-            <Button 
-                label="Cancelar Pedido" 
-                v-if="selectedOrder.state === 'pendiente'" 
-                @click="updateOrderState('cancelado')" 
-                class="w-full"
-            />
-            <Button 
-                label="Marcar como En Entrega" 
-                v-if="selectedOrder.state === 'en preparación'" 
-                @click="updateOrderState('en entrega')" 
-                class="w-full"
-            />
-            <Button 
-                label="Marcar como Completado" 
-                v-if="selectedOrder.state === 'en entrega'" 
-                @click="updateOrderState('completado')" 
-                class="w-full"
-            />
+            <!-- Acciones para PLATILLOS -->
+            <template v-if="isPlatillo">
+                <Button label="Preparar Pedido" v-if="selectedOrder.state === 'pendiente'"
+                    @click="updateOrderState('en preparación')" class="w-full" />
+                <Button label="Cancelar Pedido" v-if="selectedOrder.state === 'pendiente'"
+                    @click="updateOrderState('cancelado')" class="w-full p-button-danger" />
+                <Button label="Marcar como En Entrega" v-if="selectedOrder.state === 'en preparación'"
+                    @click="updateOrderState('en entrega')" class="w-full" />
+                <Button label="Marcar como Completado" v-if="selectedOrder.state === 'en entrega'"
+                    @click="updateOrderState('completado')" class="w-full p-button-success" />
+            </template>
+
+            <!-- Acciones para PRODUCTOS -->
+            <template v-else-if="isProducto">
+                <Button label="Cancelar Pedido" v-if="selectedOrder.state === 'pendiente'"
+                    @click="updateOrderState('cancelado')" class="w-full p-button-danger" />
+                <Button label="Marcar como En Entrega" v-if="selectedOrder.state === 'pendiente'"
+                    @click="updateOrderState('en entrega')" class="w-full" />
+                <Button label="Marcar como Completado" v-if="selectedOrder.state === 'en entrega'"
+                    @click="updateOrderState('completado')" class="w-full p-button-success" />
+            </template>
+
+            <!-- Mensaje cuando no hay acciones disponibles -->
+            <div v-if="!isPlatillo && !isProducto" class="text-center text-gray-500">
+                No hay acciones disponibles
+            </div>
         </div>
     </Dialog>
-
 </template>

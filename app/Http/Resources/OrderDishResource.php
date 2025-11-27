@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Carbon\Carbon;
-
+//FALTA PRODUCTS
 class OrderDishResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -15,6 +15,8 @@ class OrderDishResource extends JsonResource
             'idOrder' => $this->idOrder,
             'idDish'   => $this->idDishes,
             'name'   => $this->dish->name ?? null,  // Asegúrate de tener relación dish() en el modelo
+            'idProduct'   => $this->idProduct,
+            'productName'   => $this->product->name ?? null,  // Asegúrate de tener relación product() en el modelo
             'quantity' => $this->quantity,
             'price'   => $this->price,
             'subtotal' => number_format($this->quantity * $this->price, 2),

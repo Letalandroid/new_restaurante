@@ -43,11 +43,16 @@ class Product extends Model
         return $this->hasMany(MovementInputDetail::class, 'idProduct');
     }
 
-    // Nuevo: Accesor para obtener el stock total
-    public function getStockQuantityAttribute()
-    {
-        return $this->MovementDetail()->sum('quantity');
-    }
+    // En el modelo Product.php
+public function getStockQuantityAttribute()
+{
+    // Contar registros de entrada (idMovementInput no nulo)
+    $entradas = $this->MovementDetail()
+        ->whereNotNull('idMovementInput')
+        ->sum('quantity'); // Aquí SÍ sumamos quantities porque las entradas vienen en lotes
+
+    return $entradas;
+}
 
     public function tieneRelaciones(): bool
     {

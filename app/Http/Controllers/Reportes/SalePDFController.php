@@ -13,7 +13,12 @@ class SalePDFController extends Controller
     public function exportPDF($idOrder)
     {
         // Obtener la venta asociada al idOrder con la relación 'order_dishes' y 'dish'
-        $saleOrder = SalesOrder::with(['sale', 'order', 'order.orderDishes.dish'])
+        $saleOrder = SalesOrder::with([
+        'sale', 
+        'order', 
+        'order.orderDishes.dish',  // Platos
+        'order.orderDishes.product' // Productos ← AGREGAR ESTA RELACIÓN
+            ])
             ->where('idOrder', $idOrder)
             ->first();
 
@@ -33,16 +38,25 @@ class SalePDFController extends Controller
             'documentType' => $saleOrder->sale->documentType,
             'paymentType' => $saleOrder->sale->paymentType,
             'operationCode' => $saleOrder->sale->operationCode,
-            'orderDetails' => $saleOrder->order->orderDishes->filter(function ($dish) {
-                return $dish->state === 'completado'; // Filtrar platos con estado "completado"
-            })->map(function ($dish) {
-                // Calcular el subtotal manualmente
-                $subtotal = $dish->quantity * $dish->price;
+            'orderDetails' => $saleOrder->order->orderDishes->filter(function ($orderDish) {
+                return $orderDish->state === 'completado';
+            })->map(function ($orderDish) {
+                // Determinar si es plato o producto y obtener el nombre
+                if ($orderDish->idDishes !== null) {
+                    $name = $orderDish->dish->name; // Es un plato
+                } else if ($orderDish->idProduct !== null) {
+                    $name = $orderDish->product->name; // Es un producto
+                } else {
+                    $name = 'Item sin nombre';
+                }
+                
+                $subtotal = $orderDish->quantity * $orderDish->price;
                 return [
-                    'name' => $dish->dish->name, // Usar la relación 'dish' para obtener el nombre
-                    'quantity' => $dish->quantity,
-                    'price' => $dish->price,
-                    'subtotal' => number_format($subtotal, 2), // Formatear el subtotal
+                    'name' => $name,
+                    'quantity' => $orderDish->quantity,
+                    'price' => $orderDish->price,
+                    'subtotal' => number_format($subtotal, 2),
+                    'type' => $orderDish->idDishes !== null ? 'Plato' : 'Producto' // Para identificar el tipo
                 ];
             })->toArray(),
             'total' => $saleOrder->subtotal,
@@ -115,22 +129,55 @@ if (!empty($saleData['operationCode'])) {
 
         // Tabla de detalles de la venta
         $pdf->SetFont('helvetica', 'B', 7);
-        $pdf->Cell(35, 6, 'Plato', 1, 0, 'C');
-        $pdf->Cell(12, 6, 'Cantidad', 1, 0, 'C');
-        $pdf->Cell(12, 6, 'Precio', 1, 0, 'C');
-        $pdf->Cell(12, 6, 'Subtotal', 1, 1, 'C');
-        $pdf->SetFont('helvetica', '', 6);
+        // Separar platillos y productos
+        $platillos = array_filter($saleData['orderDetails'], function($item) {
+            return $item['type'] === 'Plato';
+        });
 
-        // Detalles de los platos
-        if (!empty($saleData['orderDetails'])) {
-            foreach ($saleData['orderDetails'] as $item) {
+        $productos = array_filter($saleData['orderDetails'], function($item) {
+            return $item['type'] === 'Producto';
+        });
+
+        // Mostrar Platillos
+        if (!empty($platillos)) {
+            $pdf->Cell(0, 6, 'PLATILLOS', 0, 1, 'C');
+            $pdf->Cell(35, 6, 'Nombre', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Cantidad', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Precio', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Subtotal', 1, 1, 'C');
+            $pdf->SetFont('helvetica', '', 6);
+
+            foreach ($platillos as $item) {
                 $pdf->Cell(35, 6, $item['name'], 1, 0, 'C');
                 $pdf->Cell(12, 6, $item['quantity'], 1, 0, 'C');
                 $pdf->Cell(12, 6, 'S/ ' . $item['price'], 1, 0, 'C');
                 $pdf->Cell(12, 6, 'S/ ' . $item['subtotal'], 1, 1, 'C');
             }
-        } else {
-            $pdf->Cell(0, 6, 'No se encontraron platos para esta venta.', 0, 1, 'C');
+            $pdf->Ln(3);
+        }
+
+        // Mostrar Productos
+        if (!empty($productos)) {
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->Cell(0, 6, 'PRODUCTOS', 0, 1, 'C');
+            $pdf->Cell(35, 6, 'Nombre', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Cantidad', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Precio', 1, 0, 'C');
+            $pdf->Cell(12, 6, 'Subtotal', 1, 1, 'C');
+            $pdf->SetFont('helvetica', '', 6);
+
+            foreach ($productos as $item) {
+                $pdf->Cell(35, 6, $item['name'], 1, 0, 'C');
+                $pdf->Cell(12, 6, $item['quantity'], 1, 0, 'C');
+                $pdf->Cell(12, 6, 'S/ ' . $item['price'], 1, 0, 'C');
+                $pdf->Cell(12, 6, 'S/ ' . $item['subtotal'], 1, 1, 'C');
+            }
+            $pdf->Ln(3);
+        }
+
+        // Si no hay items de ningún tipo
+        if (empty($platillos) && empty($productos)) {
+            $pdf->Cell(0, 6, 'No se encontraron items para esta venta.', 0, 1, 'C');
         }
 
         // IGV y Subtotal (alineados a la derecha)

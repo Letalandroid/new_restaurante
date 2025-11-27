@@ -48,8 +48,9 @@ public function store(StoreOrdersRequest $request)
     Gate::authorize('create', Orders::class);
 
     $validated = $request->validated();
-    $platos = $validated['platos'];
-    unset($validated['platos']); // Quita 'platos' para no insertarlo directamente
+    $platos = $validated['platos'] ?? [];
+    $productos = $validated['productos'] ?? []; // ← NUEVO
+    unset($validated['platos'], $validated['productos']);
 
     DB::beginTransaction();
     try {
@@ -80,16 +81,24 @@ public function store(StoreOrdersRequest $request)
              // 3.2 Actualizar el quantity de dishes restando la cantidad pedida
             $dish = Dishes::find($plato['id']);
             if ($dish) {
-                $dish->quantity -= $plato['cantidad'];  // Resta la cantidad pedida
-                $dish->save();  // Guarda los cambios
+                $dish->quantity -= $plato['cantidad'];
+                $dish->save();
             }
-
-            $totalExtra += $plato['cantidad'] * $plato['price'];
         }
 
+        // ======================================================
+        // REGISTRAR PRODUCTOS (NUEVO)
+        // ======================================================
+        foreach ($productos as $prod) {
 
-
-        $order->save();
+            // 1. Guardar en order_dishes (pero en idProduct)
+            OrderDishes::create([
+                'idOrder'   => $order->id,
+                'idProduct' => $prod['id'],
+                'quantity'  => $prod['cantidad'],
+                'price'     => $prod['price'],
+            ]);
+        }
 
         DB::commit();
 

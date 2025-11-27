@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Pipelines;
 
 use Closure;
@@ -11,8 +12,13 @@ class FilterByNameHistorial
         $search = request('search');
 
         if ($search) {
-            $query->whereHas('dish', function (Builder $query) use ($search) {
-                $query->where('name', 'ILIKE', "%{$search}%");  // Usamos ILIKE para PostgreSQL (búsqueda no sensible a mayúsculas)
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('dish', function (Builder $dishQuery) use ($search) {
+                    $dishQuery->where('name', 'ILIKE', "%{$search}%");
+                })
+                ->orWhereHas('product', function (Builder $prodQuery) use ($search) {
+                    $prodQuery->where('name', 'ILIKE', "%{$search}%");
+                });
             });
         }
 

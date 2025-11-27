@@ -401,7 +401,13 @@ const enviarASunat = async (idSale, prefix) => {
             <!-- DataTable para mostrar los platos -->
             <div class="overflow-x-auto">
                 <DataTable :value="selectedSale.order.orderDishes" :responsive="true" class="min-w-full text-sm sm:text-base">
-                    <Column field="name" header="Plato" />
+                    <Column header="Consumo">
+                        <template #body="{ data }">
+                            <!-- Mostrar plato o producto según corresponda -->
+                            {{ data.name ?? data.productName }}
+                        </template>
+                    </Column>
+
                     <Column field="quantity" header="Cantidad" />
                     <Column field="price" header="Precio" />
                     <Column field="subtotal" header="Subtotal" />

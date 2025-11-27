@@ -26,8 +26,13 @@ class SunatController extends Controller
 
         // Obtener los datos de la venta
         $idSale = $request->idSale;
-        $sale = SalesOrder::with(['salesInvoice', 'order.orderDishes', 'order.customer'])->find($idSale);
-        $sales = Sale::with(['salesOrders', 'salesOrders.salesInvoice', 'salesOrders.order.orderDishes', 'salesOrders.order.customer'])->find($idSale);  // Usamos el modelo 'Sale'
+        $sale = SalesOrder::with([
+                'salesInvoice', 
+                'order.orderDishes', 
+                'order.orderDishes.dish',
+                'order.orderDishes.product', // ← SOLO AGREGAR ESTA LÍNEA
+                'order.customer'
+            ])->find($idSale);        $sales = Sale::with(['salesOrders', 'salesOrders.salesInvoice', 'salesOrders.order.orderDishes', 'salesOrders.order.customer'])->find($idSale);  // Usamos el modelo 'Sale'
 
         if (!$sale) {
             return response()->json(['error' => 'Sale not found'], 404);
@@ -127,9 +132,10 @@ class SunatController extends Controller
         }
 
 
-        foreach ($sale->order->orderDishes as $plato) {
-            // Validar que el nombre del plato no esté vacío
-            $descripcionPlato = !empty($plato->name) ? $plato->name : 'Producto sin descripción';
+       foreach ($sale->order->orderDishes as $plato) {
+        // SOLO MODIFICAR ESTAS 2 LÍNEAS para detectar nombre
+        $nombreItem = $plato->dish->name ?? $plato->product->name ?? 'Producto sin descripción';
+        $descripcionPlato = !empty($nombreItem) ? $nombreItem : 'Producto sin descripción';
             $totalplato = $sale->subtotal;
             $igv = $total * 0.10;
             $subtotalplato = $total - $igv;
