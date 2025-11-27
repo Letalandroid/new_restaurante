@@ -234,7 +234,8 @@ const handleSearch = async (): Promise<void> => {
                     // Búsqueda de productos
                     response = await axios.get('/producto', {
                         params: {
-                            search: searchTerm.value
+                            search: searchTerm.value,
+                            state: 1
                         },
                     });
                 }
