@@ -1343,8 +1343,13 @@ const finalizarMesa = async () => {
                         </template>
                     </Column>
 
-                    <Column field="name" header="Nombre" />
-                    <Column field="productName" header="Producto" />
+                    <Column header="Item" style="min-width: 12rem">
+                        <template #body="{ data }">
+                            <div class="flex flex-col">
+                                <span class="font-medium">{{ data.name || data.productName }}</span>
+                            </div>
+                        </template>
+                    </Column>
                     <Column field="quantity" header="Cantidad" />
                     <Column field="price" header="Precio Unit.">
                         <template #body="{ data }"> S/ {{ parseFloat(data.price).toFixed(2) }} </template>
