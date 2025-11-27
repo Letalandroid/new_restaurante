@@ -14,6 +14,9 @@ use App\Pipelines\FilterByNameHistorial;
 use App\Pipelines\FilterByStateHistorial;
 use App\Http\Requests\OrderDish\UpdateOrdersDishesRequest;
 use App\Models\Dishes;
+use App\Models\MovementInputDetail;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class OrderDishController extends Controller
 {
@@ -53,43 +56,47 @@ public function update(UpdateOrdersDishesRequest $request, $id)
     // Obtener el nuevo estado de la solicitud
     $newState = $request->input('state');
 
-    // Validar las transiciones de estado
-    if ($orderDish->state === 'pendiente') {
-        if ($newState === 'cancelado') {
-            // Si el estado es pendiente y se solicita "cancelar", cambiar el estado a "cancelado"
-            $orderDish->state = 'cancelado';
+    $isDish = $orderDish->idDishes !== null;
+    $isProduct = $orderDish->idProduct !== null;
 
-            // Aumentar la cantidad del plato en la tabla Dishes
-            $dish = Dishes::find($orderDish->idDishes);
-            if ($dish) {
-                $dish->quantity += $orderDish->quantity;  // Incrementar la cantidad
-                $dish->save();
+    /*
+    |--------------------------------------------------------------------------
+    | FLUJO PARA PLATOS (NO TOCAR)
+    |--------------------------------------------------------------------------
+    */
+    if ($isDish) {
+
+        if ($orderDish->state === 'pendiente') {
+
+            if ($newState === 'cancelado') {
+                $orderDish->state = 'cancelado';
+
+                $dish = Dishes::find($orderDish->idDishes);
+                if ($dish) {
+                    $dish->quantity += $orderDish->quantity;
+                    $dish->save();
+                }
+
+                $orderDish->save();
+
+                return response()->json([
+                    'message' => 'Platillo cancelado correctamente.',
+                    'data' => new OrderDishResource($orderDish)
+                ], 200);
             }
 
-            // Guardar el cambio en el estado del platillo
-            $orderDish->save();
+            if ($newState === 'en preparación') {
+                $orderDish->state = 'en preparación';
+                $orderDish->save();
 
-            return response()->json([
-                'message' => 'Platillo cancelado correctamente.',
-                'data' => new OrderDishResource($orderDish)
-            ], 200);
+                return response()->json([
+                    'message' => 'Platillo marcado como en preparación.',
+                    'data' => new OrderDishResource($orderDish)
+                ], 200);
+            }
         }
 
-        if ($newState === 'en preparación') {
-            // Si el estado es pendiente y se solicita "en preparación", cambiar el estado a "en preparación"
-            $orderDish->state = 'en preparación';
-            $orderDish->save();
-
-            return response()->json([
-                'message' => 'Platillo marcado como en preparación.',
-                'data' => new OrderDishResource($orderDish)
-            ], 200);
-        }
-    }
-
-    if ($orderDish->state === 'en preparación') {
-        if ($newState === 'en entrega') {
-            // Si el estado es "en preparación" y se solicita "en entrega", cambiar el estado a "en entrega"
+        if ($orderDish->state === 'en preparación' && $newState === 'en entrega') {
             $orderDish->state = 'en entrega';
             $orderDish->save();
 
@@ -98,18 +105,149 @@ public function update(UpdateOrdersDishesRequest $request, $id)
                 'data' => new OrderDishResource($orderDish)
             ], 200);
         }
-    }
 
-    if ($orderDish->state === 'en entrega') {
-        if ($newState === 'completado') {
-            // Si el estado es "en entrega" y se solicita "completado", cambiar el estado a "completado"
+        if ($orderDish->state === 'en entrega' && $newState === 'completado') {
             $orderDish->state = 'completado';
             $orderDish->save();
 
             return response()->json([
-                'message' => 'Platillo marcado como completado.',
+                'message' => 'Platillo completado.',
                 'data' => new OrderDishResource($orderDish)
             ], 200);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FLUJO PARA PRODUCTOS
+    |--------------------------------------------------------------------------
+    */
+    if ($isProduct) {
+
+        $product = Product::find($orderDish->idProduct);
+
+        if ($orderDish->state === 'pendiente') {
+
+            // cancelar desde pendiente → devolver stock
+            if ($newState === 'cancelado') {
+
+                if ($product) {
+                }
+
+                $orderDish->state = 'cancelado';
+                $orderDish->save();
+
+                return response()->json([
+                    'message' => 'Producto cancelado y stock devuelto.',
+                    'data' => new OrderDishResource($orderDish)
+                ], 200);
+            }
+
+            // pendiente → en entrega
+            if ($newState === 'en entrega') {
+                $orderDish->state = 'en entrega';
+                $orderDish->save();
+
+                return response()->json([
+                    'message' => 'Producto marcado como en entrega.',
+                    'data' => new OrderDishResource($orderDish)
+                ], 200);
+            }
+        }
+
+        // en entrega → completado
+        if ($orderDish->state === 'en entrega' && $newState === 'completado') {
+            DB::beginTransaction();
+            try {
+                $product = Product::find($orderDish->idProduct);
+                $cantidadRestante = $orderDish->quantity;
+                
+                // 1. DESCONTAR STOCK POR LOTE (FIFO)
+                $lotes = MovementInputDetail::where('idProduct', $orderDish->idProduct)
+                    ->where('quantity', '>', 0)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+                
+                foreach ($lotes as $lote) {
+                    if ($cantidadRestante <= 0) break;
+                    
+                    if ($lote->quantity >= $cantidadRestante) {
+                        // 2. REGISTRAR EN KARDEX Y DETAIL_MOVEMENTS_INPUTS
+                        for ($i = 0; $i < $cantidadRestante; $i++) {
+                            // Crear registro en KardexInput
+                            $kardex = \App\Models\KardexInput::create([
+                                'idUser' => auth()->id(),
+                                'idProduct' => $orderDish->idProduct,
+                                'idMovementInput' => null,
+                                'totalPrice' => null,
+                                'movement_type' => 1,
+                            ]);
+                            
+                            // ✅ CREAR REGISTRO EN DETAIL_MOVEMENTS_INPUTS
+                            \App\Models\MovementInputDetail::create([
+                                'idMovementInput' => null,
+                                'idInput' => null,
+                                'idProduct' => $orderDish->idProduct,
+                                'quantity' => 1, // 1 unidad por registro
+                                'totalPrice' => null,
+                                'priceUnit' => null,
+                                'batch' => $lote->batch,
+                                'expirationDate' => $lote->expirationDate,
+                            ]);
+                        }
+                        
+                        $lote->quantity -= $cantidadRestante;
+                        $lote->save();
+                        $cantidadRestante = 0;
+                    } else {
+                        // REGISTRAR SALIDA PARA TODO EL LOTE
+                        for ($i = 0; $i < $lote->quantity; $i++) {
+                            // Crear registro en KardexInput
+                            $kardex = \App\Models\KardexInput::create([
+                                'idUser' => auth()->id(),
+                                'idProduct' => $orderDish->idProduct,
+                                'idMovementInput' => null,
+                                'totalPrice' => null,
+                                'movement_type' => 1,
+                            ]);
+                            
+                            // ✅ CREAR REGISTRO EN DETAIL_MOVEMENTS_INPUTS
+                            \App\Models\MovementInputDetail::create([
+                                'idMovementInput' => null,
+                                'idInput' => null,
+                                'idProduct' => $orderDish->idProduct,
+                                'quantity' => 1, // 1 unidad por registro
+                                'totalPrice' => null,
+                                'priceUnit' => null,
+                                'batch' => $lote->batch,
+                                'expirationDate' => $lote->expirationDate,
+                            ]);
+                        }
+                        
+                        $cantidadRestante -= $lote->quantity;
+                        $lote->quantity = 0;
+                        $lote->save();
+                    }
+                }
+                
+                // 3. ACTUALIZAR ESTADO
+                $orderDish->state = 'completado';
+                $orderDish->save();
+                
+                DB::commit();
+                
+                return response()->json([
+                    'message' => 'Producto completado y stock descontado.',
+                    'data' => new OrderDishResource($orderDish)
+                ], 200);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Error al completar el producto.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
         }
     }
 

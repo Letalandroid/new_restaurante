@@ -12,6 +12,7 @@ class OrderDishes extends Model
     protected $fillable = [
         'idOrder',
         'idDishes',
+        'idProduct',   // Nuevo campo agregado
         'quantity',
         'state',
         'price',
@@ -27,5 +28,10 @@ class OrderDishes extends Model
     public function dish()
     {
         return $this->belongsTo(Dishes::class, 'idDishes','id');
+    }
+    // Nueva relación con Product
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'idProduct', 'id');
     }
 }

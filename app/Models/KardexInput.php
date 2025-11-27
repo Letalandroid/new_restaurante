@@ -43,6 +43,21 @@ class KardexInput extends Model
   
 public function getQuantity()
     {
+        // ✅ PARA PRODUCTOS EN SALIDAS: Buscar el registro específico
+    if ($this->idProduct && $this->idMovementInput === null) {
+        // Buscar el MovementInputDetail que se creó al mismo tiempo
+        $movementDetail = DB::table('detail_movements_inputs')
+            ->where('idProduct', $this->idProduct)
+            ->where('idMovementInput', null)
+            ->whereBetween('created_at', [
+                $this->created_at->subSeconds(30), // 30 segundos antes
+                $this->created_at->addSeconds(30)  // 30 segundos después
+            ])
+            ->first();
+        
+        // Si encontró el registro, devolver su quantity, sino 1
+        return $movementDetail ? $movementDetail->quantity : 1;
+    }
         $query = DB::table('detail_movements_inputs')
             ->where('idMovementInput', $this->idMovementInput);
 

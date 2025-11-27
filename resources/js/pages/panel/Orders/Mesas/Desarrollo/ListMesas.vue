@@ -11,11 +11,20 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 import Toolbar from 'primevue/toolbar';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 const isButtonDisabled = ref(false);
 
 import AddCliente from './AddCliente.vue';
+
+// NUEVAS VARIABLES PARA PRODUCTOS
+const products = ref([]);
+const searchQueryProduct = ref('');
+const currentPageProduct = ref(1);
+const perPageProduct = ref(7);
+const totalPagesProduct = ref(1);
 
 // Initialize toast
 const toast = useToast();
@@ -43,7 +52,8 @@ const order = ref({
     mesaId: null,
     tablenum: null,
     platos: [],
-    idOrder: null, // Añadido aquí
+    productos: [], // SEPARAR PLATOS Y PRODUCTOS
+    idOrder: null,
 });
 
 // Estado para el formulario
@@ -136,7 +146,66 @@ const loadHistorialPlatos = async () => {
     }
 };
 
-// Función para cargar los platos desde la API con búsqueda y paginación
+// CORREGIDO: Función para cargar productos (SOLO productos)
+const loadProducts = async (search = '') => {
+    try {
+        const response = await axios.get(`/producto`, {
+            params: {
+                search: search,
+                page: currentPageProduct.value,
+                per_page: perPageProduct.value,
+                state: 1
+            }
+        });
+
+        console.log('Productos cargados:', response.data.data);
+
+        // Obtener pedidos pendientes para calcular stock virtual SOLO PARA PRODUCTOS
+        const pedidosPendientesResponse = await axios.get('/order-dishes', {
+            params: {
+                state: 'pendiente'
+            }
+        });
+
+        const productosEnPedidosPendientes = pedidosPendientesResponse.data.data.filter(
+            item => item.idProduct !== null && item.state === 'pendiente'
+        );
+
+        // Filtrar productos con stock disponible > 0 y calcular stock virtual
+        const productosDisponibles = response.data.data.map((producto) => {
+            // Calcular cuántos de este producto están en pedidos pendientes
+            const cantidadEnPedidosPendientes = productosEnPedidosPendientes
+                .filter(item => item.idProduct === producto.id)
+                .reduce((total, item) => total + item.quantity, 0);
+
+            // Stock virtual = stock real - productos en pedidos pendientes
+            const stockVirtual = parseFloat(producto.stock_quantity) - cantidadEnPedidosPendientes;
+
+            return {
+                ...producto,
+                stock_quantity: Math.max(0, stockVirtual), // Mostrar stock virtual (no negativo)
+                stock_real: parseFloat(producto.stock_quantity) // Guardar stock real
+            };
+        }).filter(producto => producto.stock_quantity > 0); // Solo mostrar productos con stock virtual > 0
+
+        products.value = productosDisponibles;
+        totalPagesProduct.value = response.data.meta.last_page;
+        
+        console.log('Productos disponibles (con stock virtual):', productosDisponibles);
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+    }
+};
+
+const filteredProducts = computed(() => {
+    if (!searchQueryProduct.value) {
+        return products.value;
+    }
+    return products.value.filter((producto) => 
+        producto.name.toLowerCase().includes(searchQueryProduct.value.toLowerCase())
+    );
+});
+
 const loadPlatos = async (search = '') => {
     try {
         // Construir la URL con el parámetro de búsqueda y paginación
@@ -167,7 +236,9 @@ const showOrderFormForMesa = async (mesaId, tablenum) => {
     showOrderHistorial.value = true;
     showReciboToolbar.value = true;
 
+    // CARGAR AMBOS
     loadPlatos();
+    loadProducts();
 
     try {
         // Buscar en la API si hay un pedido activo para esta mesa
@@ -192,14 +263,39 @@ const getSeverity = (state) => {
         case 'pendiente':
             return 'warning';
         case 'servido':
+        case 'completado':
             return 'success';
         case 'cancelado':
             return 'danger';
+        case 'en preparación':
+            return 'info';
+        case 'en entrega':
+            return 'primary';
         default:
             return null;
     }
 };
 
+// CORREGIDO: Función para agregar producto al pedido
+const agregarProductoAlPedido = (producto) => {
+    const productoExistente = order.value.productos.find((pedido) => 
+        pedido.id === producto.id
+    );
+
+    if (productoExistente) {
+        productoExistente.cantidad = Math.min(productoExistente.cantidad + 1, parseFloat(producto.stock_quantity));
+    } else {
+        order.value.productos.push({
+            id: producto.id,
+            name: producto.name,
+            price: producto.priceSale, // Usar priceSale
+            stock: parseFloat(producto.stock_quantity), // Usar stock_quantity
+            cantidad: 1,
+            tipo: 'producto'
+        });
+    }
+    console.log('Productos en el pedido:', order.value.productos);
+};
 const agregarAlPedido = (plato) => {
     // Verifica si el plato ya está en el pedido
     const platoExistente = order.value.platos.find((pedido) => pedido.id === plato.id);
@@ -334,11 +430,19 @@ watch(searchQueryPlato, (newSearchQuery) => {
     loadPlatos(newSearchQuery);
 });
 
-// Watch para detectar cambios en la página actual
-watch(currentPage, () => {
-    loadPlatos(searchQueryPlato.value); // Recargar platos al cambiar de página
+watch(searchQueryProduct, (newSearchQuery) => {
+    currentPageProduct.value = 1;
+    loadProducts(newSearchQuery);
 });
-// Watch para cambiar de piso y resetear área seleccionada
+
+watch(currentPage, () => {
+    loadPlatos(searchQueryPlato.value);
+});
+
+watch(currentPageProduct, () => {
+    loadProducts(searchQueryProduct.value);
+});
+
 watch(selectedFloor, () => {
     selectedArea.value = null; // Resetear área seleccionada
     updateAreas(); // Actualizar áreas
@@ -352,6 +456,7 @@ const goBack = () => {
 const goBackOrder = () => {
     // Limpiar el pedido (vaciar platos y otros datos)
     order.value.platos = [];
+    order.value.productos = []; // Limpiar productos también
     order.value.mesaId = null;
     order.value.tablenum = null;
 
@@ -378,17 +483,27 @@ const goBackOrder = () => {
 
 
 const tableNumber = ref(1);
+
+// CORREGIDO: Función para verificar si un producto está agregado
+const isProductoAgregado = (producto) => {
+    return order.value.productos.some((pedido) => 
+        pedido.id === producto.id
+    );
+};
+
 const isPlatoAgregado = (plato) => {
     return order.value.platos.some((pedido) => pedido.id === plato.id);
 };
-// Función para ajustar la cantidad del plato
-const adjustQuantity = (plato, increment) => {
-    // Si la cantidad es 1 y se intenta restar, eliminar el plato del pedido
-    if (plato.cantidad === 1 && increment === -1) {
-        eliminarDelPedido(order.value.platos.indexOf(plato)); // Elimina el plato
+
+// CORREGIDO: Función para ajustar cantidad
+const adjustQuantity = (item, increment, tipo) => {
+    const array = tipo === 'platillo' ? order.value.platos : order.value.productos;
+    const index = array.findIndex((i) => i.id === item.id);
+    
+    if (item.cantidad === 1 && increment === -1) {
+        eliminarDelPedido(index, tipo);
     } else {
-        // Actualiza la cantidad, asegurándose de no exceder el stock
-        plato.cantidad = Math.min(Math.max(plato.cantidad + increment, 1), plato.stock);
+        item.cantidad = Math.min(Math.max(item.cantidad + increment, 1), item.stock);
     }
 };
 
@@ -399,11 +514,16 @@ const filteredPlatos = computed(() => {
     }
     return platos.value.filter((plato) => plato.name.toLowerCase().includes(searchQueryPlato.value.toLowerCase()));
 });
-// Función para eliminar un plato del pedido
-const eliminarDelPedido = (index) => {
-    order.value.platos.splice(index, 1); // Elimina el plato del array
+
+// CORREGIDO: Función para eliminar del pedido
+const eliminarDelPedido = (index, tipo) => {
+    if (tipo === 'platillo') {
+        order.value.platos.splice(index, 1);
+    } else {
+        order.value.productos.splice(index, 1);
+    }
 };
-// Función para capitalizar la primera letra de un string
+
 const capitalizeFirstLetter = (str) => {
     if (!str) return ''; // Retorna vacío si no hay texto
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -412,8 +532,10 @@ const capitalizeFirstLetter = (str) => {
 const cancelOrder = () => {
     // Limpiar el pedido (vaciar platos y otros datos)
     order.value.platos = [];
+    order.value.productos = [];
 };
-// Función para registrar la orden
+
+// CORREGIDO: Función para registrar la orden
 const realizarPedido = async () => {
     if (isButtonDisabled.value) return; // Si el botón está deshabilitado, no hacer nada
 
@@ -422,8 +544,9 @@ const realizarPedido = async () => {
 
     const userId = await fetchUserId();
     try {
-        if (order.value.platos.length === 0) {
-            toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'Debe seleccionar al menos un plato', life: 3000 });
+        // Verificar que haya al menos un plato o producto
+        if (order.value.platos.length === 0 && order.value.productos.length === 0) {
+            toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'Debe seleccionar al menos un item', life: 3000 });
             return;
         }
 
@@ -436,6 +559,13 @@ const realizarPedido = async () => {
                 id: plato.id,
                 cantidad: plato.cantidad,
                 price: plato.price,
+                // NO enviar 'tipo' aquí - el backend espera solo datos de platos
+            })),
+            productos: order.value.productos.map((producto) => ({
+                id: producto.id,
+                cantidad: producto.cantidad,
+                price: producto.price,
+                // NO enviar 'tipo' aquí - el backend espera solo datos de productos
             })),
         };
 
@@ -446,12 +576,15 @@ const realizarPedido = async () => {
         // Guardar el nuevo ID del pedido y recargar historial
         order.value.idOrder = response.data.order.id; // ← backend debe devolver el pedido creado
         order.value.platos = [];
+        order.value.productos = [];
         await loadHistorialPlatos(); // ← recarga historial automáticamente
 
         await loadPlatos(); // Esto actualiza la lista de platos disponibles (por ejemplo, restando los que se pidieron)
+        await loadProducts();
     } catch (error) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Hubo un problema al registrar la orden', life: 3000 });
-        console.error(error);
+        console.error('Error completo:', error);
+        const errorMessage = error.response?.data?.message || 'Hubo un problema al registrar la orden';
+        toast.add({ severity: 'error', summary: 'Error', detail: errorMessage, life: 3000 });
     } finally {
         // Habilitar el botón después de 1 segundo
         setTimeout(() => {
@@ -510,31 +643,37 @@ const stateOptions = ref([
     { label: 'Cancelado', value: 'cancelado' },
 ]);
 
-const cancelDish = async (dishId) => {
+const cancelDish = async (itemId) => {
     try {
-        await axios.put(`/order-dishes/${dishId}`, { state: 'cancelado' });
-        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Platillo cancelado', life: 3000 });
+        await axios.put(`/order-dishes/${itemId}`, { state: 'cancelado' });
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Item cancelado', life: 3000 });
 
         // Actualiza el historial de platos después de la cancelación
         loadHistorialPlatos();
         loadPlatos();
+        loadProducts();
     } catch (error) {
         console.error(error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cancelar el platillo', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cancelar el item', life: 3000 });
     }
 };
 const totalHistorialPedido = computed(() => {
     return historialPlatos.value
-        .filter((plato) => plato.state !== 'cancelado') // Filtra los platos que no están cancelados
-        .reduce((total, plato) => {
-            const precio = parseFloat(plato.price) || 0; // Si el precio no es un número válido, se asigna 0
-            const cantidad = parseFloat(plato.quantity) || 0; // Si la cantidad no es un número válido, se asigna 0
-            return total + precio * cantidad; // Calcula el subtotal
-        }, 0) // Inicia la suma desde 0
-        .toFixed(2); // Redondea el resultado a dos decimales
+        .filter((item) => item.state !== 'cancelado')
+        .reduce((total, item) => {
+            const precio = parseFloat(item.price) || 0;
+            const cantidad = parseFloat(item.quantity) || 0;
+            return total + precio * cantidad;
+        }, 0)
+        .toFixed(2);
 });
 
-
+// NUEVO: Computed para calcular el total del pedido actual
+const totalPedidoActual = computed(() => {
+    const totalPlatos = order.value.platos.reduce((total, plato) => total + parseFloat(plato.price) * plato.cantidad, 0);
+    const totalProductos = order.value.productos.reduce((total, producto) => total + parseFloat(producto.price) * producto.cantidad, 0);
+    return (totalPlatos + totalProductos).toFixed(2);
+});
 const actualizarestadomesa = async ()=>{
 
     
@@ -608,13 +747,12 @@ const showFormularioRecibo = async () => { // Marca la función como async
 };
 
 const generarRecibo = async () => { 
-    // Verificar que todos los platos estén en estado 'cancelado' o 'completado'
-    const todosCompletadosOCancelados = historialPlatos.value.every((plato) => 
-        plato.state === 'cancelado' || plato.state === 'completado'
+    const todosCompletadosOCancelados = historialPlatos.value.every((item) => 
+        item.state === 'cancelado' || item.state === 'completado'
     );
 
     if (!todosCompletadosOCancelados) {
-        // Si algún plato no está cancelado o completado, mostrar un toast
+        // Si algún plato o producto no está cancelado o completado, mostrar un toast
         toast.add({
             severity: 'warn',
             summary: 'Órdenes no completadas',
@@ -624,9 +762,8 @@ const generarRecibo = async () => {
         return; // Detener la ejecución si no todos los platos están completos o cancelados
     }
 
-    // Verificar que al menos haya un plato completado entre los cancelados
-    const alMenosUnCompletado = historialPlatos.value.some((plato) => 
-        plato.state === 'completado'
+    const alMenosUnCompletado = historialPlatos.value.some((item) => 
+        item.state === 'completado'
     );
 
     if (!alMenosUnCompletado) {
@@ -637,23 +774,11 @@ const generarRecibo = async () => {
             detail: 'Debe haber al menos un pedido completado entre los cancelados.',
             life: 3000
         });
-        return; // Detener la ejecución si no hay pedidos completados
+        return;
     }
 
-    // Calcular el total del historial de la orden
-    const totalHistorial = historialPlatos.value
-        .filter((plato) => plato.state !== 'cancelado') // Filtra los platos no cancelados
-        .reduce((total, plato) => {
-            const precio = parseFloat(plato.price) || 0; // Si el precio no es válido, asignar 0
-            const cantidad = parseFloat(plato.quantity) || 0; // Si la cantidad no es válida, asignar 0
-            return total + precio * cantidad; // Sumar el total
-        }, 0)
-        .toFixed(2); // Redondea a 2 decimales
+    const totalHistorial = totalHistorialPedido.value;
 
-    console.log('Total del historial de la orden: S/', totalHistorial); // Imprimir total del historial
-
-
-  // Guardar el documentType y idSale en una variable general
     const generalData = {
         documentType: recibo.value.tipoRecibo,
         idSale: null
@@ -977,7 +1102,7 @@ const finalizarMesa = async () => {
                             :options="['Tarjeta', 'Transferencia', 'Efectivo', 'Yape', 'Plin']"
                             placeholder="Seleccione tipo de pago"
                             class="w-full"
-                        />
+/>
                     </div>
 
                     <!-- Código de Operación (Solo si no es Efectivo) -->
@@ -1029,91 +1154,112 @@ const finalizarMesa = async () => {
                             <strong>Mesa Nº {{ order.tablenum || 'Cargando...' }}</strong>
                         </h2>
 
-                        <!-- Buscador de platos -->
-                        <InputText v-model="searchQueryPlato" placeholder="Buscar plato..." class="mb-3 sm:mb-4 w-full" />
+                        <TabView>
+                            <!-- TAB DE PLATILLOS -->
+                            <TabPanel header="Platillos">
+                                <InputText v-model="searchQueryPlato" placeholder="Buscar platillo..." class="mb-4 w-full" />
 
-                        <!-- Mostrar platos disponibles con búsqueda -->
-                        <div class="platos-disponibles max-h-60 sm:max-h-80 lg:max-h-96 overflow-y-auto">
-                            <div v-for="plato in filteredPlatos" :key="plato.id" class="plato-item mb-3 sm:mb-4 p-2 border-b">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                    <div class="flex-1">
-                                        <!-- Nombre del plato y precio con texto un poco más pequeño -->
-                                        <span class="text-sm sm:text-base font-medium">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }} </span>
-                                        <!-- Stock con texto aún más pequeño -->
-                                        <div class="text-xs text-gray-500">Stock: {{ plato.quantity }}</div>
-                                    </div>
-                                    <div class="flex gap-1 sm:gap-2">
-                                        <Button 
-                                            label="Detalles" 
-                                            icon="pi pi-info-circle" 
-                                            class="p-button-text text-xs sm:text-sm" 
-                                            @click="verInsumos(plato)" 
-                                        />
-                                        <Button
-                                            label="Añadir"
-                                            icon="pi pi-plus"
-                                            class="p-button-success text-xs sm:text-sm"
-                                            :disabled="isPlatoAgregado(plato)"
-                                            @click="agregarAlPedido(plato)"
-                                        />
+                                <div class="platos-disponibles max-h-96 overflow-y-auto">
+                                    <div v-for="plato in filteredPlatos" :key="plato.id" class="plato-item mb-4 p-2 border-b">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="text-lg font-medium">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }} </span>
+                                                <div class="text-xs text-gray-500">Stock: {{ plato.quantity }}</div>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <Button label="Detalles" icon="pi pi-info-circle" class="p-button-text" @click="verInsumos(plato)" />
+                                                <Button
+                                                    label="Añadir"
+                                                    icon="pi pi-plus"
+                                                    class="p-button-success"
+                                                    :disabled="isPlatoAgregado(plato)"
+                                                    @click="agregarAlPedido(plato)"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Paginación minimalista y dinámica -->
-                        <div class="paginacion mt-3 sm:mt-4 flex items-center justify-center gap-4 sm:gap-6">
-                            <!-- Página anterior -->
-                            <span v-if="currentPage > 1" class="cursor-pointer text-blue-500 text-sm" @click="currentPage--">Anterior</span>
+                                <div class="paginacion mt-4 flex items-center justify-center space-x-6">
+                                    <span v-if="currentPage > 1" class="cursor-pointer text-blue-500" @click="currentPage--">Anterior</span>
+                                    <span class="text-sm text-gray-600"> Página {{ currentPage }} de {{ totalPages }} </span>
+                                    <span v-if="currentPage < totalPages" class="cursor-pointer text-blue-500" @click="currentPage++">Siguiente</span>
+                                </div>
+                            </TabPanel>
 
-                            <!-- Página actual y total -->
-                            <span class="text-xs sm:text-sm text-gray-600"> Página {{ currentPage }} de {{ totalPages }} </span>
+                            <!-- En el TabPanel de Productos -->
+                            <TabPanel header="Productos">
+                                <InputText v-model="searchQueryProduct" placeholder="Buscar producto..." class="mb-4 w-full" />
 
-                            <!-- Página siguiente -->
-                            <span v-if="currentPage < totalPages" class="cursor-pointer text-blue-500 text-sm" @click="currentPage++">Siguiente</span>
-                        </div>
+                                <div class="productos-disponibles max-h-96 overflow-y-auto">
+                                    <div v-for="producto in filteredProducts" :key="producto.id" class="producto-item mb-4 p-2 border-b">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="text-lg font-medium">{{ capitalizeFirstLetter(producto.name) }} - S/ {{ producto.priceSale }} </span>
+                                                <div class="text-xs text-gray-500">Stock: {{ producto.stock_quantity }}</div>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <Button
+                                                    label="Añadir"
+                                                    icon="pi pi-plus"
+                                                    class="p-button-success"
+                                                    :disabled="isProductoAgregado(producto)"
+                                                    @click="agregarProductoAlPedido(producto)"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="paginacion mt-4 flex items-center justify-center space-x-6">
+                                    <span v-if="currentPageProduct > 1" class="cursor-pointer text-blue-500" @click="currentPageProduct--">Anterior</span>
+                                    <span class="text-sm text-gray-600"> Página {{ currentPageProduct }} de {{ totalPagesProduct }} </span>
+                                    <span v-if="currentPageProduct < totalPagesProduct" class="cursor-pointer text-blue-500" @click="currentPageProduct++">Siguiente</span>
+                                </div>
+                            </TabPanel>
+                        </TabView>
                     </div>
 
-                    <!-- Columna 2: Pedido y total -->
-                    <div class="col-span-1 flex flex-col justify-between lg:pl-4">
-                        <h2 class="mb-3 sm:mb-4 text-base sm:text-lg font-semibold uppercase">
+                    <!-- Columna 2: Pedido y total CORREGIDO -->
+                    <div class="col-span-1 flex flex-col justify-between pl-4">
+                        <h2 class="mb-4 text-lg font-semibold uppercase">
                             <strong>Pedido</strong>
                         </h2>
-                        <div class="pedido flex-grow max-h-48 sm:max-h-60 lg:max-h-80 overflow-y-auto">
-                            <!-- Mostrar los platos agregados al pedido -->
-                            <div v-for="(plato, index) in order.platos" :key="plato.id" class="mb-2 p-2 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <span class="text-sm sm:text-base flex-1">{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }}</span>
-
-                                <!-- Botones para ajustar la cantidad -->
-                                <div class="flex items-center gap-1 sm:gap-2">
-                                    <Button 
-                                        icon="pi pi-minus" 
-                                        class="p-button-text p-button-danger w-8 h-8" 
-                                        @click="adjustQuantity(plato, -1)" 
-                                    />
-                                    <!-- Mostrar la cantidad actual -->
-                                    <span class="text-sm w-8 text-center">{{ plato.cantidad }}</span>
-                                    <Button 
-                                        icon="pi pi-plus" 
-                                        class="p-button-text p-button-success w-8 h-8" 
-                                        @click="adjustQuantity(plato, 1)" 
-                                    />
-                                    <span class="text-xs text-gray-500 hidden sm:inline">de {{ plato.stock }} disponibles</span>
+                        <div class="pedido flex-grow max-h-96 overflow-y-auto">
+                            <!-- Mostrar platos del pedido -->
+                            <div v-for="(plato, index) in order.platos" :key="'plato-' + plato.id" class="mb-2 p-2 border-b flex items-center justify-between">
+                                <div>
+                                    <span>{{ capitalizeFirstLetter(plato.name) }} - S/ {{ plato.price }}</span>
+                                    <div class="text-xs text-gray-500">🍽️ Platillo</div>
                                 </div>
+                                <div class="flex items-center space-x-2">
+                                    <Button icon="pi pi-minus" class="p-button-text p-button-danger" @click="adjustQuantity(plato, -1, 'platillo')" />
+                                    <span>{{ plato.cantidad }}</span>
+                                    <Button icon="pi pi-plus" class="p-button-text p-button-success" @click="adjustQuantity(plato, 1, 'platillo')" />
+                                    <span class="text-xs text-gray-500">de {{ plato.stock }}</span>
+                                </div>
+                                <Button icon="pi pi-trash" class="p-button-text p-button-danger ml-2" @click="eliminarDelPedido(index, 'platillo')" />
+                            </div>
 
-                                <!-- Botón para eliminar el plato -->
-                                <Button 
-                                    icon="pi pi-trash" 
-                                    class="p-button-text p-button-danger w-8 h-8" 
-                                    @click="eliminarDelPedido(index)" 
-                                />
+                            <!-- Mostrar productos del pedido -->
+                            <div v-for="(producto, index) in order.productos" :key="'producto-' + producto.id" class="mb-2 p-2 border-b flex items-center justify-between">
+                                <div>
+                                    <span>{{ capitalizeFirstLetter(producto.name) }} - S/ {{ producto.price }}</span>
+                                    <div class="text-xs text-gray-500">📦 Producto</div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <Button icon="pi pi-minus" class="p-button-text p-button-danger" @click="adjustQuantity(producto, -1, 'producto')" />
+                                    <span>{{ producto.cantidad }}</span>
+                                    <Button icon="pi pi-plus" class="p-button-text p-button-success" @click="adjustQuantity(producto, 1, 'producto')" />
+                                    <span class="text-xs text-gray-500">de {{ producto.stock }}</span>
+                                </div>
+                                <Button icon="pi pi-trash" class="p-button-text p-button-danger ml-2" @click="eliminarDelPedido(index, 'producto')" />
                             </div>
                         </div>
 
-                        <!-- Total y botones al final -->
-                        <div class="total mt-3 sm:mt-4 font-semibold uppercase text-sm sm:text-base">
-                            <strong>Total: </strong> S/
-                            {{ order.platos.reduce((total, plato) => total + parseFloat(plato.price) * plato.cantidad, 0).toFixed(2) }}
+                        <!-- Total y botones -->
+                        <div class="total mt-4 font-semibold uppercase">
+                            <strong>Total: </strong> S/ {{ totalPedidoActual }}
                         </div>
 
                         <!-- Botones debajo del total usando PrimeVue -->
@@ -1187,18 +1333,24 @@ const finalizarMesa = async () => {
                         </div>
                     </template>
 
-                    <Column field="name" header="Nombre" :style="columnStyle" />
-                    <Column field="quantity" header="Cantidad" :style="columnStyle" />
-                    <Column field="price" header="Precio Unit." :style="columnStyle">
-                        <template #body="{ data }"> 
-                            <span class="text-sm sm:text-base">S/ {{ parseFloat(data.price).toFixed(2) }}</span>
+                    <!-- Columna para mostrar tipo de item -->
+                    <Column header="Tipo" style="min-width: 6rem">
+                        <template #body="{ data }">
+                            <Tag 
+                                :value="data.idDish ? 'Platillo' : 'Producto'" 
+                                :severity="data.idDish ? 'info' : 'success'" 
+                            />
                         </template>
                     </Column>
-                    <!-- Nueva columna "Subtotal" -->
-                    <Column header="Subtotal" :style="columnStyle">
-                        <template #body="{ data }"> 
-                            <span class="text-sm sm:text-base">S/ {{ (parseFloat(data.quantity) * parseFloat(data.price)).toFixed(2) }}</span>
-                        </template>
+
+                    <Column field="name" header="Nombre" />
+                    <Column field="productName" header="Producto" />
+                    <Column field="quantity" header="Cantidad" />
+                    <Column field="price" header="Precio Unit.">
+                        <template #body="{ data }"> S/ {{ parseFloat(data.price).toFixed(2) }} </template>
+                    </Column>
+                    <Column header="Subtotal" style="min-width: 8rem">
+                        <template #body="{ data }"> S/ {{ (parseFloat(data.quantity) * parseFloat(data.price)).toFixed(2) }} </template>
                     </Column>
 
                     <Column field="state" header="Estado" :style="columnStyle">
