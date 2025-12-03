@@ -15,6 +15,7 @@ use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Facades\Gate;
 use App\Pipelines\FilterByNumTable;
 use App\Pipelines\FilterByState;
+use App\Pipelines\FilterByOrderStatus;
 
 class TablesController extends Controller
 {
@@ -33,6 +34,7 @@ public function index(Request $request)
         ->through([
             new FilterByNumTable($request->input('search')),
             new FilterByState($request->input('state')),
+            new FilterByOrderStatus($request->input('order_status')), // <- NUEVO
         ])
         ->thenReturn();
 

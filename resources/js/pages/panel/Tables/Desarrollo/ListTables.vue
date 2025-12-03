@@ -24,6 +24,7 @@ interface Table {
     creacion?: string;
     actualizacion?: string;
     state: boolean;
+    order_status?: string;
 }
 
 interface Pagination {
@@ -50,12 +51,25 @@ const currentPage = ref<number>(1);
 const selectedAreas = ref<number | null>(null);
 const selectedFloor = ref<number | null>(null);
 const selectedEstadoTable = ref<EstadoOption | null>(null);
+const selectedOrderStatus = ref<EstadoOption | null>(null);
+
+const orderStatusOptions = ref<EstadoOption[]>([
+    { name: 'TODOS', value: '' },
+    { name: 'DISPONIBLES', value: 'disponible' },
+    { name: 'OCUPADOS', value: 'ocupado' },
+]);
 
 const pagination = ref<Pagination>({
     currentPage: 1,
     perPage: 15,
     total: 0
 });
+const getOrderStatusSeverity = (status: string): string => {
+    return status === 'ocupado' ? 'danger' : 'success';
+};
+const getOrderStatusIcon = (status: string): string => {
+    return status === 'ocupado' ? 'pi pi-ban' : 'pi pi-check-circle';
+};
 
 const estadoTableOptions = ref<EstadoOption[]>([
     { name: 'TODOS', value: '' },
@@ -74,6 +88,7 @@ const loadTables = async (): Promise<void> => {
             areas: selectedAreas?.value,
             floor: selectedFloor?.value,
             state: selectedEstadoTable.value?.value ?? '',
+            order_status: selectedOrderStatus.value?.value ?? '',
         };
         const response = await axios.get('/mesa', { params });
         tables.value = response.data.data;
@@ -100,7 +115,10 @@ watch(() => selectedEstadoTable.value, () => {
 watch(deleteTableDialog, (val) => {
     console.log('Dialogo eliminar visible:', val);
 });
-
+watch(() => selectedOrderStatus.value, () => {
+    currentPage.value = 1;
+    loadTables();
+});
 // Paginación
 const onPage = (event: { page: number; rows: number }): void => {
     pagination.value.currentPage = event.page + 1;
@@ -179,7 +197,13 @@ onMounted(loadTables);
                             class="w-full"
                         />
                     </IconField>
-
+                    <Select
+                        v-model="selectedOrderStatus"
+                        :options="orderStatusOptions"
+                        optionLabel="name"
+                        placeholder="Ocupación"
+                        class="w-full sm:w-48 md:w-56"
+                    />
                     <Select
                         v-model="selectedEstadoTable"
                         :options="estadoTableOptions"
@@ -210,7 +234,16 @@ onMounted(loadTables);
         <Column field="floor_name" header="Piso" sortable style="min-width: 10rem" />
         <Column field="creacion" header="Creación" sortable style="min-width: 12rem" />
         <Column field="actualizacion" header="Actualización" sortable style="min-width: 12rem" />
-
+        <Column field="order_status" header="Ocupación" style="min-width: 10rem">
+            <template #body="{ data }">
+                <Tag
+                    :value="data.order_status === 'ocupado' ? 'Ocupado' : 'Disponible'"
+                    :icon="getOrderStatusIcon(data.order_status)"
+                    :severity="getOrderStatusSeverity(data.order_status)"
+                    class="text-xs sm:text-sm md:text-base"
+                />
+            </template>
+        </Column>
         <Column field="state" header="Estado" sortable style="min-width: 6rem">
             <template #body="{ data }">
                 <Tag
