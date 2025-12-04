@@ -35,13 +35,16 @@
         </button>
 
         <!-- Ícono de cuenta -->
-        <a href="/login" class="ml-3 flex items-center text-gray-800 hover:text-blue-800 dark:text-gray-200 dark:hover:text-cyan-400">
+          <button 
+            @click="handleIntranetClick" 
+            class="ml-3 flex items-center text-gray-800 hover:text-blue-800 dark:text-gray-200 dark:hover:text-cyan-400"
+          >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5">
             <path fill-rule="evenodd"
               d="M8 0a8 8 0 100 16A8 8 0 008 0zM5.5 5.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zM8 9c-2.21 0-4 1.57-4 3.5V13h8v-.5C12 10.57 10.21 9 8 9z" />
           </svg>
           <span class="ml-1">Intranet</span>
-        </a>
+        </button>
 
  
       </div>
@@ -81,13 +84,16 @@
 
           <!-- Ícono de cuenta en móvil -->
           <NavigationMenuItem>
-            <a href="/login" class="flex items-center space-x-2 text-gray-800 hover:text-blue-800 gap-2 rounded-lg p-2 dark:text-gray-200 dark:hover:text-blue-400">
+                <button 
+                  @click="handleIntranetClick"
+                  class="flex items-center space-x-2 text-gray-800 hover:text-blue-800 gap-2 rounded-lg p-2 dark:text-gray-200 dark:hover:text-blue-400 w-full text-left"
+                >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5">
                 <path fill-rule="evenodd"
                   d="M8 0a8 8 0 100 16A8 8 0 008 0zM5.5 5.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zM8 9c-2.21 0-4 1.57-4 3.5V13h8v-.5C12 10.57 10.21 9 8 9z" />
               </svg>
               <span>Intranet</span>
-            </a>
+            </button>
           </NavigationMenuItem>
 
         </NavigationMenuList>
@@ -152,4 +158,8 @@ const links = [
   { text: 'FAQS', href: '#faqs' },
   { text: 'Contacto', href: '#contacto' },
 ]
+const handleIntranetClick = () => {
+  // Redirigir directamente a una ruta que maneje el logout y login
+  window.location.href = '/landing-logout'
+}
 </script>

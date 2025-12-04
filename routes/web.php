@@ -86,6 +86,7 @@ use App\Http\Controllers\Web\ReservationWebController;
 use App\Http\Controllers\Web\AttendancesWebController;
 use App\Http\Controllers\Web\GeneralHolidayWebController;
 use App\Http\Controllers\Web\PayrollWebController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -515,6 +516,19 @@ Route::get('/export-excel-payrolls', [PayrollController::class, 'exportExcel'])
     
     });
 });
+        // En web.php
+        Route::get('/landing-logout', function (Request $request) {
+            // Cerrar sesión si el usuario está autenticado
+            if (Auth::check()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            
+            // Redirigir al login
+            return redirect('/login');
+        })->name('landing.logout');
+
         //RUTAS PARA QUE PASEN EL TEST  
         Route::get('/register', [RegisteredUserController::class, 'create'])
             ->middleware('guest')
